@@ -1,0 +1,7 @@
+
+Python34 packages required to run
+requests
+colorama
+
+python -m pip install requests
+python -m pip install colorama
