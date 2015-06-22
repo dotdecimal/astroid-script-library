@@ -1,4 +1,5 @@
-# .decimal Astroid Script Library
+.decimal Astroid Script Library
+===============================
 
 Copyright (c) 2015 .decimal, Inc. All rights reserved.
 All trademarks referenced herein are property of their respective
@@ -6,8 +7,10 @@ holders.
 
 These examples provide a starting point for issuing http connections and requests to the dosimetry app on the thinknode™ framework. They are provided as is. Any further dependencies are listed along with the provided scripts.
 
-# Reference Documentation
+Reference Documentation
+=======================
 
-## Dosimetry
-* Dosimetry App Userguide: www.dosimetry.dotdecimal.com
-* Dosimetry App Manifest Guide: www.docs.dosimetry.dotdecimal.com
+Dosimetry
+---------
+1. Dosimetry App Userguide: www.dosimetry.dotdecimal.com
+2. Dosimetry App Manifest Guide: www.docs.dosimetry.dotdecimal.com
