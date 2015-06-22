@@ -1,0 +1,42 @@
+{
+   "centerlines": [],
+   "corner_planes": [],
+   "downstream_edge": 250.0,
+   "half_planes": [],
+   "mill_radius": 0.0,
+   "organs": [],
+   "overrides": [],
+   "target_margin": 20.0,
+   "targets": [
+      {
+         "faces": {
+            "blob": "AAAAAAMAAAABAAAAAAAAAAIAAAADAAAAAAAAAAEAAAAFAAAAAAAAAAUAAAAEAAAAAAAAAAQAAAACAAAAAgAAAAQAAAAGAAAABAAAAAUAAAAGAAAABQAAAAcAAAAGAAAAAgAAAAYAAAADAAAAAwAAAAYAAAAHAAAAAQAAAAMAAAAFAAAAAwAAAAcAAAAFAAAA",
+            "type": "base64-encoded-blob"
+         },
+         "vertices": {
+            "blob": "AAAAAAAAQMAAAAAAAAA0wAAAAAAAAD7AAAAAAAAAMEAAAAAAAAA0wAAAAAAAAD7AAAAAAAAAQMAAAAAAAAAkwAAAAAAAAD7AAAAAAAAAMEAAAAAAAAAkwAAAAAAAAD7AAAAAAAAAQMAAAAAAAAA0wAAAAAAAAD5AAAAAAAAAMEAAAAAAAAA0wAAAAAAAAD5AAAAAAAAAQMAAAAAAAAAkwAAAAAAAAD5AAAAAAAAAMEAAAAAAAAAkwAAAAAAAAD5A",
+            "type": "base64-encoded-blob"
+         }
+      },
+      {
+         "faces": {
+            "blob": "AAAAAAMAAAABAAAAAAAAAAIAAAADAAAAAAAAAAEAAAAFAAAAAAAAAAUAAAAEAAAAAAAAAAQAAAACAAAAAgAAAAQAAAAGAAAABAAAAAUAAAAGAAAABQAAAAcAAAAGAAAAAgAAAAYAAAADAAAAAwAAAAYAAAAHAAAAAQAAAAMAAAAFAAAAAwAAAAcAAAAFAAAA",
+            "type": "base64-encoded-blob"
+         },
+         "vertices": {
+            "blob": "AAAAAAAAQMAAAAAAAAAkwAAAAAAAAD7AAAAAAAAAMcAAAAAAAAAkwAAAAAAAAD7AAAAAAAAAQMAAAAAAAAAUQAAAAAAAAD7AAAAAAAAAMcAAAAAAAAAUQAAAAAAAAD7AAAAAAAAAQMAAAAAAAAAkwAAAAAAAAD5AAAAAAAAAMcAAAAAAAAAkwAAAAAAAAD5AAAAAAAAAQMAAAAAAAAAUQAAAAAAAAD5AAAAAAAAAMcAAAAAAAAAUQAAAAAAAAD5A",
+            "type": "base64-encoded-blob"
+         }
+      }
+   ],
+   "view": {
+      "center": [ 0.0, 0.0, 0.0 ],
+      "direction": [ -0.0, 1.0, 0.0 ],
+      "display_surface": {
+         "corner": [ -100.0, -100.0 ],
+         "size": [ 200.0, 200.0 ]
+      },
+      "distance": [ 2270.0, 2270.0 ],
+      "up": [ 0.0, 0.0, 1.0 ]
+   }
+}

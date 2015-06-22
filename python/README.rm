@@ -1,0 +1,47 @@
+# Copyright (c) 2015 .decimal, Inc. All rights reserved.
+# Author:   Daniel Patenaude
+# Date:     06/09/2015
+
+###########################################
+Python Verion Required: 
+	Python 34
+
+Packages required to run: 
+	requests
+	colorama
+
+	python -m pip install requests
+	python -m pip install colorama
+###########################################
+
+Provided Example File Usages:
+1) post_calc_request_generic.py
+	- Posts calculation request based on a prebuilt json request. 
+	- The request example provided uses an already existing iss object referenced by ID (iss_files/aperture_creation_params.json).
+2) post_calc_request_sobp_dose.py
+	- Manually constructs an entire sobp dose calculation request and all required datatypes. No prior postings to ISS is required for this script to run.
+	  All data types are constructed inline with the calling calculation request.
+3) post_calc_request_sobp_dose_with_shifter.py
+	- Manually constructs an entire sobp dose calculation request and all required datatypes and using a constructed degrader. No prior postings to ISS is required for this script to run.
+	  All data types are constructed inline with the calling calculation request or posted with running the python script.
+4) post_iss_object_generic.py
+    - Posts any prebuilt json named_type dosimetry object to thinknode ISS.
+	
+Decimal Provided Libraries:
+1) decimal_logging.py
+	- Prettified log output. Includes optional file logging, timestamps, message coloring (when run through command windows)
+2) dosimetry_types.py
+	- Reconstruction of dosimetry manifest types in python class format. Includes interdependencies between types (e.g. the class "aperture_creation_params.view" requires the class "multiple_source_view")
+	- This types match the manifest for the version specified
+3) thinknode_worker.py
+	- Main worker to perform thinknode IAM, ISS, and calculation requests.
+	- Make sure to update thinknode.cfg prior to trying to authenticate with thinknode (see below)
+	
+	
+Thinknode.cfg file syntax:
+{
+    "basic_user": "<Base64 encoded username:password>",
+    "api_url": "https://api.thinknode.com/v1.0",
+    "app_name": "dosimetry",
+    "app_version": "1.0.0.0"
+}

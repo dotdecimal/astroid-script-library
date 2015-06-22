@@ -1,0 +1,11 @@
+{
+   "type": "function",
+   "function": {
+       "app": "dosimetry",
+       "name": "compute_aperture",
+       "args": [{
+           "type": "reference",
+           "reference": "5584732a28c00020000c"
+       }]
+   }
+}
