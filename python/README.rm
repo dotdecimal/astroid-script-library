@@ -43,5 +43,6 @@ Thinknode.cfg file syntax:
     "basic_user": "<Base64 encoded username:password>",
     "api_url": "https://api.thinknode.com/v1.0",
     "app_name": "dosimetry",
-    "app_version": "1.0.0.0"
+    "app_version": "1.0.0.0",
+    "realm_name": "Realm Name"
 }

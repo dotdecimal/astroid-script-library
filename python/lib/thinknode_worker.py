@@ -44,8 +44,12 @@ def authenticate(config):
         headers = {'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
     dl.data("Realms:", res.text)
-    config["realm_id"] = res.json()[1]["id"] # get the second returned realm
-    config["bucket_id"] = res.json()[1]["bucket_id"]
+    realm_list = json.loads(res.text)
+    for realm in realm_list:
+        desc = realm['name']
+        if desc == config["realm_name"]:    
+            config["realm_id"] = realm['id']
+            config["bucket_id"] = realm['bucket_id']
     dl.data("Realm ID:", config["realm_id"])
     # Get context ID
     dl.event("Getting Context ID...")
@@ -59,7 +63,6 @@ def authenticate(config):
 # Send calculation request to thinknode api
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param json_data: calculation request in json format
-#   param return_data: True = returns calculation result; False = returns calculation id
 def do_calculation(config, json_data, return_data=True):
     # Get calculation ID
     dl.event("Sending Calculation...")
@@ -100,9 +103,23 @@ def do_calculation(config, json_data, return_data=True):
 #   param json_data: immutable object in json format
 #   param obj_name: object name of app to post to
 def post_immutable(config, json_data, obj_name):
-    print("Posting object to ISS...")
+    dl.event("Posting object to ISS...")
     # Post immutable object
     res = requests.post(config["api_url"] + '/iss/named/' + config["app_name"] + "/" + obj_name + '/?context=' + config["context_id"], 
+        data = json.dumps(json_data), 
+        headers = {'Authorization': 'Bearer ' + config["user_token"]})
+    dl.event("    Immutable id: " + res.text)
+    return res
+
+# Post immutable object to ISS of a dependency type 
+#   param config: connection settings (url, user token, and ids for context and realm)
+#   param dep_app: The name of the app the data type belongs too
+#   param json_data: immutable object in json format
+#   param obj_name: object name of app to post to
+def post_dependency_immutable(config, dep_app, json_data, obj_name):
+    print("Posting object to ISS...")
+    # Post immutable object
+    res = requests.post(config["api_url"] + '/iss/named/' + dep_app + "/" + obj_name + '/?context=' + config["context_id"], 
         data = json.dumps(json_data), 
         headers = {'Authorization': 'Bearer ' + config["user_token"]})
     print("    Immutable id: " + res.text)
@@ -111,14 +128,13 @@ def post_immutable(config, json_data, obj_name):
 # Post immutable object to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param json_data: immutable object blob in json format
-#   param app_name: name of thinknode application to post to
-def post_blob(config, json_data, app_name):
-    print("Posting blob to ISS...")
+def post_blob(config, json_data):
+    dl.event("Posting blob to ISS...")
     # Post immutable object
     res = requests.post(config["api_url"] + '/iss/blob/' + 'blob' + '/?context=' + config["context_id"], 
         data = json.dumps(json_data), 
         headers = {'Authorization': 'Bearer ' + config["user_token"]})
-    print("    Immutable id: " + res.text)
+    dl.event("    Immutable id: " + res.text)
     return res
 
 # Post immutable object to ISS
@@ -176,6 +192,19 @@ def array_named_type(app, item_name, a):
             { "type": "named_type", \
             "named_type": { "name": item_name, "app": app } }, "items": a } }  
 
+# Create an array request for a named_type
+#   param app: app name on thinknode
+#   param item_name: name of the named_type
+#   param a: array of items
+def array_referenced_named_type(app, item_name, a):
+    return { "type": "array", "array": \
+            { "item_schema" : \
+            { "type": "reference_type", \
+            "reference_type": { "type": "named_type", \
+            "named_type": { "name": item_name, "app": app } } }, "items": a } } 
+            # { "type": "named_type", \
+            # "named_type": { "name": item_name, "app": app } }, "items": a } }  
+
 
 # Create an array request for a number type
 def array_number_type(app, a):
@@ -188,13 +217,3 @@ def array_number_type(app, a):
 
 # Create a none type
 none = value({ "type": "none", "none": None })
-
-#####################################################################
-# Misc utility
-#####################################################################
-
-def blob(data):
-    b = {}
-    b['blob'] = data
-    b['type'] = 'base64-encoded-blob'
-    return b

@@ -4,7 +4,6 @@
 # Desc:     Post an immutable json object to the thinknode framework
 
 from lib import thinknode_worker as thinknode
-from lib import decimal_logging as dl
 import requests
 import json
 
@@ -20,6 +19,5 @@ with open(iss_dir + '/' + json_iss_file) as data_file:
     json_data = json.load(data_file)
 
 # Post immutable object to ISS
-res = thinknode.post_immutable(iam, json_data, obj_name)    
-dl.data("Immutable id: ", res.text)
+res = thinknode.post_immutable(iam, json_data, obj_name)
 

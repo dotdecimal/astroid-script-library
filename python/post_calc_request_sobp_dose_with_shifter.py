@@ -49,8 +49,7 @@ def make_layers(sad, range, mod):
     return \
         thinknode.function("dosimetry", "compute_double_scattering_layers",
             [
-                #get_example_sobp_machine(0),
-                thinknode.reference("557b40b1ee000020000c"),
+                get_example_sobp_machine(0),
                 thinknode.value(sad),
                 thinknode.value(range),
                 thinknode.value(mod)
@@ -81,16 +80,16 @@ def make_target():
 
 def make_view():
     mv = dt.multiple_source_view()
-    ds = {}
-    ds['corner'] = [-100, -100]
-    ds['size'] = [200, 200]
+    ds = dt.box_2d()
+    ds.corner = [-100, -100]
+    ds.size = [200, 200]
     mv.display_surface = ds
     mv.center = [0, 0, 0]
     mv.direction = [0, 1, 0]
     mv.distance = [2270, 2270]
     mv.up = [0, 0, 1]
 
-    return mv.out()
+    return mv
 
 def compute_aperture():
     ap_params = dt.aperture_creation_params()
@@ -105,7 +104,7 @@ def compute_aperture():
     args = {}
     args["targets"] = thinknode.array_named_type("dosimetry", "triangle_mesh", ap_params.targets)
     args["target_margin"] = thinknode.value(ap_params.target_margin)
-    args["view"] = thinknode.value(ap_params.view)
+    args["view"] = thinknode.value(ap_params.view.toStr())
     args["mill_radius"] = thinknode.value(ap_params.mill_radius)
     args["organs"] = thinknode.value(ap_params.organs)
     args["half_planes"] = thinknode.value(ap_params.half_planes)
@@ -126,22 +125,15 @@ beam_geometry = \
         "sad": [2270, 2270]
     })
 
-# Lucite
+# Get lucite material as calculation result
 material = \
-    {
-       "density": 1.150,
-       "theta_curve": {
-          "outside_domain_policy": "extend_with_copies",
-          "samples": {
-             "blob": "bvDPVm8eaD8AMxOxLaj0PtQWMrK/R2g/AIEV8ecl8D7WQRSCC2hoPwBEHOviNuo+Gl7/ZEKCaD8Ax+4CJQXmPuFMAopHmGg/AJ43XzZL4z5/hGHAkqtoPwDTizW3neE+UhCXdzC9aD8AHlVNEHXfPuG6vf/qzGg/AKInZVJD2z6yTvCojNpoPwC8UdCSbNo+kHdY8sLnaD8ADNARVOjXPpZfYRy382g/AFxOUxVk1T7EBgsnaf5oPwBq44i1+NQ+eXjPgeUIaT8AnjdfNkvTPkgU/xyLEmk/ALhhynZ00j4kRWRYxRtpPwDgIGtXMtE+lNUZhF4kaT8A/ErWl1vQPhL7BFCMLGk/ACjqgrAJzz6ctSW8TjRpPwBgPlkxXM0+NAV8yKU7aT8AfGjEcYXMPlMf7STHQmk/AMjmBTMByj4Fma5xR0lpPwCwvJry18o+MUhVbv1PaT8AADvcs1PIPvFWTFsSVmk/ABhlR/R8xz43MF6Y8VtpPwAYZUf0fMc+fQlw1dBhaT8AULkddc/FPtF3t7JEZ2k/AGjjiLX4xD6rsBnggmxpPwCEDfT1IcQ+DLSWXYtxaT8AhA309SHEPm23E9uTdmk/AJw3XzZLwz5UhauoZntpPwC8Ycp2dMI+wx1exgOAaT8A0Is1t53BPreAKzRrhGk/APC1oPfGwD4zrhPynIhpPwDQizW3ncE+JxHhXwSNaT8A8LWg98bAPqM+yR02kWk/AEAU7vAyvj4rAed7/JRpPwAQwBdw4L8+LfnpifiYaT8ASBTu8DK+Pra7B+i+nGk/AEgU7vAyvj4/fiVGhaBpPwCwvJry17o+1dV4ROCjaT8AeGjEcYW8Pg==",
-             "type": "base64-encoded-blob"
-          },
-          "x0": 2.0,
-          "x_spacing": 1.0
-       },
-       "water_equivalent_ratio": 1.0
-    }
+    thinknode.function("dosimetry", "get_example_proton_material",
+            [
+                thinknode.value("Acrylic"),
+            ])
+res_material = thinknode.do_calculation(iam, material, True)
 
+# Get degrader geometry as calculation result
 degrade_geom = \
     thinknode.function("dosimetry", "make_shifter", 
         [
@@ -149,13 +141,13 @@ degrade_geom = \
             thinknode.value("mm"), # units
             thinknode.value(200) # downstream edge
         ])
+res_geom = thinknode.do_calculation(iam, degrade_geom, True)
 
-res1 = thinknode.do_calculation(iam, degrade_geom, True)
-
+# Construct the degrader based on existing calculations
 proton_degr = \
     {
-        "geometry": json.loads(res1.text),
-        "material": material
+        "geometry": json.loads(res_geom.text),
+        "material": json.loads(res_material.text)
     }
 
 # Call compute_sobp_pb_dose2

@@ -44,13 +44,6 @@ def get_example_sobp_machine(id):
                 thinknode.value(id),
             ])
 
-def get_example_proton_material(material):
-    return \
-        thinknode.function("dosimetry", "get_example_proton_material",
-            [
-                thinknode.value(material),
-            ])
-
 def make_layers(sad, range, mod):
     return \
         thinknode.function("dosimetry", "compute_double_scattering_layers",
@@ -86,16 +79,16 @@ def make_target():
 
 def make_view():
     mv = dt.multiple_source_view()
-    ds = {}
-    ds['corner'] = [-100, -100]
-    ds['size'] = [200, 200]
+    ds = dt.box_2d()
+    ds.corner = [-100, -100]
+    ds.size = [200, 200]
     mv.display_surface = ds
     mv.center = [0, 0, 0]
     mv.direction = [0, 1, 0]
     mv.distance = [2270, 2270]
     mv.up = [0, 0, 1]
 
-    return mv.out()
+    return mv
 
 def compute_aperture():
     ap_params = dt.aperture_creation_params()
@@ -111,7 +104,7 @@ def compute_aperture():
     args = {}
     args["targets"] = thinknode.array_named_type("dosimetry", "triangle_mesh", ap_params.targets)
     args["target_margin"] = thinknode.value(ap_params.target_margin)
-    args["view"] = thinknode.value(ap_params.view)
+    args["view"] = thinknode.value(ap_params.view.toStr())
     args["mill_radius"] = thinknode.value(ap_params.mill_radius)
     args["organs"] = thinknode.value(ap_params.organs)
     args["half_planes"] = thinknode.value(ap_params.half_planes)
@@ -137,7 +130,7 @@ dose_calc = \
     thinknode.function("dosimetry", "compute_sobp_pb_dose2",
         [
             make_water_phantom([-100, -100, -100], [200, 200, 200], [2, 2, 2]), #stopping_power_image
-            thinknode.value(make_dose_points(91)), # dose_points
+            thinknode.value(make_dose_points(181)), # dose_points
             beam_geometry, #beam_geometry
             make_grid([-75, -75], [150, 150], [2, 2]), # bixel_grid
             make_layers(2270.0, 152.0, 38.0),

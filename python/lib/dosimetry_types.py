@@ -1,6 +1,6 @@
 # Copyright (c) 2015 .decimal, Inc. All rights reserved.
 # Author:	Travis DeMint
-# Date:		06/22/2015
+# Date:		06/24/2015
 # Desc:		Provides access to cradle type usage for all types
 # Dosimetry Version:		1.0.5.1
 
@@ -10,21 +10,23 @@ class blob_type:
 
 	def __init__(self):
 		self.blob = ""
+		self.type = "base64-encoded-blob"
 
-	def out(self):
-		values = OrderedDict([("blob", self.blob)])
+	def toStr(self):
+		values = OrderedDict([("blob", self.blob), 
+								("type", self.type)
+			])
 		return values
 
 class adaptive_grid_region:
 
 	#Initialize
 	def __init__(self):
-		optimized_triangle_mes = optimized_triangle_mesh() 
-		self.region = optimized_triangle_mes.out()
+		self.region = optimized_triangle_mesh()
 		self.maximum_spacing = 0.0 
 
-	def out(self):
-		values = OrderedDict([("region", self.region),
+	def toStr(self):
+		values = OrderedDict([("region", self.region.toStr()),
 								("maximum_spacing", self.maximum_spacing)
 			]) 
 		return values 
@@ -38,7 +40,7 @@ class adaptive_grid_voxel:
 		self.inside_count = 0.0 
 		self.surface_count = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("index", self.index),
 								("volume_offset", self.volume_offset),
 								("inside_count", self.inside_count),
@@ -50,15 +52,14 @@ class adaptive_grid:
 
 	#Initialize
 	def __init__(self):
-		box_3 = box_3d() 
-		self.extents = box_3.out()
+		self.extents = box_3d()
 		blob = blob_type()
-		self.voxels = blob.out()
+		self.voxels = blob.toStr()
 		blob = blob_type()
-		self.volumes = blob.out()
+		self.volumes = blob.toStr()
 
-	def out(self):
-		values = OrderedDict([("extents", self.extents),
+	def toStr(self):
+		values = OrderedDict([("extents", self.extents.toStr()),
 								("voxels", self.voxels),
 								("volumes", self.volumes)
 			]) 
@@ -68,18 +69,17 @@ class bin_collection_3d:
 
 	#Initialize
 	def __init__(self):
-		box_3 = box_3d() 
-		self.bounds = box_3.out()
+		self.bounds = box_3d()
 		self.grid_size = [] 
 		blob = blob_type()
-		self.offsets = blob.out()
+		self.offsets = blob.toStr()
 		blob = blob_type()
-		self.counts = blob.out()
+		self.counts = blob.toStr()
 		blob = blob_type()
-		self.bins = blob.out()
+		self.bins = blob.toStr()
 
-	def out(self):
-		values = OrderedDict([("bounds", self.bounds),
+	def toStr(self):
+		values = OrderedDict([("bounds", self.bounds.toStr()),
 								("grid_size", self.grid_size),
 								("offsets", self.offsets),
 								("counts", self.counts),
@@ -94,7 +94,7 @@ class box_1d:
 		self.corner = [] 
 		self.size = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("corner", self.corner),
 								("size", self.size)
 			]) 
@@ -107,7 +107,7 @@ class box_2d:
 		self.corner = [] 
 		self.size = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("corner", self.corner),
 								("size", self.size)
 			]) 
@@ -120,7 +120,7 @@ class box_3d:
 		self.corner = [] 
 		self.size = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("corner", self.corner),
 								("size", self.size)
 			]) 
@@ -133,7 +133,7 @@ class box_4d:
 		self.corner = [] 
 		self.size = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("corner", self.corner),
 								("size", self.size)
 			]) 
@@ -146,7 +146,7 @@ class circle:
 		self.center = [] 
 		self.radius = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("center", self.center),
 								("radius", self.radius)
 			]) 
@@ -159,7 +159,7 @@ class plane:
 		self.point = [] 
 		self.normal = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("point", self.point),
 								("normal", self.normal)
 			]) 
@@ -172,7 +172,7 @@ class ray_2d:
 		self.origin = [] 
 		self.direction = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("origin", self.origin),
 								("direction", self.direction)
 			]) 
@@ -185,7 +185,7 @@ class ray_3d:
 		self.origin = [] 
 		self.direction = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("origin", self.origin),
 								("direction", self.direction)
 			]) 
@@ -198,7 +198,7 @@ class ray_points:
 		self.n_points = 0.0 
 		self.offset = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("n_points", self.n_points),
 								("offset", self.offset)
 			]) 
@@ -212,19 +212,18 @@ class divergent_grid:
 		self.z_position = 0.0 
 		self.source_dist = 0.0 
 		self.cax_length = 0.0 
-		regular_grid_2 = regular_grid_2d() 
-		self.grid = regular_grid_2.out()
+		self.grid = regular_grid_2d()
 		blob = blob_type()
-		self.rays = blob.out()
+		self.rays = blob.toStr()
 		blob = blob_type()
-		self.data = blob.out()
+		self.data = blob.toStr()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("isUniform", self.isUniform),
 								("z_position", self.z_position),
 								("source_dist", self.source_dist),
 								("cax_length", self.cax_length),
-								("grid", self.grid),
+								("grid", self.grid.toStr()),
 								("rays", self.rays),
 								("data", self.data)
 			]) 
@@ -238,7 +237,7 @@ class ray_box_intersection_2d:
 		self.entrance_distance = 0.0 
 		self.exit_distance = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("n_intersections", self.n_intersections),
 								("entrance_distance", self.entrance_distance),
 								("exit_distance", self.exit_distance)
@@ -253,7 +252,7 @@ class ray_box_intersection_3d:
 		self.entrance_distance = 0.0 
 		self.exit_distance = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("n_intersections", self.n_intersections),
 								("entrance_distance", self.entrance_distance),
 								("exit_distance", self.exit_distance)
@@ -264,11 +263,10 @@ class levelset2:
 
 	#Initialize
 	def __init__(self):
-		image_2 = image_2d() 
-		self.values = image_2.out()
+		self.values = image_2d()
 
-	def out(self):
-		values = OrderedDict([("values", self.values),
+	def toStr(self):
+		values = OrderedDict([("values", self.values.toStr()),
 			]) 
 		return values 
 
@@ -278,7 +276,7 @@ class line_strip:
 	def __init__(self):
 		self.vertices = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("vertices", self.vertices),
 			]) 
 		return values 
@@ -288,11 +286,11 @@ class triangle_mesh:
 	#Initialize
 	def __init__(self):
 		blob = blob_type()
-		self.vertices = blob.out()
+		self.vertices = blob.toStr()
 		blob = blob_type()
-		self.faces = blob.out()
+		self.faces = blob.toStr()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("vertices", self.vertices),
 								("faces", self.faces)
 			]) 
@@ -303,15 +301,15 @@ class triangle_mesh_with_normals:
 	#Initialize
 	def __init__(self):
 		blob = blob_type()
-		self.vertex_positions = blob.out()
+		self.vertex_positions = blob.toStr()
 		blob = blob_type()
-		self.vertex_normals = blob.out()
+		self.vertex_normals = blob.toStr()
 		blob = blob_type()
-		self.face_position_indices = blob.out()
+		self.face_position_indices = blob.toStr()
 		blob = blob_type()
-		self.face_normal_indices = blob.out()
+		self.face_normal_indices = blob.toStr()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("vertex_positions", self.vertex_positions),
 								("vertex_normals", self.vertex_normals),
 								("face_position_indices", self.face_position_indices),
@@ -323,14 +321,12 @@ class optimized_triangle_mesh:
 
 	#Initialize
 	def __init__(self):
-		triangle_mes = triangle_mesh() 
-		self.mesh = triangle_mes.out()
-		bin_collection_3 = bin_collection_3d() 
-		self.bin_collection = bin_collection_3.out()
+		self.mesh = triangle_mesh()
+		self.bin_collection = bin_collection_3d()
 
-	def out(self):
-		values = OrderedDict([("mesh", self.mesh),
-								("bin_collection", self.bin_collection)
+	def toStr(self):
+		values = OrderedDict([("mesh", self.mesh.toStr()),
+								("bin_collection", self.bin_collection.toStr())
 			]) 
 		return values 
 
@@ -339,15 +335,14 @@ class multiple_source_view:
 	#Initialize
 	def __init__(self):
 		self.center = [] 
-		box_2 = box_2d() 
-		self.display_surface = box_2.out()
+		self.display_surface = box_2d()
 		self.direction = [] 
 		self.distance = [] 
 		self.up = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("center", self.center),
-								("display_surface", self.display_surface),
+								("display_surface", self.display_surface.toStr()),
 								("direction", self.direction),
 								("distance", self.distance),
 								("up", self.up)
@@ -363,16 +358,15 @@ class nurb_surface:
 		self.knots = [] 
 		self.heights = [] 
 		self.weights = [] 
-		box_2 = box_2d() 
-		self.box = box_2.out()
+		self.box = box_2d()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("order", self.order),
 								("point_counts", self.point_counts),
 								("knots", self.knots),
 								("heights", self.heights),
 								("weights", self.weights),
-								("box", self.box)
+								("box", self.box.toStr())
 			]) 
 		return values 
 
@@ -381,9 +375,9 @@ class polygon2:
 	#Initialize
 	def __init__(self):
 		blob = blob_type()
-		self.vertices = blob.out()
+		self.vertices = blob.toStr()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("vertices", self.vertices),
 			]) 
 		return values 
@@ -395,7 +389,7 @@ class polyset:
 		self.polygons = [] 
 		self.holes = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("polygons", self.polygons),
 								("holes", self.holes)
 			]) 
@@ -410,7 +404,7 @@ class set_operation:
 		self.difference = 2
 		self.xor = 3
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("union", self.union),
 								("intersection", self.intersection),
 								("difference", self.difference),
@@ -424,13 +418,12 @@ class structure_geometry_slice:
 	def __init__(self):
 		self.position = 0.0 
 		self.thickness = 0.0 
-		polyse = polyset() 
-		self.region = polyse.out()
+		self.region = polyset()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("position", self.position),
 								("thickness", self.thickness),
-								("region", self.region)
+								("region", self.region.toStr())
 			]) 
 		return values 
 
@@ -440,7 +433,7 @@ class structure_geometry:
 	def __init__(self):
 		self.slices = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("slices", self.slices),
 			]) 
 		return values 
@@ -452,7 +445,7 @@ class weighted_grid_index:
 		self.index = 0.0 
 		self.weight = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("index", self.index),
 								("weight", self.weight)
 			]) 
@@ -464,7 +457,7 @@ class sliced_scene_geometry_2d:
 	def __init__(self):
 		self.slicing = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("slicing", self.slicing),
 			]) 
 		return values 
@@ -475,7 +468,7 @@ class sliced_scene_geometry_3d:
 	def __init__(self):
 		self.slicing = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("slicing", self.slicing),
 			]) 
 		return values 
@@ -487,7 +480,7 @@ class slice_description:
 		self.position = 0.0 
 		self.thickness = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("position", self.position),
 								("thickness", self.thickness)
 			]) 
@@ -497,10 +490,10 @@ class id_and_type:
 
 	#Initialize
 	def __init__(self):
-		self.id_and_type = "" 
-		self.id_and_type = "" 
+		self.id = "" 
+		self.type = "" 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("id", self.id),
 								("type", self.type)
 			]) 
@@ -510,12 +503,12 @@ class gui_task_state:
 
 	#Initialize
 	def __init__(self):
-		self.gui_task_state = "" 
+		self.type = "" 
 		self.completed_subtask_count = 0.0 
 		self.canceled_subtask_count = 0.0 
 		self.open_subtask_count = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("type", self.type),
 								("state", self.state),
 								("active_subtask", self.active_subtask),
@@ -534,7 +527,7 @@ class app_level_page:
 		self.settings = 2
 		self.notifications = 3
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("app_contents", self.app_contents),
 								("app_info", self.app_info),
 								("settings", self.settings),
@@ -552,7 +545,7 @@ class base_zoom_type:
 		self.fit_scene_height = 3
 		self.fill_canvas = 4
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("stretch_to_fit", self.stretch_to_fit),
 								("fit_scene", self.fit_scene),
 								("fit_scene_width", self.fit_scene_width),
@@ -568,7 +561,7 @@ class camera:
 		self.zoom = 0.0 
 		self.position = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("zoom", self.zoom),
 								("position", self.position)
 			]) 
@@ -578,14 +571,12 @@ class simple_2d_image_view_state:
 
 	#Initialize
 	def __init__(self):
-		camer = camera() 
-		self.camera = camer.out()
-		simple_2d_view_measurement_stat = simple_2d_view_measurement_state() 
-		self.measurement = simple_2d_view_measurement_stat.out()
+		self.camera = camera()
+		self.measurement = simple_2d_view_measurement_state()
 
-	def out(self):
-		values = OrderedDict([("camera", self.camera),
-								("measurement", self.measurement)
+	def toStr(self):
+		values = OrderedDict([("camera", self.camera.toStr()),
+								("measurement", self.measurement.toStr())
 			]) 
 		return values 
 
@@ -595,7 +586,7 @@ class sliced_3d_image_view_state:
 	def __init__(self):
 		self.view_axis = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("view_axis", self.view_axis),
 			]) 
 		return values 
@@ -606,7 +597,7 @@ class sliced_3d_structure_view_state:
 	def __init__(self):
 		self.view_axis = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("view_axis", self.view_axis),
 			]) 
 		return values 
@@ -617,7 +608,7 @@ class sliced_3d_structure_set_view_state:
 	def __init__(self):
 		self.view_axis = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("view_axis", self.view_axis),
 			]) 
 		return values 
@@ -632,7 +623,7 @@ class display_layout_type:
 		self.two_columns = 3
 		self.squares = 4
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("main_plus_row", self.main_plus_row),
 								("main_plus_column", self.main_plus_column),
 								("two_rows", self.two_rows),
@@ -645,10 +636,10 @@ class display_view_instance:
 
 	#Initialize
 	def __init__(self):
-		self.display_view_instance = "" 
-		self.display_view_instance = "" 
+		self.instance_id = "" 
+		self.type_id = "" 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("instance_id", self.instance_id),
 								("type_id", self.type_id)
 			]) 
@@ -658,17 +649,16 @@ class display_view_composition:
 
 	#Initialize
 	def __init__(self):
-		self.display_view_composition = "" 
-		self.display_view_composition = "" 
+		self.id = "" 
+		self.label = "" 
 		self.views = [] 
-		display_layout_typ = display_layout_type() 
-		self.layout = display_layout_typ.out()
+		self.layout = display_layout_type()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("id", self.id),
 								("label", self.label),
 								("views", self.views),
-								("layout", self.layout)
+								("layout", self.layout.toStr())
 			]) 
 		return values 
 
@@ -678,7 +668,7 @@ class display_state:
 	def __init__(self):
 		self.controls_expanded = False 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("selected_composition", self.selected_composition),
 								("focused_view", self.focused_view),
 								("controls_expanded", self.controls_expanded),
@@ -690,12 +680,11 @@ class dose_level:
 	#Initialize
 	def __init__(self):
 		self.level = 0.0 
-		rg = rgb() 
-		self.color = rg.out()
+		self.color = rgb()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("level", self.level),
-								("color", self.color)
+								("color", self.color.toStr())
 			]) 
 		return values 
 
@@ -707,7 +696,7 @@ class dose_display_type:
 		self.isodose_lines = 1
 		self.color_wash = 2
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("off", self.off),
 								("isodose_lines", self.isodose_lines),
 								("color_wash", self.color_wash)
@@ -718,15 +707,13 @@ class dose_display_style:
 
 	#Initialize
 	def __init__(self):
-		dose_display_typ = dose_display_type() 
-		self.display_type = dose_display_typ.out()
-		spatial_region_display_option = spatial_region_display_options() 
-		self.isodose_display = spatial_region_display_option.out()
+		self.display_type = dose_display_type()
+		self.isodose_display = spatial_region_display_options()
 		self.color_wash_opacity = 0.0 
 
-	def out(self):
-		values = OrderedDict([("display_type", self.display_type),
-								("isodose_display", self.isodose_display),
+	def toStr(self):
+		values = OrderedDict([("display_type", self.display_type.toStr()),
+								("isodose_display", self.isodose_display.toStr()),
 								("color_wash_opacity", self.color_wash_opacity)
 			]) 
 		return values 
@@ -736,12 +723,11 @@ class dose_display_options:
 	#Initialize
 	def __init__(self):
 		self.levels = [] 
-		dose_display_styl = dose_display_style() 
-		self.style = dose_display_styl.out()
+		self.style = dose_display_style()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("levels", self.levels),
-								("style", self.style)
+								("style", self.style.toStr())
 			]) 
 		return values 
 
@@ -752,7 +738,7 @@ class dose_level_ui_mode:
 		self.relative = 0
 		self.absolute = 1
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("relative", self.relative),
 								("absolute", self.absolute)
 			]) 
@@ -762,12 +748,11 @@ class preset_dose_level:
 
 	#Initialize
 	def __init__(self):
-		rg = rgb() 
-		self.color = rg.out()
+		self.color = rgb()
 		self.is_fixed = False 
 
-	def out(self):
-		values = OrderedDict([("color", self.color),
+	def toStr(self):
+		values = OrderedDict([("color", self.color.toStr()),
 								("is_fixed", self.is_fixed)
 								("absolute_level", self.absolute_level),
 								("relative_level", self.relative_level),
@@ -781,7 +766,7 @@ class line_stipple:
 		self.factor = 0.0 
 		self.pattern = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("factor", self.factor),
 								("pattern", self.pattern)
 			]) 
@@ -792,12 +777,11 @@ class line_style:
 	#Initialize
 	def __init__(self):
 		self.width = 0.0 
-		line_stippl = line_stipple() 
-		self.stipple = line_stippl.out()
+		self.stipple = line_stipple()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("width", self.width),
-								("stipple", self.stipple)
+								("stipple", self.stipple.toStr())
 			]) 
 		return values 
 
@@ -808,7 +792,7 @@ class gray_image_display_options:
 		self.level = 0.0 
 		self.window = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("level", self.level),
 								("window", self.window)
 			]) 
@@ -823,7 +807,7 @@ class line_stipple_type:
 		self.dashed = 2
 		self.dotted = 3
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("none", self.none),
 								("solid", self.solid),
 								("dashed", self.dashed),
@@ -838,7 +822,7 @@ class spatial_region_fill_options:
 		self.enabled = False 
 		self.opacity = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("enabled", self.enabled),
 								("opacity", self.opacity)
 			]) 
@@ -848,13 +832,12 @@ class spatial_region_outline_options:
 
 	#Initialize
 	def __init__(self):
-		line_stipple_typ = line_stipple_type() 
-		self.type = line_stipple_typ.out()
+		self.type = line_stipple_type()
 		self.width = 0.0 
 		self.opacity = 0.0 
 
-	def out(self):
-		values = OrderedDict([("type", self.type),
+	def toStr(self):
+		values = OrderedDict([("type", self.type.toStr()),
 								("width", self.width),
 								("opacity", self.opacity)
 			]) 
@@ -864,14 +847,12 @@ class spatial_region_display_options:
 
 	#Initialize
 	def __init__(self):
-		spatial_region_fill_option = spatial_region_fill_options() 
-		self.fill = spatial_region_fill_option.out()
-		spatial_region_outline_option = spatial_region_outline_options() 
-		self.outline = spatial_region_outline_option.out()
+		self.fill = spatial_region_fill_options()
+		self.outline = spatial_region_outline_options()
 
-	def out(self):
-		values = OrderedDict([("fill", self.fill),
-								("outline", self.outline)
+	def toStr(self):
+		values = OrderedDict([("fill", self.fill.toStr()),
+								("outline", self.outline.toStr())
 			]) 
 		return values 
 
@@ -880,13 +861,12 @@ class point_rendering_options:
 	#Initialize
 	def __init__(self):
 		self.size = 0.0 
-		line_stipple_typ = line_stipple_type() 
-		self.line_type = line_stipple_typ.out()
+		self.line_type = line_stipple_type()
 		self.line_thickness = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("size", self.size),
-								("line_type", self.line_type),
+								("line_type", self.line_type.toStr()),
 								("line_thickness", self.line_thickness)
 			]) 
 		return values 
@@ -895,14 +875,13 @@ class notable_data_point:
 
 	#Initialize
 	def __init__(self):
-		self.notable_data_point = "" 
-		rg = rgb() 
-		self.color = rg.out()
+		self.label = "" 
+		self.color = rgb()
 		self.position = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("label", self.label),
-								("color", self.color),
+								("color", self.color.toStr()),
 								("position", self.position)
 			]) 
 		return values 
@@ -911,11 +890,11 @@ class data_reporting_parameters:
 
 	#Initialize
 	def __init__(self):
-		self.data_reporting_parameters = "" 
-		self.data_reporting_parameters = "" 
+		self.label = "" 
+		self.units = "" 
 		self.digits = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("label", self.label),
 								("units", self.units),
 								("digits", self.digits)
@@ -926,11 +905,10 @@ class graph_line_style_info:
 
 	#Initialize
 	def __init__(self):
-		rgb = rgba() 
-		self.color = rgb.out()
+		self.color = rgba()
 
-	def out(self):
-		values = OrderedDict([("color", self.color),
+	def toStr(self):
+		values = OrderedDict([("color", self.color.toStr()),
 			]) 
 		return values 
 
@@ -942,7 +920,7 @@ class out_of_plane_information:
 		self.thickness = 0.0 
 		self.position = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("axis", self.axis),
 								("thickness", self.thickness),
 								("position", self.position)
@@ -954,13 +932,12 @@ class image_geometry_1d:
 	#Initialize
 	def __init__(self):
 		self.slicing = [] 
-		regular_grid_1 = regular_grid_1d() 
-		self.regular_grid = regular_grid_1.out()
+		self.regular_grid = regular_grid_1d()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("slicing", self.slicing),
 								("out_of_plane_info", self.out_of_plane_info)
-								("regular_grid", self.regular_grid),
+								("regular_grid", self.regular_grid.toStr()),
 			]) 
 		return values 
 
@@ -969,13 +946,12 @@ class image_geometry_2d:
 	#Initialize
 	def __init__(self):
 		self.slicing = [] 
-		regular_grid_2 = regular_grid_2d() 
-		self.regular_grid = regular_grid_2.out()
+		self.regular_grid = regular_grid_2d()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("slicing", self.slicing),
 								("out_of_plane_info", self.out_of_plane_info)
-								("regular_grid", self.regular_grid),
+								("regular_grid", self.regular_grid.toStr()),
 			]) 
 		return values 
 
@@ -984,13 +960,12 @@ class image_geometry_3d:
 	#Initialize
 	def __init__(self):
 		self.slicing = [] 
-		regular_grid_3 = regular_grid_3d() 
-		self.regular_grid = regular_grid_3.out()
+		self.regular_grid = regular_grid_3d()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("slicing", self.slicing),
 								("out_of_plane_info", self.out_of_plane_info)
-								("regular_grid", self.regular_grid),
+								("regular_grid", self.regular_grid.toStr()),
 			]) 
 		return values 
 
@@ -999,13 +974,12 @@ class image_geometry_4d:
 	#Initialize
 	def __init__(self):
 		self.slicing = [] 
-		regular_grid_4 = regular_grid_4d() 
-		self.regular_grid = regular_grid_4.out()
+		self.regular_grid = regular_grid_4d()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("slicing", self.slicing),
 								("out_of_plane_info", self.out_of_plane_info)
-								("regular_grid", self.regular_grid),
+								("regular_grid", self.regular_grid.toStr()),
 			]) 
 		return values 
 
@@ -1013,24 +987,22 @@ class drr_options:
 
 	#Initialize
 	def __init__(self):
-		gray_image_display_option = gray_image_display_options() 
-		self.image_display_options = gray_image_display_option.out()
+		self.image_display_options = gray_image_display_options()
 		self.min_z = 0.0 
 		self.max_z = 0.0 
 		self.min_value = 0.0 
 		self.max_value = 0.0 
 		self.image_z = 0.0 
-		regular_grid_2 = regular_grid_2d() 
-		self.sizing = regular_grid_2.out()
+		self.sizing = regular_grid_2d()
 
-	def out(self):
-		values = OrderedDict([("image_display_options", self.image_display_options),
+	def toStr(self):
+		values = OrderedDict([("image_display_options", self.image_display_options.toStr()),
 								("min_z", self.min_z),
 								("max_z", self.max_z),
 								("min_value", self.min_value),
 								("max_value", self.max_value),
 								("image_z", self.image_z),
-								("sizing", self.sizing)
+								("sizing", self.sizing.toStr())
 			]) 
 		return values 
 
@@ -1043,7 +1015,7 @@ class camera3:
 		self.direction = [] 
 		self.up = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("zoom", self.zoom),
 								("position", self.position),
 								("direction", self.direction),
@@ -1057,7 +1029,7 @@ class sliced_3d_view_state:
 	def __init__(self):
 		self.slice_positions = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("slice_positions", self.slice_positions),
 			]) 
 		return values 
@@ -1067,12 +1039,11 @@ class point_sample_2d:
 	#Initialize
 	def __init__(self):
 		self.position = [] 
-		rg = rgb() 
-		self.color = rg.out()
+		self.color = rgb()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("position", self.position),
-								("color", self.color)
+								("color", self.color.toStr())
 			]) 
 		return values 
 
@@ -1082,13 +1053,12 @@ class line_profile:
 	def __init__(self):
 		self.axis = 0.0 
 		self.position = 0.0 
-		rg = rgb() 
-		self.color = rg.out()
+		self.color = rgb()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("axis", self.axis),
 								("position", self.position),
-								("color", self.color)
+								("color", self.color.toStr())
 			]) 
 		return values 
 
@@ -1099,7 +1069,7 @@ class simple_2d_view_measurement_state:
 		self.profiles = [] 
 		self.point_samples = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("profiles", self.profiles),
 								("point_samples", self.point_samples)
 			]) 
@@ -1113,7 +1083,7 @@ class subtask_event_type:
 		self.value_produced = 1
 		self.task_canceled = 2
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("task_completed", self.task_completed),
 								("value_produced", self.value_produced),
 								("task_canceled", self.task_canceled)
@@ -1124,12 +1094,11 @@ class subtask_event:
 
 	#Initialize
 	def __init__(self):
-		subtask_event_typ = subtask_event_type() 
-		self.type = subtask_event_typ.out()
-		self.subtask_event = "" 
+		self.type = subtask_event_type()
+		self.task_id = "" 
 
-	def out(self):
-		values = OrderedDict([("type", self.type),
+	def toStr(self):
+		values = OrderedDict([("type", self.type.toStr()),
 								("task_id", self.task_id)
 								("value", self.value),
 			]) 
@@ -1143,7 +1112,7 @@ class tristate_expansion:
 		self.halfway = 1
 		self.open = 2
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("closed", self.closed),
 								("halfway", self.halfway),
 								("open", self.open)
@@ -1155,12 +1124,11 @@ class color_map_level:
 	#Initialize
 	def __init__(self):
 		self.level = 0.0 
-		rgb = rgba() 
-		self.color = rgb.out()
+		self.color = rgba()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("level", self.level),
-								("color", self.color)
+								("color", self.color.toStr())
 			]) 
 		return values 
 
@@ -1170,7 +1138,7 @@ class grid_cell_inclusion_info:
 	def __init__(self):
 		self.cells_inside = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("cells_inside", self.cells_inside),
 			]) 
 		return values 
@@ -1180,12 +1148,11 @@ class colored_vertex_2d:
 	#Initialize
 	def __init__(self):
 		self.position = [] 
-		rgb = rgba() 
-		self.color = rgb.out()
+		self.color = rgba()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("position", self.position),
-								("color", self.color)
+								("color", self.color.toStr())
 			]) 
 		return values 
 
@@ -1196,14 +1163,13 @@ class image_slice_1d:
 		self.axis = 0.0 
 		self.position = 0.0 
 		self.thickness = 0.0 
-		image_1 = image_1d() 
-		self.content = image_1.out()
+		self.content = image_1d()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("axis", self.axis),
 								("position", self.position),
 								("thickness", self.thickness),
-								("content", self.content)
+								("content", self.content.toStr())
 			]) 
 		return values 
 
@@ -1214,14 +1180,13 @@ class image_slice_2d:
 		self.axis = 0.0 
 		self.position = 0.0 
 		self.thickness = 0.0 
-		image_2 = image_2d() 
-		self.content = image_2.out()
+		self.content = image_2d()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("axis", self.axis),
 								("position", self.position),
 								("thickness", self.thickness),
-								("content", self.content)
+								("content", self.content.toStr())
 			]) 
 		return values 
 
@@ -1232,14 +1197,13 @@ class image_slice_3d:
 		self.axis = 0.0 
 		self.position = 0.0 
 		self.thickness = 0.0 
-		image_3 = image_3d() 
-		self.content = image_3.out()
+		self.content = image_3d()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("axis", self.axis),
 								("position", self.position),
 								("thickness", self.thickness),
-								("content", self.content)
+								("content", self.content.toStr())
 			]) 
 		return values 
 
@@ -1251,7 +1215,7 @@ class pixel_format:
 		self.rgb = 1
 		self.rgba = 2
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("gray", self.gray),
 								("rgb", self.rgb),
 								("rgba", self.rgba)
@@ -1273,7 +1237,7 @@ class channel_type:
 		self.float = 8
 		self.double = 9
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("int8", self.int8),
 								("uint8", self.uint8),
 								("int16", self.int16),
@@ -1291,14 +1255,12 @@ class variant_type_info:
 
 	#Initialize
 	def __init__(self):
-		pixel_forma = pixel_format() 
-		self.format = pixel_forma.out()
-		channel_typ = channel_type() 
-		self.type = channel_typ.out()
+		self.format = pixel_format()
+		self.type = channel_type()
 
-	def out(self):
-		values = OrderedDict([("format", self.format),
-								("type", self.type)
+	def toStr(self):
+		values = OrderedDict([("format", self.format.toStr()),
+								("type", self.type.toStr())
 			]) 
 		return values 
 
@@ -1311,7 +1273,7 @@ class unboxed_image_2d:
 		self.origin = [] 
 		self.axes = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("size", self.size),
 								("pixels", self.pixels),
 								("origin", self.origin),
@@ -1328,7 +1290,7 @@ class unboxed_image_3d:
 		self.origin = [] 
 		self.axes = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("size", self.size),
 								("pixels", self.pixels),
 								("origin", self.origin),
@@ -1340,25 +1302,34 @@ class filesystem_item_contents:
 
 	#Initialize
 	def __init__(self):
-		print ("union_type")
+		self.type = ""
+		self.directory = []
+		self.file = blob_type()
 
-	def out(self):
-		values = OrderedDict([("directory", self.directory),
-								("file", self.file),
-			]) 
-		return values 
+	def toStr(self):
+		if (self.type == 'directory'):
+			values = OrderedDict([("directory", self.directory),
+									("type", self.type)
+				]) 
+			return values 
+		elif (self.type == 'file'):
+			values = OrderedDict([("file", self.file.toStr()),
+									("type", self.type)
+				]) 
+			return values 
+		else:
+			return "Type not Set" 
 
 class filesystem_item:
 
 	#Initialize
 	def __init__(self):
-		self.filesystem_item = "" 
-		filesystem_item_content = filesystem_item_contents() 
-		self.contents = filesystem_item_content.out()
+		self.name = "" 
+		self.contents = filesystem_item_contents()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("name", self.name),
-								("contents", self.contents)
+								("contents", self.contents.toStr())
 			]) 
 		return values 
 
@@ -1369,7 +1340,7 @@ class min_max:
 		self.min = 0.0 
 		self.max = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("min", self.min),
 								("max", self.max)
 			]) 
@@ -1381,7 +1352,7 @@ class statistics:
 	def __init__(self):
 		self.n_samples = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("min", self.min),
 								("max", self.max),
 								("mean", self.mean),
@@ -1396,7 +1367,7 @@ class linear_function:
 		self.intercept = 0.0 
 		self.slope = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("intercept", self.intercept),
 								("slope", self.slope)
 			]) 
@@ -1410,7 +1381,7 @@ class quadratic_function:
 		self.b = 0.0 
 		self.c = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("a", self.a),
 								("b", self.b),
 								("c", self.c)
@@ -1425,7 +1396,7 @@ class regular_grid_1d:
 		self.spacing = [] 
 		self.n_points = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("p0", self.p0),
 								("spacing", self.spacing),
 								("n_points", self.n_points)
@@ -1440,7 +1411,7 @@ class regular_grid_2d:
 		self.spacing = [] 
 		self.n_points = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("p0", self.p0),
 								("spacing", self.spacing),
 								("n_points", self.n_points)
@@ -1455,7 +1426,7 @@ class regular_grid_3d:
 		self.spacing = [] 
 		self.n_points = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("p0", self.p0),
 								("spacing", self.spacing),
 								("n_points", self.n_points)
@@ -1470,7 +1441,7 @@ class regular_grid_4d:
 		self.spacing = [] 
 		self.n_points = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("p0", self.p0),
 								("spacing", self.spacing),
 								("n_points", self.n_points)
@@ -1484,7 +1455,7 @@ class outside_domain_policy:
 		self.always_zero = 0
 		self.extend_with_copies = 1
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("always_zero", self.always_zero),
 								("extend_with_copies", self.extend_with_copies)
 			]) 
@@ -1497,7 +1468,7 @@ class function_sample:
 		self.value = 0.0 
 		self.delta = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("value", self.value),
 								("delta", self.delta)
 			]) 
@@ -1510,15 +1481,14 @@ class interpolated_function:
 		self.x0 = 0.0 
 		self.x_spacing = 0.0 
 		blob = blob_type()
-		self.samples = blob.out()
-		outside_domain_polic = outside_domain_policy() 
-		self.outside_domain_policy = outside_domain_polic.out()
+		self.samples = blob.toStr()
+		self.outside_domain_policy = outside_domain_policy()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("x0", self.x0),
 								("x_spacing", self.x_spacing),
 								("samples", self.samples),
-								("outside_domain_policy", self.outside_domain_policy)
+								("outside_domain_policy", self.outside_domain_policy.toStr())
 			]) 
 		return values 
 
@@ -1529,14 +1499,13 @@ class regularly_sampled_function:
 		self.x0 = 0.0 
 		self.x_spacing = 0.0 
 		self.samples = [] 
-		outside_domain_polic = outside_domain_policy() 
-		self.outside_domain_policy = outside_domain_polic.out()
+		self.outside_domain_policy = outside_domain_policy()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("x0", self.x0),
 								("x_spacing", self.x_spacing),
 								("samples", self.samples),
-								("outside_domain_policy", self.outside_domain_policy)
+								("outside_domain_policy", self.outside_domain_policy.toStr())
 			]) 
 		return values 
 
@@ -1545,12 +1514,11 @@ class irregularly_sampled_function:
 	#Initialize
 	def __init__(self):
 		self.samples = [] 
-		outside_domain_polic = outside_domain_policy() 
-		self.outside_domain_policy = outside_domain_polic.out()
+		self.outside_domain_policy = outside_domain_policy()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("samples", self.samples),
-								("outside_domain_policy", self.outside_domain_policy)
+								("outside_domain_policy", self.outside_domain_policy.toStr())
 			]) 
 		return values 
 
@@ -1561,7 +1529,7 @@ class gaussian_sample_point:
 		self.point = [] 
 		self.weight = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("point", self.point),
 								("weight", self.weight)
 			]) 
@@ -1572,12 +1540,11 @@ class mco_navigation_objective:
 	#Initialize
 	def __init__(self):
 		self.is_maximization = False 
-		min_ma = min_max() 
-		self.range = min_ma.out()
+		self.range = min_max()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("is_maximization", self.is_maximization),
-								("range", self.range)
+								("range", self.range.toStr())
 			]) 
 		return values 
 
@@ -1589,7 +1556,7 @@ class mco_navigation_system:
 		self.objectives = [] 
 		self.p_matrix = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("plan_count", self.plan_count),
 								("objectives", self.objectives),
 								("p_matrix", self.p_matrix)
@@ -1600,12 +1567,12 @@ class dicom_element:
 
 	#Initialize
 	def __init__(self):
-		self.dicom_element = "" 
-		self.dicom_element = "" 
+		self.name = "" 
+		self.value = "" 
 		self.g = 0.0 
 		self.e = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("name", self.name),
 								("value", self.value),
 								("g", self.g),
@@ -1621,7 +1588,7 @@ class dicom_sequence:
 		self.g = 0.0 
 		self.e = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("items", self.items),
 								("g", self.g),
 								("e", self.e)
@@ -1632,13 +1599,13 @@ class dicom_item:
 
 	#Initialize
 	def __init__(self):
-		self.dicom_item = "" 
-		self.dicom_item = "" 
-		self.dicom_item = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -1651,18 +1618,18 @@ class rt_study:
 
 	#Initialize
 	def __init__(self):
-		self.rt_study = "" 
-		self.rt_study = "" 
-		self.rt_study = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		self.rt_study = "" 
-		self.rt_study = "" 
-		self.rt_study = "" 
-		self.rt_study = "" 
-		self.rt_study = "" 
+		self.study_date = "" 
+		self.description = "" 
+		self.physician_name = "" 
+		self.id = "" 
+		self.accession_number = "" 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -1690,7 +1657,7 @@ class patient_position_type:
 		self.FFDR = 6
 		self.FFDL = 7
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("HFS", self.HFS),
 								("HFP", self.HFP),
 								("FFS", self.FFS),
@@ -1706,13 +1673,13 @@ class person_name:
 
 	#Initialize
 	def __init__(self):
-		self.person_name = "" 
-		self.person_name = "" 
-		self.person_name = "" 
-		self.person_name = "" 
-		self.person_name = "" 
+		self.family_name = "" 
+		self.given_name = "" 
+		self.middle_name = "" 
+		self.prefix = "" 
+		self.suffix = "" 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("family_name", self.family_name),
 								("given_name", self.given_name),
 								("middle_name", self.middle_name),
@@ -1729,7 +1696,7 @@ class patient_sex:
 		self.F = 1
 		self.O = 2
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("M", self.M),
 								("F", self.F),
 								("O", self.O)
@@ -1740,30 +1707,28 @@ class patient:
 
 	#Initialize
 	def __init__(self):
-		self.patient = "" 
-		self.patient = "" 
-		self.patient = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		person_nam = person_name() 
-		self.name = person_nam.out()
-		self.patient = "" 
-		patient_se = patient_sex() 
-		self.sex = patient_se.out()
+		self.name = person_name()
+		self.id = "" 
+		self.sex = patient_sex()
 		self.other_names = [] 
 		self.other_ids = [] 
-		self.patient = "" 
-		self.patient = "" 
+		self.ethnic_group = "" 
+		self.comments = "" 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
 								("elements", self.elements),
 								("sequences", self.sequences),
-								("name", self.name),
+								("name", self.name.toStr()),
 								("id", self.id),
-								("sex", self.sex),
+								("sex", self.sex.toStr()),
 								("birth_date", self.birth_date),
 								("other_names", self.other_names),
 								("other_ids", self.other_ids),
@@ -1776,9 +1741,9 @@ class rt_control_point:
 
 	#Initialize
 	def __init__(self):
-		self.rt_control_point = "" 
-		self.rt_control_point = "" 
-		self.rt_control_point = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
 		self.number = 0.0 
@@ -1793,16 +1758,16 @@ class rt_control_point:
 		self.snout_position = 0.0 
 		self.iso_center_position = [] 
 		self.surface_entry_point = [] 
-		self.rt_control_point = "" 
-		self.rt_control_point = "" 
-		self.rt_control_point = "" 
-		self.rt_control_point = "" 
+		self.gantry_rotation_direction = "" 
+		self.gantry_pitch_direction = "" 
+		self.beam_limiting_direction = "" 
+		self.patient_support_direction = "" 
 		self.table_top_pitch_angle = 0.0 
 		self.table_top_roll_angle = 0.0 
-		self.rt_control_point = "" 
-		self.rt_control_point = "" 
+		self.table_top_pitch_direction = "" 
+		self.table_top_roll_direction = "" 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -1839,7 +1804,7 @@ class rt_mounting_position:
 		self.SOURCE_SIDE = 1
 		self.DOUBLE_SIDED = 2
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("PATIENT_SIDE", self.PATIENT_SIDE),
 								("SOURCE_SIDE", self.SOURCE_SIDE),
 								("DOUBLE_SIDED", self.DOUBLE_SIDED)
@@ -1850,26 +1815,24 @@ class rt_ion_rangecompensator:
 
 	#Initialize
 	def __init__(self):
-		self.rt_ion_rangecompensator = "" 
-		self.rt_ion_rangecompensator = "" 
-		self.rt_ion_rangecompensator = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		self.rt_ion_rangecompensator = "" 
+		self.name = "" 
 		self.number = 0.0 
-		self.rt_ion_rangecompensator = "" 
+		self.material = "" 
 		self.divergent = False 
-		rt_mounting_positio = rt_mounting_position() 
-		self.mounting_position = rt_mounting_positio.out()
+		self.mounting_position = rt_mounting_position()
 		self.downstream_edge = 0.0 
 		self.column_offset = 0.0 
 		self.relative_stopping_power = 0.0 
 		self.position = [] 
 		self.pixelSpacing = [] 
-		image_2 = image_2d() 
-		self.data = image_2.out()
+		self.data = image_2d()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -1879,13 +1842,13 @@ class rt_ion_rangecompensator:
 								("number", self.number),
 								("material", self.material),
 								("divergent", self.divergent),
-								("mounting_position", self.mounting_position),
+								("mounting_position", self.mounting_position.toStr()),
 								("downstream_edge", self.downstream_edge),
 								("column_offset", self.column_offset),
 								("relative_stopping_power", self.relative_stopping_power),
 								("position", self.position),
 								("pixelSpacing", self.pixelSpacing),
-								("data", self.data)
+								("data", self.data.toStr())
 			]) 
 		return values 
 
@@ -1896,7 +1859,7 @@ class rt_ion_block_type:
 		self.APERTURE = 0
 		self.SHIELDING = 1
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("APERTURE", self.APERTURE),
 								("SHIELDING", self.SHIELDING)
 			]) 
@@ -1906,26 +1869,23 @@ class rt_ion_block:
 
 	#Initialize
 	def __init__(self):
-		self.rt_ion_block = "" 
-		self.rt_ion_block = "" 
-		self.rt_ion_block = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		self.rt_ion_block = "" 
-		self.rt_ion_block = "" 
-		self.rt_ion_block = "" 
+		self.name = "" 
+		self.description = "" 
+		self.material = "" 
 		self.number = 0.0 
 		self.divergent = False 
 		self.downstream_edge = 0.0 
 		self.thinkness = 0.0 
-		rt_mounting_positio = rt_mounting_position() 
-		self.position = rt_mounting_positio.out()
-		rt_ion_block_typ = rt_ion_block_type() 
-		self.block_type = rt_ion_block_typ.out()
-		polyse = polyset() 
-		self.data = polyse.out()
+		self.position = rt_mounting_position()
+		self.block_type = rt_ion_block_type()
+		self.data = polyset()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -1938,9 +1898,9 @@ class rt_ion_block:
 								("divergent", self.divergent),
 								("downstream_edge", self.downstream_edge),
 								("thinkness", self.thinkness),
-								("position", self.position),
-								("block_type", self.block_type),
-								("data", self.data)
+								("position", self.position.toStr()),
+								("block_type", self.block_type.toStr()),
+								("data", self.data.toStr())
 			]) 
 		return values 
 
@@ -1948,15 +1908,15 @@ class rt_snout:
 
 	#Initialize
 	def __init__(self):
-		self.rt_snout = "" 
-		self.rt_snout = "" 
-		self.rt_snout = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		self.rt_snout = "" 
-		self.rt_snout = "" 
+		self.id = "" 
+		self.accessoryCode = "" 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -1976,7 +1936,7 @@ class rt_radiation_type:
 		self.ELECTRON = 2
 		self.NEUTRON = 3
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("PROTON", self.PROTON),
 								("PHOTON", self.PHOTON),
 								("ELECTRON", self.ELECTRON),
@@ -1991,7 +1951,7 @@ class rt_ion_beam_type:
 		self.STATIC = 0
 		self.DYNAMIC = 1
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("STATIC", self.STATIC),
 								("DYNAMIC", self.DYNAMIC)
 			]) 
@@ -2001,32 +1961,29 @@ class rt_ion_beam:
 
 	#Initialize
 	def __init__(self):
-		self.rt_ion_beam = "" 
-		self.rt_ion_beam = "" 
-		self.rt_ion_beam = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
 		self.beam_number = 0.0 
-		self.rt_ion_beam = "" 
-		self.rt_ion_beam = "" 
-		self.rt_ion_beam = "" 
-		self.rt_ion_beam = "" 
-		self.rt_ion_beam = "" 
-		rt_ion_beam_typ = rt_ion_beam_type() 
-		self.beam_type = rt_ion_beam_typ.out()
-		rt_radiation_typ = rt_radiation_type() 
-		self.radiation_type = rt_radiation_typ.out()
+		self.name = "" 
+		self.description = "" 
+		self.treatment_machine = "" 
+		self.primary_dosimeter_unit = "" 
+		self.treatment_delivery_type = "" 
+		self.beam_type = rt_ion_beam_type()
+		self.radiation_type = rt_radiation_type()
 		self.referenced_patient_setup = 0.0 
 		self.referenced_tolerance_table = 0.0 
 		self.virtual_sad = [] 
 		self.final_meterset_weight = 0.0 
 		self.snouts = [] 
-		rt_ion_bloc = rt_ion_block() 
-		self.block = rt_ion_bloc.out()
+		self.block = rt_ion_block()
 		self.degraders = [] 
 		self.control_points = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2038,14 +1995,14 @@ class rt_ion_beam:
 								("treatment_machine", self.treatment_machine),
 								("primary_dosimeter_unit", self.primary_dosimeter_unit),
 								("treatment_delivery_type", self.treatment_delivery_type),
-								("beam_type", self.beam_type),
-								("radiation_type", self.radiation_type),
+								("beam_type", self.beam_type.toStr()),
+								("radiation_type", self.radiation_type.toStr()),
 								("referenced_patient_setup", self.referenced_patient_setup),
 								("referenced_tolerance_table", self.referenced_tolerance_table),
 								("virtual_sad", self.virtual_sad),
 								("final_meterset_weight", self.final_meterset_weight),
 								("snouts", self.snouts),
-								("block", self.block),
+								("block", self.block.toStr()),
 								("degraders", self.degraders),
 								("control_points", self.control_points)
 			]) 
@@ -2055,23 +2012,23 @@ class rt_dose_reference:
 
 	#Initialize
 	def __init__(self):
-		self.rt_dose_reference = "" 
-		self.rt_dose_reference = "" 
-		self.rt_dose_reference = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
 		self.number = 0.0 
-		self.rt_dose_reference = "" 
-		self.rt_dose_reference = "" 
-		self.rt_dose_reference = "" 
-		self.rt_dose_reference = "" 
+		self.uid = "" 
+		self.structure_type = "" 
+		self.description = "" 
+		self.type = "" 
 		self.delivery_max_dose = 0.0 
 		self.target_rx_dose = 0.0 
 		self.target_min_dose = 0.0 
 		self.target_max_dose = 0.0 
 		self.point_coordinates = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2094,9 +2051,9 @@ class rt_tolerance_table:
 
 	#Initialize
 	def __init__(self):
-		self.rt_tolerance_table = "" 
-		self.rt_tolerance_table = "" 
-		self.rt_tolerance_table = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
 		self.number = 0.0 
@@ -2106,11 +2063,11 @@ class rt_tolerance_table:
 		self.table_top_vert_position = 0.0 
 		self.table_top_long_position = 0.0 
 		self.table_top_lat_position = 0.0 
-		self.rt_tolerance_table = "" 
+		self.label = "" 
 		self.limiting_device_position = [] 
 		self.limiting_device_type = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2133,24 +2090,23 @@ class rt_patient_setup:
 
 	#Initialize
 	def __init__(self):
-		self.rt_patient_setup = "" 
-		self.rt_patient_setup = "" 
-		self.rt_patient_setup = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
 		self.setup_number = 0.0 
-		patient_position_typ = patient_position_type() 
-		self.position = patient_position_typ.out()
-		self.rt_patient_setup = "" 
+		self.position = patient_position_type()
+		self.setup_description = "" 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
 								("elements", self.elements),
 								("sequences", self.sequences),
 								("setup_number", self.setup_number),
-								("position", self.position),
+								("position", self.position.toStr()),
 								("setup_description", self.setup_description)
 			]) 
 		return values 
@@ -2159,9 +2115,9 @@ class rt_fraction:
 
 	#Initialize
 	def __init__(self):
-		self.rt_fraction = "" 
-		self.rt_fraction = "" 
-		self.rt_fraction = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
 		self.number = 0.0 
@@ -2170,7 +2126,7 @@ class rt_fraction:
 		self.referenced_beam_numbers = [] 
 		self.referenced_beam_dose = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2188,15 +2144,15 @@ class rt_ref_beam:
 
 	#Initialize
 	def __init__(self):
-		self.rt_ref_beam = "" 
-		self.rt_ref_beam = "" 
-		self.rt_ref_beam = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
 		self.beam_dose = 0.0 
 		self.beam_number = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2211,22 +2167,20 @@ class rt_plan:
 
 	#Initialize
 	def __init__(self):
-		self.rt_plan = "" 
-		self.rt_plan = "" 
-		self.rt_plan = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		self.rt_plan = "" 
-		self.rt_plan = "" 
-		self.rt_plan = "" 
-		self.rt_plan = "" 
-		self.rt_plan = "" 
-		self.rt_plan = "" 
-		self.rt_plan = "" 
-		patien = patient() 
-		self.patient_data = patien.out()
-		rt_stud = rt_study() 
-		self.study = rt_stud.out()
+		self.plan_date = "" 
+		self.name = "" 
+		self.description = "" 
+		self.label = "" 
+		self.uid = "" 
+		self.geometry = "" 
+		self.frame_of_ref_uid = "" 
+		self.patient_data = patient()
+		self.study = rt_study()
 		self.dose = [] 
 		self.fractions = [] 
 		self.ref_beam = [] 
@@ -2234,7 +2188,7 @@ class rt_plan:
 		self.patient_setups = [] 
 		self.beams = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2248,8 +2202,8 @@ class rt_plan:
 								("uid", self.uid),
 								("geometry", self.geometry),
 								("frame_of_ref_uid", self.frame_of_ref_uid),
-								("patient_data", self.patient_data),
-								("study", self.study),
+								("patient_data", self.patient_data.toStr()),
+								("study", self.study.toStr()),
 								("dose", self.dose),
 								("fractions", self.fractions),
 								("ref_beam", self.ref_beam),
@@ -2268,7 +2222,7 @@ class rt_image_conversion_type:
 		self.DF = 2
 		self.WSD = 3
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("DV", self.DV),
 								("DI", self.DI),
 								("DF", self.DF),
@@ -2287,7 +2241,7 @@ class rt_image_type:
 		self.BLANK = 4
 		self.FLUENCE = 5
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("DRR", self.DRR),
 								("PORTAL", self.PORTAL),
 								("SIMULATOR", self.SIMULATOR),
@@ -2304,7 +2258,7 @@ class rt_structure_type:
 		self.point = 0
 		self.closed_planar = 1
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("point", self.point),
 								("closed_planar", self.closed_planar)
 			]) 
@@ -2320,7 +2274,7 @@ class dicom_modality:
 		self.CT = 3
 		self.RTDOSE = 4
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("RTPLAN", self.RTPLAN),
 								("RTSTRUCTURESET", self.RTSTRUCTURESET),
 								("RTSTRUCT", self.RTSTRUCT),
@@ -2333,17 +2287,16 @@ class dicom_structure_geometry_slice:
 
 	#Initialize
 	def __init__(self):
-		self.dicom_structure_geometry_slice = "" 
-		self.dicom_structure_geometry_slice = "" 
-		self.dicom_structure_geometry_slice = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
 		self.position = 0.0 
 		self.thickness = 0.0 
-		polyse = polyset() 
-		self.region = polyse.out()
+		self.region = polyset()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2351,7 +2304,7 @@ class dicom_structure_geometry_slice:
 								("sequences", self.sequences),
 								("position", self.position),
 								("thickness", self.thickness),
-								("region", self.region)
+								("region", self.region.toStr())
 			]) 
 		return values 
 
@@ -2359,14 +2312,14 @@ class dicom_structure_geometry:
 
 	#Initialize
 	def __init__(self):
-		self.dicom_structure_geometry = "" 
-		self.dicom_structure_geometry = "" 
-		self.dicom_structure_geometry = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
 		self.slices = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2380,23 +2333,20 @@ class rt_structure:
 
 	#Initialize
 	def __init__(self):
-		self.rt_structure = "" 
-		self.rt_structure = "" 
-		self.rt_structure = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		self.rt_structure = "" 
-		self.rt_structure = "" 
+		self.name = "" 
+		self.description = "" 
 		self.number = 0.0 
-		rg = rgb() 
-		self.color = rg.out()
-		rt_structure_typ = rt_structure_type() 
-		self.type = rt_structure_typ.out()
+		self.color = rgb()
+		self.type = rt_structure_type()
 		self.point = [] 
-		dicom_structure_geometr = dicom_structure_geometry() 
-		self.volume = dicom_structure_geometr.out()
+		self.volume = dicom_structure_geometry()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2405,10 +2355,10 @@ class rt_structure:
 								("name", self.name),
 								("description", self.description),
 								("number", self.number),
-								("color", self.color),
-								("type", self.type),
+								("color", self.color.toStr()),
+								("type", self.type.toStr()),
 								("point", self.point),
-								("volume", self.volume)
+								("volume", self.volume.toStr())
 			]) 
 		return values 
 
@@ -2416,23 +2366,21 @@ class rt_structure_set:
 
 	#Initialize
 	def __init__(self):
-		self.rt_structure_set = "" 
-		self.rt_structure_set = "" 
-		self.rt_structure_set = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		self.rt_structure_set = "" 
-		self.rt_structure_set = "" 
+		self.name = "" 
+		self.description = "" 
 		self.structures = [] 
-		patient_position_typ = patient_position_type() 
-		self.patient_position = patient_position_typ.out()
+		self.patient_position = patient_position_type()
 		self.contour_image_sequence = [] 
-		self.rt_structure_set = "" 
-		self.rt_structure_set = "" 
-		rt_stud = rt_study() 
-		self.study = rt_stud.out()
+		self.frame_of_ref_uid = "" 
+		self.series_uid = "" 
+		self.study = rt_study()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2441,11 +2389,11 @@ class rt_structure_set:
 								("name", self.name),
 								("description", self.description),
 								("structures", self.structures),
-								("patient_position", self.patient_position),
+								("patient_position", self.patient_position.toStr()),
 								("contour_image_sequence", self.contour_image_sequence),
 								("frame_of_ref_uid", self.frame_of_ref_uid),
 								("series_uid", self.series_uid),
-								("study", self.study)
+								("study", self.study.toStr())
 			]) 
 		return values 
 
@@ -2453,8 +2401,7 @@ class rt_image_2d:
 
 	#Initialize
 	def __init__(self):
-		image_2 = image_2d() 
-		self.img = image_2.out()
+		self.img = image_2d()
 		self.bits_allocated = 0.0 
 		self.bits_stored = 0.0 
 		self.high_bit = 0.0 
@@ -2463,8 +2410,8 @@ class rt_image_2d:
 		self.cols = 0.0 
 		self.rows = 0.0 
 
-	def out(self):
-		values = OrderedDict([("img", self.img),
+	def toStr(self):
+		values = OrderedDict([("img", self.img.toStr()),
 								("bits_allocated", self.bits_allocated),
 								("bits_stored", self.bits_stored),
 								("high_bit", self.high_bit),
@@ -2479,8 +2426,7 @@ class rt_image_3d:
 
 	#Initialize
 	def __init__(self):
-		image_3 = image_3d() 
-		self.img = image_3.out()
+		self.img = image_3d()
 		self.bits_allocated = 0.0 
 		self.bits_stored = 0.0 
 		self.high_bit = 0.0 
@@ -2489,8 +2435,8 @@ class rt_image_3d:
 		self.cols = 0.0 
 		self.rows = 0.0 
 
-	def out(self):
-		values = OrderedDict([("img", self.img),
+	def toStr(self):
+		values = OrderedDict([("img", self.img.toStr()),
 								("bits_allocated", self.bits_allocated),
 								("bits_stored", self.bits_stored),
 								("high_bit", self.high_bit),
@@ -2505,8 +2451,7 @@ class rt_image_slice_2d:
 
 	#Initialize
 	def __init__(self):
-		rt_image_2 = rt_image_2d() 
-		self.content = rt_image_2.out()
+		self.content = rt_image_2d()
 		self.axis = 0.0 
 		self.position = 0.0 
 		self.thickness = 0.0 
@@ -2516,10 +2461,10 @@ class rt_image_slice_2d:
 		self.pixel_spacing = [] 
 		self.image_position = [] 
 		self.image_orientation = [] 
-		self.rt_image_slice_2d = "" 
+		self.photometric_interpretation = "" 
 
-	def out(self):
-		values = OrderedDict([("content", self.content),
+	def toStr(self):
+		values = OrderedDict([("content", self.content.toStr()),
 								("axis", self.axis),
 								("position", self.position),
 								("thickness", self.thickness),
@@ -2537,8 +2482,7 @@ class rt_image_slice_3d:
 
 	#Initialize
 	def __init__(self):
-		rt_image_3 = rt_image_3d() 
-		self.content = rt_image_3.out()
+		self.content = rt_image_3d()
 		self.axis = 0.0 
 		self.position = 0.0 
 		self.thickness = 0.0 
@@ -2548,10 +2492,10 @@ class rt_image_slice_3d:
 		self.pixel_spacing = [] 
 		self.image_position = [] 
 		self.image_orientation = [] 
-		self.rt_image_slice_3d = "" 
+		self.photometric_interpretation = "" 
 
-	def out(self):
-		values = OrderedDict([("content", self.content),
+	def toStr(self):
+		values = OrderedDict([("content", self.content.toStr()),
 								("axis", self.axis),
 								("position", self.position),
 								("thickness", self.thickness),
@@ -2569,30 +2513,28 @@ class rt_dose:
 
 	#Initialize
 	def __init__(self):
-		self.rt_dose = "" 
-		self.rt_dose = "" 
-		self.rt_dose = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		rt_image_slice_3 = rt_image_slice_3d() 
-		self.dose = rt_image_slice_3.out()
+		self.dose = rt_image_slice_3d()
 		self.number_frames = 0.0 
 		self.frame_spacing = [] 
-		self.rt_dose = "" 
-		rt_stud = rt_study() 
-		self.study = rt_stud.out()
+		self.frame_increment_pointer = "" 
+		self.study = rt_study()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
 								("elements", self.elements),
 								("sequences", self.sequences),
-								("dose", self.dose),
+								("dose", self.dose.toStr()),
 								("number_frames", self.number_frames),
 								("frame_spacing", self.frame_spacing),
 								("frame_increment_pointer", self.frame_increment_pointer),
-								("study", self.study)
+								("study", self.study.toStr())
 			]) 
 		return values 
 
@@ -2600,27 +2542,24 @@ class ct_image_slice:
 
 	#Initialize
 	def __init__(self):
-		self.ct_image_slice = "" 
-		self.ct_image_slice = "" 
-		self.ct_image_slice = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		rt_image_slice_2 = rt_image_slice_2d() 
-		self.slice = rt_image_slice_2.out()
-		patient_position_typ = patient_position_type() 
-		self.patient_position = patient_position_typ.out()
-		rt_stud = rt_study() 
-		self.study = rt_stud.out()
+		self.slice = rt_image_slice_2d()
+		self.patient_position = patient_position_type()
+		self.study = rt_study()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
 								("elements", self.elements),
 								("sequences", self.sequences),
-								("slice", self.slice),
-								("patient_position", self.patient_position),
-								("study", self.study)
+								("slice", self.slice.toStr()),
+								("patient_position", self.patient_position.toStr()),
+								("study", self.study.toStr())
 			]) 
 		return values 
 
@@ -2628,27 +2567,24 @@ class ct_image_set:
 
 	#Initialize
 	def __init__(self):
-		self.ct_image_set = "" 
-		self.ct_image_set = "" 
-		self.ct_image_set = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		image_3 = image_3d() 
-		self.image = image_3.out()
-		patient_position_typ = patient_position_type() 
-		self.patient_position = patient_position_typ.out()
-		rt_stud = rt_study() 
-		self.study = rt_stud.out()
+		self.image = image_3d()
+		self.patient_position = patient_position_type()
+		self.study = rt_study()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
 								("elements", self.elements),
 								("sequences", self.sequences),
-								("image", self.image),
-								("patient_position", self.patient_position),
-								("study", self.study)
+								("image", self.image.toStr()),
+								("patient_position", self.patient_position.toStr()),
+								("study", self.study.toStr())
 			]) 
 		return values 
 
@@ -2656,18 +2592,16 @@ class dicom_metadata:
 
 	#Initialize
 	def __init__(self):
-		self.dicom_metadata = "" 
-		self.dicom_metadata = "" 
-		self.dicom_metadata = "" 
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
-		self.dicom_metadata = "" 
-		patien = patient() 
-		self.patient_metadata = patien.out()
-		dicom_modalit = dicom_modality() 
-		self.modality = dicom_modalit.out()
+		self.creationDate = "" 
+		self.patient_metadata = patient()
+		self.modality = dicom_modality()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("class_uid", self.class_uid),
 								("instance_uid", self.instance_uid),
 								("series_uid", self.series_uid),
@@ -2675,8 +2609,8 @@ class dicom_metadata:
 								("sequences", self.sequences),
 								("creationDate", self.creationDate),
 								("creationTime", self.creationTime),
-								("patient_metadata", self.patient_metadata)
-								("modality", self.modality),
+								("patient_metadata", self.patient_metadata.toStr())
+								("modality", self.modality.toStr()),
 			]) 
 		return values 
 
@@ -2684,38 +2618,52 @@ class dicom_object:
 
 	#Initialize
 	def __init__(self):
-		rt_structure_se = rt_structure_set() 
-		self.structure_set = rt_structure_se.out()
-		ct_image_slic = ct_image_slice() 
-		self.ct_image = ct_image_slic.out()
-		ct_image_se = ct_image_set() 
-		self.ct_image_set = ct_image_se.out()
-		rt_dos = rt_dose() 
-		self.dose = rt_dos.out()
-		rt_pla = rt_plan() 
-		self.plan = rt_pla.out()
+		self.type = ""
+		self.structure_set = rt_structure_set.toStr()
+		self.ct_image = ct_image_slice.toStr()
+		self.ct_image_set = ct_image_set.toStr()
+		self.dose = rt_dose.toStr()
+		self.plan = rt_plan.toStr()
 
-	def out(self):
-		values = OrderedDict([("structure_set", self.structure_set),
-								("ct_image", self.ct_image),
-								("ct_image_set", self.ct_image_set),
-								("dose", self.dose),
-								("plan", self.plan)
-			]) 
-		return values 
+	def toStr(self):
+		if (self.type == 'structure_set'):
+			values = OrderedDict([("structure_set", self.structure_set.toStr()),
+									("type", self.type)
+				]) 
+			return values 
+		elif (self.type == 'ct_image'):
+			values = OrderedDict([("ct_image", self.ct_image.toStr()),
+									("type", self.type)
+				]) 
+			return values 
+		elif (self.type == 'ct_image_set'):
+			values = OrderedDict([("ct_image_set", self.ct_image_set.toStr()),
+									("type", self.type)
+				]) 
+			return values 
+		elif (self.type == 'dose'):
+			values = OrderedDict([("dose", self.dose.toStr()),
+									("type", self.type)
+				]) 
+			return values 
+		elif (self.type == 'plan'):
+			values = OrderedDict([("plan", self.plan.toStr()),
+									("type", self.type)
+				]) 
+			return values 
+		else:
+			return "Type not Set" 
 
 class dicom_data:
 
 	#Initialize
 	def __init__(self):
-		dicom_metadat = dicom_metadata() 
-		self.meta_data = dicom_metadat.out()
-		dicom_objec = dicom_object() 
-		self.dicom_obj = dicom_objec.out()
+		self.meta_data = dicom_metadata()
+		self.dicom_obj = dicom_object()
 
-	def out(self):
-		values = OrderedDict([("meta_data", self.meta_data),
-								("dicom_obj", self.dicom_obj)
+	def toStr(self):
+		values = OrderedDict([("meta_data", self.meta_data.toStr()),
+								("dicom_obj", self.dicom_obj.toStr())
 			]) 
 		return values 
 
@@ -2725,7 +2673,7 @@ class dicom_patient:
 	def __init__(self):
 		self.patient = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("patient", self.patient),
 			]) 
 		return values 
@@ -2734,12 +2682,11 @@ class aperture:
 
 	#Initialize
 	def __init__(self):
-		polyse = polyset() 
-		self.shape = polyse.out()
+		self.shape = polyset()
 		self.downstream_edge = 0.0 
 
-	def out(self):
-		values = OrderedDict([("shape", self.shape),
+	def toStr(self):
+		values = OrderedDict([("shape", self.shape.toStr()),
 								("downstream_edge", self.downstream_edge)
 			]) 
 		return values 
@@ -2748,12 +2695,11 @@ class aperture_target:
 
 	#Initialize
 	def __init__(self):
-		triangle_mes = triangle_mesh() 
-		self.structure = triangle_mes.out()
+		self.structure = triangle_mesh()
 		self.margin = 0.0 
 
-	def out(self):
-		values = OrderedDict([("structure", self.structure),
+	def toStr(self):
+		values = OrderedDict([("structure", self.structure.toStr()),
 								("margin", self.margin)
 			]) 
 		return values 
@@ -2762,13 +2708,12 @@ class aperture_organ:
 
 	#Initialize
 	def __init__(self):
-		triangle_mes = triangle_mesh() 
-		self.structure = triangle_mes.out()
+		self.structure = triangle_mesh()
 		self.margin = 0.0 
 		self.occlude_by_target = False 
 
-	def out(self):
-		values = OrderedDict([("structure", self.structure),
+	def toStr(self):
+		values = OrderedDict([("structure", self.structure.toStr()),
 								("margin", self.margin),
 								("occlude_by_target", self.occlude_by_target)
 			]) 
@@ -2778,12 +2723,11 @@ class aperture_centerline:
 
 	#Initialize
 	def __init__(self):
-		triangle_mes = triangle_mesh() 
-		self.structure = triangle_mes.out()
+		self.structure = triangle_mesh()
 		self.margin = 0.0 
 
-	def out(self):
-		values = OrderedDict([("structure", self.structure),
+	def toStr(self):
+		values = OrderedDict([("structure", self.structure.toStr()),
 								("margin", self.margin)
 			]) 
 		return values 
@@ -2795,7 +2739,7 @@ class aperture_half_plane:
 		self.origin = [] 
 		self.direction = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("origin", self.origin),
 								("direction", self.direction)
 			]) 
@@ -2809,7 +2753,7 @@ class aperture_corner_plane:
 		self.first_direction = 0.0 
 		self.second_direction = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("origin", self.origin),
 								("first_direction", self.first_direction),
 								("second_direction", self.second_direction)
@@ -2820,12 +2764,11 @@ class aperture_manual_override:
 
 	#Initialize
 	def __init__(self):
-		polyse = polyset() 
-		self.shape = polyse.out()
+		self.shape = polyset()
 		self.add_shape_to_opening = False 
 
-	def out(self):
-		values = OrderedDict([("shape", self.shape),
+	def toStr(self):
+		values = OrderedDict([("shape", self.shape.toStr()),
 								("add_shape_to_opening", self.add_shape_to_opening)
 			]) 
 		return values 
@@ -2836,8 +2779,7 @@ class aperture_creation_params:
 	def __init__(self):
 		self.targets = [] 
 		self.target_margin = 0.0 
-		multiple_source_vie = multiple_source_view() 
-		self.view = multiple_source_vie.out()
+		self.view = multiple_source_view()
 		self.mill_radius = 0.0 
 		self.organs = [] 
 		self.half_planes = [] 
@@ -2846,10 +2788,10 @@ class aperture_creation_params:
 		self.overrides = [] 
 		self.downstream_edge = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("targets", self.targets),
 								("target_margin", self.target_margin),
-								("view", self.view),
+								("view", self.view.toStr()),
 								("mill_radius", self.mill_radius),
 								("organs", self.organs),
 								("half_planes", self.half_planes),
@@ -2866,7 +2808,7 @@ class shifter_geometry:
 	def __init__(self):
 		self.thickness = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("thickness", self.thickness),
 			]) 
 		return values 
@@ -2875,12 +2817,11 @@ class block_geometry:
 
 	#Initialize
 	def __init__(self):
-		polyse = polyset() 
-		self.shape = polyse.out()
+		self.shape = polyset()
 		self.thickness = 0.0 
 
-	def out(self):
-		values = OrderedDict([("shape", self.shape),
+	def toStr(self):
+		values = OrderedDict([("shape", self.shape.toStr()),
 								("thickness", self.thickness)
 			]) 
 		return values 
@@ -2889,11 +2830,10 @@ class rc_geometry:
 
 	#Initialize
 	def __init__(self):
-		image_2 = image_2d() 
-		self.thickness = image_2.out()
+		self.thickness = image_2d()
 
-	def out(self):
-		values = OrderedDict([("thickness", self.thickness),
+	def toStr(self):
+		values = OrderedDict([("thickness", self.thickness.toStr()),
 			]) 
 		return values 
 
@@ -2901,11 +2841,10 @@ class rc_nurb_geometry:
 
 	#Initialize
 	def __init__(self):
-		nurb_surfac = nurb_surface() 
-		self.surface = nurb_surfac.out()
+		self.surface = nurb_surface()
 
-	def out(self):
-		values = OrderedDict([("surface", self.surface),
+	def toStr(self):
+		values = OrderedDict([("surface", self.surface.toStr()),
 			]) 
 		return values 
 
@@ -2913,38 +2852,50 @@ class degrader_shape:
 
 	#Initialize
 	def __init__(self):
-		shifter_geometr = shifter_geometry() 
-		self.shifter = shifter_geometr.out()
-		block_geometr = block_geometry() 
-		self.block = block_geometr.out()
-		rc_geometr = rc_geometry() 
-		self.rc = rc_geometr.out()
-		rc_nurb_geometr = rc_nurb_geometry() 
-		self.rc_nurb = rc_nurb_geometr.out()
+		self.type = ""
+		self.shifter = shifter_geometry.toStr()
+		self.block = block_geometry.toStr()
+		self.rc = rc_geometry.toStr()
+		self.rc_nurb = rc_nurb_geometry.toStr()
 
-	def out(self):
-		values = OrderedDict([("shifter", self.shifter),
-								("block", self.block),
-								("rc", self.rc),
-								("rc_nurb", self.rc_nurb)
-			]) 
-		return values 
+	def toStr(self):
+		if (self.type == 'shifter'):
+			values = OrderedDict([("shifter", self.shifter.toStr()),
+									("type", self.type)
+				]) 
+			return values 
+		elif (self.type == 'block'):
+			values = OrderedDict([("block", self.block.toStr()),
+									("type", self.type)
+				]) 
+			return values 
+		elif (self.type == 'rc'):
+			values = OrderedDict([("rc", self.rc.toStr()),
+									("type", self.type)
+				]) 
+			return values 
+		elif (self.type == 'rc_nurb'):
+			values = OrderedDict([("rc_nurb", self.rc_nurb.toStr()),
+									("type", self.type)
+				]) 
+			return values 
+		else:
+			return "Type not Set" 
 
 class degrader_geometry:
 
 	#Initialize
 	def __init__(self):
 		self.downstream_edge = 0.0 
-		self.degrader_geometry = "" 
+		self.thickness_units = "" 
 		self.scale_factor = 0.0 
-		degrader_shap = degrader_shape() 
-		self.shape = degrader_shap.out()
+		self.shape = degrader_shape()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("downstream_edge", self.downstream_edge),
 								("thickness_units", self.thickness_units),
 								("scale_factor", self.scale_factor),
-								("shape", self.shape)
+								("shape", self.shape.toStr())
 			]) 
 		return values 
 
@@ -2955,7 +2906,7 @@ class dij_row:
 		self.offset = 0.0 
 		self.n_entries = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("offset", self.offset),
 								("n_entries", self.n_entries)
 			]) 
@@ -2968,7 +2919,7 @@ class dij_entry:
 		self.beamlet_index = 0.0 
 		self.dose = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("beamlet_index", self.beamlet_index),
 								("dose", self.dose)
 			]) 
@@ -2981,11 +2932,11 @@ class dij_matrix:
 		self.n_points = 0.0 
 		self.n_beamlets = 0.0 
 		blob = blob_type()
-		self.rows = blob.out()
+		self.rows = blob.toStr()
 		blob = blob_type()
-		self.entries = blob.out()
+		self.entries = blob.toStr()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("n_points", self.n_points),
 								("n_beamlets", self.n_beamlets),
 								("rows", self.rows),
@@ -3000,7 +2951,7 @@ class projected_isocentric_vector:
 		self.at_iso = [] 
 		self.delta = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("at_iso", self.at_iso),
 								("delta", self.delta)
 			]) 
@@ -3010,14 +2961,12 @@ class bixel_geometry:
 
 	#Initialize
 	def __init__(self):
-		projected_isocentric_vecto = projected_isocentric_vector() 
-		self.axis = projected_isocentric_vecto.out()
-		projected_isocentric_vecto = projected_isocentric_vector() 
-		self.size = projected_isocentric_vecto.out()
+		self.axis = projected_isocentric_vector()
+		self.size = projected_isocentric_vector()
 
-	def out(self):
-		values = OrderedDict([("axis", self.axis),
-								("size", self.size)
+	def toStr(self):
+		values = OrderedDict([("axis", self.axis.toStr()),
+								("size", self.size.toStr())
 			]) 
 		return values 
 
@@ -3025,12 +2974,11 @@ class weighted_bixel:
 
 	#Initialize
 	def __init__(self):
-		bixel_geometr = bixel_geometry() 
-		self.geometry = bixel_geometr.out()
+		self.geometry = bixel_geometry()
 		self.weight = 0.0 
 
-	def out(self):
-		values = OrderedDict([("geometry", self.geometry),
+	def toStr(self):
+		values = OrderedDict([("geometry", self.geometry.toStr()),
 								("weight", self.weight)
 			]) 
 		return values 
@@ -3042,7 +2990,7 @@ class beam_geometry:
 		self.sad = [] 
 		self.image_to_beam = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("sad", self.sad),
 								("image_to_beam", self.image_to_beam)
 			]) 
@@ -3052,13 +3000,12 @@ class proton_material_properties:
 
 	#Initialize
 	def __init__(self):
-		interpolated_functio = interpolated_function() 
-		self.theta_curve = interpolated_functio.out()
+		self.theta_curve = interpolated_function()
 		self.density = 0.0 
 		self.water_equivalent_ratio = 0.0 
 
-	def out(self):
-		values = OrderedDict([("theta_curve", self.theta_curve),
+	def toStr(self):
+		values = OrderedDict([("theta_curve", self.theta_curve.toStr()),
 								("density", self.density),
 								("water_equivalent_ratio", self.water_equivalent_ratio)
 			]) 
@@ -3068,14 +3015,12 @@ class proton_degrader:
 
 	#Initialize
 	def __init__(self):
-		degrader_geometr = degrader_geometry() 
-		self.geometry = degrader_geometr.out()
-		proton_material_propertie = proton_material_properties() 
-		self.material = proton_material_propertie.out()
+		self.geometry = degrader_geometry()
+		self.material = proton_material_properties()
 
-	def out(self):
-		values = OrderedDict([("geometry", self.geometry),
-								("material", self.material)
+	def toStr(self):
+		values = OrderedDict([("geometry", self.geometry.toStr()),
+								("material", self.material.toStr())
 			]) 
 		return values 
 
@@ -3086,7 +3031,7 @@ class pbs_deliverable_energy:
 		self.r90 = 0.0 
 		self.energy = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("r90", self.r90),
 								("energy", self.energy)
 								("r80", self.r80),
@@ -3100,18 +3045,16 @@ class pbs_modeled_energy:
 		self.r90 = 0.0 
 		self.w80 = 0.0 
 		self.energy = 0.0 
-		pbs_optical_sigm = pbs_optical_sigma() 
-		self.sigma = pbs_optical_sigm.out()
-		irregularly_sampled_functio = irregularly_sampled_function() 
-		self.pristine_peak = irregularly_sampled_functio.out()
+		self.sigma = pbs_optical_sigma()
+		self.pristine_peak = irregularly_sampled_function()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("r90", self.r90),
 								("w80", self.w80),
 								("energy", self.energy),
 								("r100", self.r100),
-								("sigma", self.sigma)
-								("pristine_peak", self.pristine_peak),
+								("sigma", self.sigma.toStr())
+								("pristine_peak", self.pristine_peak.toStr()),
 			]) 
 		return values 
 
@@ -3121,21 +3064,19 @@ class pbs_machine_spec:
 	def __init__(self):
 		self.modeled_energies = [] 
 		self.deliverable_energies = [] 
-		linear_functio = linear_function() 
-		self.source_rotation_function = linear_functio.out()
+		self.source_rotation_function = linear_function()
 		self.aperture_sad = [] 
 		self.sad = [] 
-		quadratic_functio = quadratic_function() 
-		self.halo_sigma_sq_function = quadratic_functio.out()
+		self.halo_sigma_sq_function = quadratic_function()
 		self.sigma_v = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("modeled_energies", self.modeled_energies),
 								("deliverable_energies", self.deliverable_energies),
-								("source_rotation_function", self.source_rotation_function),
+								("source_rotation_function", self.source_rotation_function.toStr()),
 								("aperture_sad", self.aperture_sad),
 								("sad", self.sad),
-								("halo_sigma_sq_function", self.halo_sigma_sq_function),
+								("halo_sigma_sq_function", self.halo_sigma_sq_function.toStr()),
 								("sigma_v", self.sigma_v)
 			]) 
 		return values 
@@ -3148,7 +3089,7 @@ class pbs_layer_spacing_strategy:
 		self.distal_w80 = 1
 		self.variable_w80 = 2
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("constant", self.constant),
 								("distal_w80", self.distal_w80),
 								("variable_w80", self.variable_w80)
@@ -3162,7 +3103,7 @@ class spot_spacing_strategy:
 		self.constant = 0
 		self.sigma = 1
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("constant", self.constant),
 								("sigma", self.sigma)
 			]) 
@@ -3172,14 +3113,12 @@ class pbs_optical_sigma:
 
 	#Initialize
 	def __init__(self):
-		quadratic_functio = quadratic_function() 
-		self.x = quadratic_functio.out()
-		quadratic_functio = quadratic_function() 
-		self.y = quadratic_functio.out()
+		self.x = quadratic_function()
+		self.y = quadratic_function()
 
-	def out(self):
-		values = OrderedDict([("x", self.x),
-								("y", self.y)
+	def toStr(self):
+		values = OrderedDict([("x", self.x.toStr()),
+								("y", self.y.toStr())
 			]) 
 		return values 
 
@@ -3190,19 +3129,17 @@ class pbs_pb_calculation_layer:
 		self.flixels = [] 
 		self.r90 = 0.0 
 		self.energy = 0.0 
-		pbs_optical_sigm = pbs_optical_sigma() 
-		self.sigma = pbs_optical_sigm.out()
+		self.sigma = pbs_optical_sigma()
 		self.flixel_rotation = 0.0 
-		interpolated_functio = interpolated_function() 
-		self.pristine_peak = interpolated_functio.out()
+		self.pristine_peak = interpolated_function()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("flixels", self.flixels),
 								("r90", self.r90),
 								("energy", self.energy),
-								("sigma", self.sigma),
+								("sigma", self.sigma.toStr()),
 								("flixel_rotation", self.flixel_rotation),
-								("pristine_peak", self.pristine_peak)
+								("pristine_peak", self.pristine_peak.toStr())
 			]) 
 		return values 
 
@@ -3210,12 +3147,11 @@ class pbs_pb_aperture_model:
 
 	#Initialize
 	def __init__(self):
-		apertur = aperture() 
-		self.aperture = apertur.out()
+		self.aperture = aperture()
 		self.sad = [] 
 
-	def out(self):
-		values = OrderedDict([("aperture", self.aperture),
+	def toStr(self):
+		values = OrderedDict([("aperture", self.aperture.toStr()),
 								("sad", self.sad)
 			]) 
 		return values 
@@ -3227,7 +3163,7 @@ class spot_placement:
 		self.energy = 0.0 
 		self.position = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("energy", self.energy),
 								("position", self.position)
 			]) 
@@ -3241,7 +3177,7 @@ class weighted_spot:
 		self.position = [] 
 		self.fluence = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("energy", self.energy),
 								("position", self.position),
 								("fluence", self.fluence)
@@ -3252,20 +3188,17 @@ class beam_properties:
 
 	#Initialize
 	def __init__(self):
-		beam_geometr = beam_geometry() 
-		self.geometry = beam_geometr.out()
-		box_2 = box_2d() 
-		self.field = box_2.out()
+		self.geometry = beam_geometry()
+		self.field = box_2d()
 		self.ssd = 0.0 
-		regular_grid_2 = regular_grid_2d() 
-		self.bixel_grid = regular_grid_2.out()
+		self.bixel_grid = regular_grid_2d()
 		self.range = 0.0 
 
-	def out(self):
-		values = OrderedDict([("geometry", self.geometry),
-								("field", self.field),
+	def toStr(self):
+		values = OrderedDict([("geometry", self.geometry.toStr()),
+								("field", self.field.toStr()),
 								("ssd", self.ssd),
-								("bixel_grid", self.bixel_grid),
+								("bixel_grid", self.bixel_grid.toStr()),
 								("range", self.range)
 			]) 
 		return values 
@@ -3281,7 +3214,7 @@ class rc_opt_properties:
 		self.smear_span = 0.0 
 		self.shift_direction = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("target_distal_dose", self.target_distal_dose),
 								("target_inner_border", self.target_inner_border),
 								("iteration_count", self.iteration_count),
@@ -3302,7 +3235,7 @@ class double_scattering_step:
 		self.weight = 0.0 
 		self.dR = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("theta", self.theta),
 								("weight", self.weight),
 								("dR", self.dR)
@@ -3313,8 +3246,8 @@ class double_scattering_option:
 
 	#Initialize
 	def __init__(self):
-		self.double_scattering_option = "" 
-		self.double_scattering_option = "" 
+		self.name = "" 
+		self.id = "" 
 		self.min_range = 0.0 
 		self.max_range = 0.0 
 		self.max_mod = 0.0 
@@ -3326,10 +3259,9 @@ class double_scattering_option:
 		self.mod_correction = [] 
 		self.steps = [] 
 		self.bcm = [] 
-		irregularly_sampled_functio = irregularly_sampled_function() 
-		self.pristine_peak = irregularly_sampled_functio.out()
+		self.pristine_peak = irregularly_sampled_function()
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("name", self.name),
 								("id", self.id),
 								("min_range", self.min_range),
@@ -3343,7 +3275,7 @@ class double_scattering_option:
 								("mod_correction", self.mod_correction),
 								("steps", self.steps),
 								("bcm", self.bcm),
-								("pristine_peak", self.pristine_peak)
+								("pristine_peak", self.pristine_peak.toStr())
 			]) 
 		return values 
 
@@ -3353,7 +3285,7 @@ class double_scattering_machine_spec:
 	def __init__(self):
 		self.options = [] 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("options", self.options),
 			]) 
 		return values 
@@ -3362,16 +3294,15 @@ class sobp_calculation_layer:
 
 	#Initialize
 	def __init__(self):
-		interpolated_functio = interpolated_function() 
-		self.depth_dose_curve = interpolated_functio.out()
+		self.depth_dose_curve = interpolated_function()
 		self.initial_range = 0.0 
 		self.initial_sigma = 0.0 
 		self.weight = 0.0 
 		self.sad = 0.0 
 		self.pdd_shift = 0.0 
 
-	def out(self):
-		values = OrderedDict([("depth_dose_curve", self.depth_dose_curve),
+	def toStr(self):
+		values = OrderedDict([("depth_dose_curve", self.depth_dose_curve.toStr()),
 								("initial_range", self.initial_range),
 								("initial_sigma", self.initial_sigma),
 								("weight", self.weight),
@@ -3384,15 +3315,14 @@ class range_analysis_context:
 
 	#Initialize
 	def __init__(self):
-		image_3 = image_3d() 
-		self.patient_image = image_3.out()
+		self.patient_image = image_3d()
 		self.sad = [] 
 		self.image_to_beam = [] 
 		self.beam_to_image = [] 
 		self.degraders = [] 
 
-	def out(self):
-		values = OrderedDict([("patient_image", self.patient_image),
+	def toStr(self):
+		values = OrderedDict([("patient_image", self.patient_image.toStr()),
 								("sad", self.sad),
 								("image_to_beam", self.image_to_beam),
 								("beam_to_image", self.beam_to_image),
@@ -3404,23 +3334,21 @@ class image_1d:
 
 	#Initialize
 	def __init__(self):
-		variant_type_inf = variant_type_info() 
-		self.type_info = variant_type_inf.out()
+		self.type_info = variant_type_info()
 		self.size = [] 
 		self.origin = [] 
 		self.axes = [] 
-		linear_functio = linear_function() 
-		self.value_mapping = linear_functio.out()
-		self.image_1d = "" 
+		self.value_mapping = linear_function()
+		self.units = "" 
 		blob = blob_type()
-		self.pixels = blob.out()
+		self.pixels = blob.toStr()
 
-	def out(self):
-		values = OrderedDict([("type_info", self.type_info),
+	def toStr(self):
+		values = OrderedDict([("type_info", self.type_info.toStr()),
 								("size", self.size),
 								("origin", self.origin),
 								("axes", self.axes),
-								("value_mapping", self.value_mapping),
+								("value_mapping", self.value_mapping.toStr()),
 								("units", self.units),
 								("pixels", self.pixels)
 			]) 
@@ -3430,23 +3358,21 @@ class image_2d:
 
 	#Initialize
 	def __init__(self):
-		variant_type_inf = variant_type_info() 
-		self.type_info = variant_type_inf.out()
+		self.type_info = variant_type_info()
 		self.size = [] 
 		self.origin = [] 
 		self.axes = [] 
-		linear_functio = linear_function() 
-		self.value_mapping = linear_functio.out()
-		self.image_2d = "" 
+		self.value_mapping = linear_function()
+		self.units = "" 
 		blob = blob_type()
-		self.pixels = blob.out()
+		self.pixels = blob.toStr()
 
-	def out(self):
-		values = OrderedDict([("type_info", self.type_info),
+	def toStr(self):
+		values = OrderedDict([("type_info", self.type_info.toStr()),
 								("size", self.size),
 								("origin", self.origin),
 								("axes", self.axes),
-								("value_mapping", self.value_mapping),
+								("value_mapping", self.value_mapping.toStr()),
 								("units", self.units),
 								("pixels", self.pixels)
 			]) 
@@ -3456,23 +3382,21 @@ class image_3d:
 
 	#Initialize
 	def __init__(self):
-		variant_type_inf = variant_type_info() 
-		self.type_info = variant_type_inf.out()
+		self.type_info = variant_type_info()
 		self.size = [] 
 		self.origin = [] 
 		self.axes = [] 
-		linear_functio = linear_function() 
-		self.value_mapping = linear_functio.out()
-		self.image_3d = "" 
+		self.value_mapping = linear_function()
+		self.units = "" 
 		blob = blob_type()
-		self.pixels = blob.out()
+		self.pixels = blob.toStr()
 
-	def out(self):
-		values = OrderedDict([("type_info", self.type_info),
+	def toStr(self):
+		values = OrderedDict([("type_info", self.type_info.toStr()),
 								("size", self.size),
 								("origin", self.origin),
 								("axes", self.axes),
-								("value_mapping", self.value_mapping),
+								("value_mapping", self.value_mapping.toStr()),
 								("units", self.units),
 								("pixels", self.pixels)
 			]) 
@@ -3486,7 +3410,7 @@ class rgb:
 		self.g = 0.0 
 		self.b = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("r", self.r),
 								("g", self.g),
 								("b", self.b)
@@ -3502,7 +3426,7 @@ class rgba:
 		self.b = 0.0 
 		self.a = 0.0 
 
-	def out(self):
+	def toStr(self):
 		values = OrderedDict([("r", self.r),
 								("g", self.g),
 								("b", self.b),

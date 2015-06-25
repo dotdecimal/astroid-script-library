@@ -32,14 +32,14 @@ def message(message):
 	if display_types:
 		mes = ' -- MESSAGE: ' 
 	mes += message
-	print(log_time() + Fore.RESET + mes)
+	print(log_time() + Fore.RESET + mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
 def debug(message):
 	mes = ' '
 	if display_types:
 		mes = ' -- DEBUG: ' 
 	mes += message
-	print(log_time() + Fore.RESET + mes)
+	print(log_time() + Fore.RESET + mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
 def linebreak():
 	print('\n')
@@ -47,7 +47,7 @@ def linebreak():
 
 def data(message, data):
 	mes ='        ' + message
-	print(log_time() + Fore.CYAN + Style.BRIGHT + mes + Fore.RESET + ' ' + data)
+	print(log_time() + Fore.CYAN + Style.BRIGHT + mes + Fore.RESET + ' ' + data  + Fore.RESET + Back.RESET + Style.RESET_ALL)
 	# print ('\n')
 
 def debug_data(message, data):
@@ -56,7 +56,7 @@ def debug_data(message, data):
 		mes = ' -- DATA: ' 
 	mes += message 
 	print(log_time() + Fore.BLUE + Back.WHITE + Style.BRIGHT +  mes)
-	print(Fore.WHITE + Back.RESET + Style.BRIGHT +  data)
+	print(Fore.WHITE + Back.RESET + Style.BRIGHT +  data  + Fore.RESET + Back.RESET + Style.RESET_ALL)
 	# print ('\n')
 
 def alert(message):
@@ -64,35 +64,35 @@ def alert(message):
 	if display_types:
 		mes = ' -- ALERT: ' 
 	mes += message 
-	print(log_time() + Fore.MAGENTA + Style.BRIGHT +  mes)
+	print(log_time() + Fore.MAGENTA + Style.BRIGHT +  mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
 def event(message):
 	mes = ' '
 	if display_types:
 		mes = ' -- EVENT: ' 
 	mes += message 
-	print(log_time() + Fore.GREEN + Style.BRIGHT +  mes)
+	print(log_time() + Fore.GREEN + Style.BRIGHT +  mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
 def task(message):
 	mes = ' '
 	if display_types:
 		mes = ' ------ TASK: ' 
 	mes += message 
-	print(log_time() + Fore.MAGENTA + Style.BRIGHT +  mes)
+	print(log_time() + Fore.MAGENTA + Style.BRIGHT +  mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
 def error(err):
 	mes = ' '
 	if display_types:
 		mes = ' -- ERROR: ' 
 	mes += err
-	print(log_time() + Fore.RED + Style.BRIGHT +  mes)
+	print(log_time() + Fore.RED + Style.BRIGHT +  mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
 def warning(warn):
 	mes = ' '
 	if display_types:
 		mes = ' -- WARNING: ' 
 	mes += warn 
-	print(log_time() + Fore.YELLOW + Style.BRIGHT +  mes)
+	print(log_time() + Fore.YELLOW + Style.BRIGHT +  mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
 def log(message):
 	mes = log_time() + ' -- ' + message 
