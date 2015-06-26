@@ -12,5 +12,5 @@ Reference Documentation
 
 Dosimetry
 ---------
-1. Dosimetry App Userguide: dosimetry.dotdecimal.com
-2. Dosimetry App Manifest Guide: docs.dosimetry.dotdecimal.com
+1. Dosimetry App Userguide: http://dosimetry.dotdecimal.com
+2. Dosimetry App Manifest Guide: http://docs.dosimetry.dotdecimal.com
