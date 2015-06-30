@@ -7,6 +7,7 @@ import requests
 import json
 import sys
 import lib.decimal_logging as dl
+import jsonpickle as jp
 
 #####################################################################
 # thinknode get/post functions
@@ -214,6 +215,13 @@ def array_number_type(app, a):
             { "item_schema" : \
             { "type": "number_type", \
             "number_type": {} }, "items": a } } 
-
 # Create a none type
 none = value({ "type": "none", "none": None })
+
+#####################################################################
+# misc helpers
+#####################################################################
+
+# Turn dosimetry_types class object into json
+def to_json(obj):
+    return json.loads(jp.encode(obj, unpicklable=False))

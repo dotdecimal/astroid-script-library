@@ -77,11 +77,12 @@ def make_target():
                 thinknode.value([16, -10, 30])
             ])
 
-def make_view():
-    mv = dt.multiple_source_view()
+def make_view():    
     ds = dt.box_2d()
     ds.corner = [-100, -100]
     ds.size = [200, 200]
+
+    mv = dt.multiple_source_view()
     mv.display_surface = ds
     mv.center = [0, 0, 0]
     mv.direction = [0, 1, 0]
@@ -95,23 +96,19 @@ def compute_aperture():
 
     # ap_params.targets.append(thinknode.reference("55802bcf49400020000c")) # Use existing ISS target
     ap_params.targets.append(make_target())
-    ap_params.target_margin = 20.0
-    ap_params.view = make_view()
-    ap_params.mill_radius = 0.0
-    ap_params.downstream_edge = 250.5
 
     # Make aperture_creation_params
     args = {}
     args["targets"] = thinknode.array_named_type("dosimetry", "triangle_mesh", ap_params.targets)
-    args["target_margin"] = thinknode.value(ap_params.target_margin)
-    args["view"] = thinknode.value(ap_params.view.toStr())
-    args["mill_radius"] = thinknode.value(ap_params.mill_radius)
+    args["target_margin"] = thinknode.value(20.0)
+    args["view"] = thinknode.value(thinknode.to_json(make_view()))
+    args["mill_radius"] = thinknode.value(0.0)
     args["organs"] = thinknode.value(ap_params.organs)
     args["half_planes"] = thinknode.value(ap_params.half_planes)
     args["corner_planes"] = thinknode.value(ap_params.corner_planes)
     args["centerlines"] = thinknode.value(ap_params.centerlines)
     args["overrides"] = thinknode.value(ap_params.overrides)
-    args["downstream_edge"] = thinknode.value(ap_params.downstream_edge)
+    args["downstream_edge"] = thinknode.value(250.5)
 
     return \
         thinknode.function("dosimetry", "compute_aperture",
