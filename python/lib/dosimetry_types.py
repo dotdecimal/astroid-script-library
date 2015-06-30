@@ -327,6 +327,560 @@ class rgba:
 		self.b = 0.0 
 		self.a = 0.0 
 
+class filesystem_item_contents:
+
+	#Initialize
+	def __init__(self):
+		self.type = ""
+		self.directory = []
+		self.file = blob_type()
+
+class filesystem_item:
+
+	#Initialize
+	def __init__(self):
+		self.name = "" 
+		self.contents = filesystem_item_contents()
+
+class dicom_element:
+
+	#Initialize
+	def __init__(self):
+		self.name = "" 
+		self.value = "" 
+		self.g = 0.0 
+		self.e = 0.0 
+
+class dicom_sequence:
+
+	#Initialize
+	def __init__(self):
+		self.items = [] 
+		self.g = 0.0 
+		self.e = 0.0 
+
+class dicom_item:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+
+class rt_study:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.study_date = "" 
+		self.description = "" 
+		self.physician_name = "" 
+		self.id = "" 
+		self.accession_number = "" 
+
+class patient_position_type:
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# HFS
+		# HFP
+		# FFS
+		# FFP
+		# HFDR
+		# HFDL
+		# FFDR
+		# FFDL
+
+class person_name:
+
+	#Initialize
+	def __init__(self):
+		self.family_name = "" 
+		self.given_name = "" 
+		self.middle_name = "" 
+		self.prefix = "" 
+		self.suffix = "" 
+
+class patient_sex:
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# M
+		# F
+		# O
+
+class patient:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.name = person_name()
+		self.id = "" 
+		self.sex = patient_sex()
+		self.other_names = [] 
+		self.other_ids = [] 
+		self.ethnic_group = "" 
+		self.comments = "" 
+
+class rt_control_point:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.number = 0.0 
+		self.meterset_weight = 0.0 
+		self.nominal_beam_energy = 0.0 
+		self.gantry_angle = 0.0 
+		self.gantry_pitch_angle = 0.0 
+		self.beam_limiting_device_angle = 0.0 
+		self.patient_support_angle = 0.0 
+		self.meterset_rate = 0.0 
+		self.source_to_surface_distance = 0.0 
+		self.snout_position = 0.0 
+		self.iso_center_position = [] 
+		self.surface_entry_point = [] 
+		self.gantry_rotation_direction = "" 
+		self.gantry_pitch_direction = "" 
+		self.beam_limiting_direction = "" 
+		self.patient_support_direction = "" 
+		self.table_top_pitch_angle = 0.0 
+		self.table_top_roll_angle = 0.0 
+		self.table_top_pitch_direction = "" 
+		self.table_top_roll_direction = "" 
+
+class rt_mounting_position:
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# PATIENT_SIDE
+		# SOURCE_SIDE
+		# DOUBLE_SIDED
+
+class rt_ion_rangecompensator:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.name = "" 
+		self.number = 0.0 
+		self.material = "" 
+		self.divergent = False 
+		self.mounting_position = rt_mounting_position()
+		self.downstream_edge = 0.0 
+		self.column_offset = 0.0 
+		self.relative_stopping_power = 0.0 
+		self.position = [] 
+		self.pixelSpacing = [] 
+		self.data = image_2d()
+
+class rt_ion_block_type:
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# APERTURE
+		# SHIELDING
+
+class rt_ion_block:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.name = "" 
+		self.description = "" 
+		self.material = "" 
+		self.number = 0.0 
+		self.divergent = False 
+		self.downstream_edge = 0.0 
+		self.thinkness = 0.0 
+		self.position = rt_mounting_position()
+		self.block_type = rt_ion_block_type()
+		self.data = polyset()
+
+class rt_snout:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.id = "" 
+		self.accessoryCode = "" 
+
+class rt_radiation_type:
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# PROTON
+		# PHOTON
+		# ELECTRON
+		# NEUTRON
+
+class rt_ion_beam_type:
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# STATIC
+		# DYNAMIC
+
+class rt_ion_beam:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.beam_number = 0.0 
+		self.name = "" 
+		self.description = "" 
+		self.treatment_machine = "" 
+		self.primary_dosimeter_unit = "" 
+		self.treatment_delivery_type = "" 
+		self.beam_type = rt_ion_beam_type()
+		self.radiation_type = rt_radiation_type()
+		self.referenced_patient_setup = 0.0 
+		self.referenced_tolerance_table = 0.0 
+		self.virtual_sad = [] 
+		self.final_meterset_weight = 0.0 
+		self.snouts = [] 
+		self.block = rt_ion_block()
+		self.degraders = [] 
+		self.control_points = [] 
+
+class rt_dose_reference:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.number = 0.0 
+		self.uid = "" 
+		self.structure_type = "" 
+		self.description = "" 
+		self.type = "" 
+		self.delivery_max_dose = 0.0 
+		self.target_rx_dose = 0.0 
+		self.target_min_dose = 0.0 
+		self.target_max_dose = 0.0 
+		self.point_coordinates = [] 
+
+class rt_tolerance_table:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.number = 0.0 
+		self.gantry_angle = 0.0 
+		self.beam_limiting_angle = 0.0 
+		self.patient_support_angle = 0.0 
+		self.table_top_vert_position = 0.0 
+		self.table_top_long_position = 0.0 
+		self.table_top_lat_position = 0.0 
+		self.label = "" 
+		self.limiting_device_position = [] 
+		self.limiting_device_type = [] 
+
+class rt_patient_setup:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.setup_number = 0.0 
+		self.position = patient_position_type()
+		self.setup_description = "" 
+
+class rt_fraction:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.number = 0.0 
+		self.number_planned_fractions = 0.0 
+		self.number_beams = 0.0 
+		self.referenced_beam_numbers = [] 
+		self.referenced_beam_dose = [] 
+
+class rt_ref_beam:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.beam_dose = 0.0 
+		self.beam_number = 0.0 
+
+class rt_plan:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.plan_date = "" 
+		self.name = "" 
+		self.description = "" 
+		self.label = "" 
+		self.uid = "" 
+		self.geometry = "" 
+		self.frame_of_ref_uid = "" 
+		self.patient_data = patient()
+		self.study = rt_study()
+		self.dose = [] 
+		self.fractions = [] 
+		self.ref_beam = [] 
+		self.tolerance_table = [] 
+		self.patient_setups = [] 
+		self.beams = [] 
+
+class rt_image_conversion_type:
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# DV
+		# DI
+		# DF
+		# WSD
+
+class rt_image_type:
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# DRR
+		# PORTAL
+		# SIMULATOR
+		# RADIOGRAPH
+		# BLANK
+		# FLUENCE
+
+class rt_structure_type:
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# point
+		# closed_planar
+
+class dicom_modality:
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# RTPLAN
+		# RTSTRUCTURESET
+		# RTSTRUCT
+		# CT
+		# RTDOSE
+
+class dicom_structure_geometry_slice:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.position = 0.0 
+		self.thickness = 0.0 
+		self.region = polyset()
+
+class dicom_structure_geometry:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.slices = [] 
+
+class rt_structure:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.name = "" 
+		self.description = "" 
+		self.number = 0.0 
+		self.color = rgb()
+		self.type = rt_structure_type()
+		self.point = [] 
+		self.volume = dicom_structure_geometry()
+
+class rt_structure_set:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.name = "" 
+		self.description = "" 
+		self.structures = [] 
+		self.patient_position = patient_position_type()
+		self.contour_image_sequence = [] 
+		self.frame_of_ref_uid = "" 
+		self.series_uid = "" 
+		self.study = rt_study()
+
+class rt_dose:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.dose = rt_image_slice_3d()
+		self.number_frames = 0.0 
+		self.frame_spacing = [] 
+		self.frame_increment_pointer = "" 
+		self.study = rt_study()
+
+class ct_image_slice:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.slice = rt_image_slice_2d()
+		self.patient_position = patient_position_type()
+		self.study = rt_study()
+
+class ct_image_set:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.image = image_3d()
+		self.patient_position = patient_position_type()
+		self.study = rt_study()
+
+class dicom_metadata:
+
+	#Initialize
+	def __init__(self):
+		self.class_uid = "" 
+		self.instance_uid = "" 
+		self.series_uid = "" 
+		self.elements = [] 
+		self.sequences = [] 
+		self.creationDate = "" 
+		self.patient_metadata = patient()
+		self.modality = dicom_modality()
+
+class dicom_object:
+
+	#Initialize
+	def __init__(self):
+		self.type = ""
+		self.structure_set = rt_structure_set.toStr()
+		self.ct_image = ct_image_slice.toStr()
+		self.ct_image_set = ct_image_set.toStr()
+		self.dose = rt_dose.toStr()
+		self.plan = rt_plan.toStr()
+
+class dicom_data:
+
+	#Initialize
+	def __init__(self):
+		self.meta_data = dicom_metadata()
+		self.dicom_obj = dicom_object()
+
+class dicom_patient:
+
+	#Initialize
+	def __init__(self):
+		self.patient = [] 
+
 class structure_geometry:
 
 	#Initialize
@@ -442,19 +996,19 @@ class set_operation:
 		# difference
 		# xor
 
-class slice_description:
-
-	#Initialize
-	def __init__(self):
-		self.position = 0.0 
-		self.thickness = 0.0 
-
 class box_3d:
 
 	#Initialize
 	def __init__(self):
 		self.corner = [] 
 		self.size = [] 
+
+class slice_description:
+
+	#Initialize
+	def __init__(self):
+		self.position = 0.0 
+		self.thickness = 0.0 
 
 class regular_grid_1d:
 
@@ -471,19 +1025,19 @@ class optimized_triangle_mesh:
 		self.mesh = triangle_mesh()
 		self.bin_collection = bin_collection_3d()
 
-class image_geometry_1d:
-
-	#Initialize
-	def __init__(self):
-		self.slicing = [] 
-		self.regular_grid = regular_grid_1d()
-
 class box_1d:
 
 	#Initialize
 	def __init__(self):
 		self.corner = [] 
 		self.size = [] 
+
+class image_geometry_1d:
+
+	#Initialize
+	def __init__(self):
+		self.slicing = [] 
+		self.regular_grid = regular_grid_1d()
 
 class image_geometry_2d:
 
@@ -529,6 +1083,38 @@ class variant_type_info:
 	def __init__(self):
 		self.format = pixel_format()
 		self.type = channel_type()
+
+class rt_image_slice_3d:
+
+	#Initialize
+	def __init__(self):
+		self.content = rt_image_3d()
+		self.axis = 0.0 
+		self.position = 0.0 
+		self.thickness = 0.0 
+		self.instance_number = 0.0 
+		self.samples_per_pixel = 0.0 
+		self.pixel_rep = 0.0 
+		self.pixel_spacing = [] 
+		self.image_position = [] 
+		self.image_orientation = [] 
+		self.photometric_interpretation = "" 
+
+class rt_image_slice_2d:
+
+	#Initialize
+	def __init__(self):
+		self.content = rt_image_2d()
+		self.axis = 0.0 
+		self.position = 0.0 
+		self.thickness = 0.0 
+		self.instance_number = 0.0 
+		self.samples_per_pixel = 0.0 
+		self.pixel_rep = 0.0 
+		self.pixel_spacing = [] 
+		self.image_position = [] 
+		self.image_orientation = [] 
+		self.photometric_interpretation = "" 
 
 class structure_geometry_slice:
 
@@ -589,3 +1175,29 @@ class channel_type:
 		# uint64
 		# float
 		# double
+
+class rt_image_3d:
+
+	#Initialize
+	def __init__(self):
+		self.img = image_3d()
+		self.bits_allocated = 0.0 
+		self.bits_stored = 0.0 
+		self.high_bit = 0.0 
+		self.rescale_intercept = 0.0 
+		self.rescale_slope = 0.0 
+		self.cols = 0.0 
+		self.rows = 0.0 
+
+class rt_image_2d:
+
+	#Initialize
+	def __init__(self):
+		self.img = image_2d()
+		self.bits_allocated = 0.0 
+		self.bits_stored = 0.0 
+		self.high_bit = 0.0 
+		self.rescale_intercept = 0.0 
+		self.rescale_slope = 0.0 
+		self.cols = 0.0 
+		self.rows = 0.0 
