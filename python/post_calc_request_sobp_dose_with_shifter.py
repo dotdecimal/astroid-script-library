@@ -7,7 +7,7 @@ import json
 from collections import OrderedDict
 from lib import thinknode_worker as thinknode
 from lib import decimal_logging as dl
-from lib import dosimetry_types as dt
+from lib import rt_types as rt_types
 
 # Get IAM ids
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
@@ -79,8 +79,8 @@ def make_target():
             ])
 
 def make_view():
-    mv = dt.multiple_source_view()
-    ds = dt.box_2d()
+    mv = rt_types.multiple_source_view()
+    ds = rt_types.box_2d()
     ds.corner = [-100, -100]
     ds.size = [200, 200]
     mv.display_surface = ds
@@ -92,7 +92,7 @@ def make_view():
     return mv
 
 def compute_aperture():
-    ap_params = dt.aperture_creation_params()
+    ap_params = rt_types.aperture_creation_params()
 
     ap_params.targets.append(make_target())
     ap_params.target_margin = 20.0
@@ -172,6 +172,22 @@ dose_calc = \
 # calc = json.load(file)
 # file.close()
 
-## Perform calculation
+# Perform calculation
 res = thinknode.do_calculation(iam, dose_calc, id)
 dl.data("Calculation Result: ", res.text)
+
+
+# Call compute_pdd
+# pdd_calc = \
+#     thinknode.function("dosimetry", "compute_pdd",
+#         [
+#             thinknode.value(150), # range
+#             thinknode.value(50), # mod
+#             thinknode.value(2250), # sad
+#             thinknode.value(2250), # ssd
+#             thinknode.value(1), # spacing
+#             thinknode.reference("557b40b1ee000020000c") # machine
+#         ])
+
+# res_pdd = thinknode.do_calculation(iam, pdd_calc, id)
+# dl.data("Calculation PDD Result: ", res_pdd.text)

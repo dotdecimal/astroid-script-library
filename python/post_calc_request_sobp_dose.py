@@ -6,7 +6,8 @@
 import json
 from lib import thinknode_worker as thinknode
 from lib import decimal_logging as dl
-from lib import dosimetry_types as dt
+from lib import rt_types as rt_types
+from lib import vtk_worker as vtk
 
 # Get IAM ids
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
@@ -78,11 +79,11 @@ def make_target():
             ])
 
 def make_view():    
-    ds = dt.box_2d()
+    ds = rt_types.box_2d()
     ds.corner = [-100, -100]
     ds.size = [200, 200]
 
-    mv = dt.multiple_source_view()
+    mv = rt_types.multiple_source_view()
     mv.display_surface = ds
     mv.center = [0, 0, 0]
     mv.direction = [0, 1, 0]
@@ -92,7 +93,7 @@ def make_view():
     return mv
 
 def compute_aperture():
-    ap_params = dt.aperture_creation_params()
+    ap_params = rt_types.aperture_creation_params()
 
     # ap_params.targets.append(thinknode.reference("55802bcf49400020000c")) # Use existing ISS target
     ap_params.targets.append(make_target())
@@ -138,8 +139,8 @@ dose_calc = \
 
 ## Write calc request to json file (debugging)
 # with open('dump_request.json', 'w') as outfile:
-#    json.dump(dose_calc, outfile)
+   # json.dump(dose_calc, outfile)
 
 ## Perform calculation
 res = thinknode.do_calculation(iam, dose_calc, True)
-dl.data("Calculation Result: ", res.text)
+dl.data("Calculation Result: ", res)
