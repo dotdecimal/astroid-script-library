@@ -5,16 +5,18 @@
 
 import json
 from lib import thinknode_worker as thinknode
+from lib import dosimetry_worker as dosimetry
 from lib import decimal_logging as dl
 from lib import rt_types as rt_types
 from lib import vtk_worker as vtk
 
 # Get IAM ids
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
+iam["app_name"] = "dosimetry" # ensure app name is set correctly
 
 def make_grid(corner, size, spacing):
     return \
-        thinknode.function("dosimetry", "make_grid_for_box_" + str(len(corner)) + "d",
+        thinknode.function(iam["app_name"], "make_grid_for_box_" + str(len(corner)) + "d",
             [
                 thinknode.value({"corner": corner, "size": size}),
                 thinknode.value(spacing)
@@ -22,7 +24,7 @@ def make_grid(corner, size, spacing):
 
 def make_water_phantom(corner, size, spacing):
     return \
-        thinknode.function("dosimetry", "create_uniform_image_on_grid_3d",
+        thinknode.function(iam["app_name"], "create_uniform_image_on_grid_3d",
             [
                 make_grid(corner, size, spacing),
                 thinknode.value(1),
@@ -40,14 +42,14 @@ def make_dose_points(pointCount):
 
 def get_example_sobp_machine(id):
     return \
-        thinknode.function("dosimetry", "get_example_sobp_machine",
+        thinknode.function(iam["app_name"], "get_example_sobp_machine",
             [
                 thinknode.value(id),
             ])
 
 def make_layers(sad, range, mod):
     return \
-        thinknode.function("dosimetry", "compute_double_scattering_layers",
+        thinknode.function(iam["app_name"], "compute_double_scattering_layers",
             [
                 get_example_sobp_machine(0),
                 thinknode.value(sad),
@@ -63,7 +65,7 @@ def make_aperture(downstream_edge, mill_radius):
     aperture_points.append([-50.,-50.])
     aperture_points.append([-50.,50.])
     return \
-        thinknode.function("dosimetry", "make_aperture",
+        thinknode.function(iam["app_name"], "make_aperture",
             [
                 thinknode.value(aperture_points),
                 thinknode.value(downstream_edge),
@@ -72,7 +74,7 @@ def make_aperture(downstream_edge, mill_radius):
 
 def make_target():
     return \
-        thinknode.function("dosimetry", "make_cube",
+        thinknode.function(iam["app_name"], "make_cube",
             [      
                 thinknode.value([-32, -20, -30]),
                 thinknode.value([16, -10, 30])
@@ -100,7 +102,7 @@ def compute_aperture():
 
     # Make aperture_creation_params
     args = {}
-    args["targets"] = thinknode.array_named_type("dosimetry", "triangle_mesh", ap_params.targets)
+    args["targets"] = thinknode.array_named_type("rt_types", "triangle_mesh", ap_params.targets)
     args["target_margin"] = thinknode.value(20.0)
     args["view"] = thinknode.value(thinknode.to_json(make_view()))
     args["mill_radius"] = thinknode.value(0.0)
@@ -112,9 +114,9 @@ def compute_aperture():
     args["downstream_edge"] = thinknode.value(250.5)
 
     return \
-        thinknode.function("dosimetry", "compute_aperture",
+        thinknode.function(iam["app_name"], "compute_aperture",
             [
-                thinknode.structure_named_type("dosimetry", "aperture_creation_params", args)
+                thinknode.structure_named_type("rt_types", "aperture_creation_params", args)
             ])
 
 beam_geometry = \
@@ -125,7 +127,7 @@ beam_geometry = \
 
 # Call compute_sobp_pb_dose2
 dose_calc = \
-    thinknode.function("dosimetry", "compute_sobp_pb_dose2",
+    thinknode.function(iam["app_name"], "compute_sobp_pb_dose2",
         [
             make_water_phantom([-100, -100, -100], [200, 200, 200], [2, 2, 2]), #stopping_power_image
             thinknode.value(make_dose_points(181)), # dose_points
@@ -139,7 +141,7 @@ dose_calc = \
 
 ## Write calc request to json file (debugging)
 # with open('dump_request.json', 'w') as outfile:
-   # json.dump(dose_calc, outfile)
+#    json.dump(dose_calc, outfile)
 
 ## Perform calculation
 res = thinknode.do_calculation(iam, dose_calc, True)

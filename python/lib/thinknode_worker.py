@@ -25,7 +25,7 @@ def assert_success(res):
 # Read the thinknode config file
 #   param path: relative location of config file
 def read_config(path):
-    file = open(path)
+    file = open(sys.path[0] + '/' + path)
     config = json.load(file)
     file.close()
     return config
@@ -71,14 +71,19 @@ def authenticate(config):
 def do_calculation(config, json_data, return_data=True):
     # Get calculation ID
     dl.event("Sending Calculation...")
+    loc = sys.path[0]
+    if loc[len(loc)-1] != '\\':
+        loc += '\\'
     res = requests.post(config["api_url"] + '/calc/?context=' + config["context_id"], 
         data = json.dumps(json_data), 
         headers = {'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
     calculation_id = res.json()["id"]
     dl.data("Calculation ID: ", calculation_id)
-
-    if not os.path.isfile('calculations\\' + calculation_id + ".txt"):
+    # Make sure calculation folder exists
+    if not os.path.exists(loc + 'calculations\\'):
+        os.makedirs(loc + 'calculations\\')
+    if not os.path.isfile(loc + 'calculations\\' + calculation_id + ".txt"):
         # Get calculation Status - using long polling
         dl.event("Checking Calculation Status...")
         res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["context_id"], 
@@ -90,10 +95,11 @@ def do_calculation(config, json_data, return_data=True):
         if res.json()["type"] == "failed":
             dl.error("Server Responded: " + res.text)
             dl.event("Getting error logs for calculation")
-            res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR', 
+            log_res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR', 
                 headers = {'Authorization': 'Bearer ' + config["user_token"]})
             assert_success(res)
             return json.loads(res.text)
+            # return res.text
         else:
             # Get calculation Result
             dl.event("Fetching Calculation Result...")
@@ -102,7 +108,7 @@ def do_calculation(config, json_data, return_data=True):
             # dl.data("Calculation Result: ", res.text)
             assert_success(res)
 
-            f = open('calculations\\' + str(calculation_id) + ".txt", 'a')
+            f = open(loc + 'calculations\\' + str(calculation_id) + ".txt", 'a')
             f.write(res.text)
             f.close()
 
@@ -111,7 +117,7 @@ def do_calculation(config, json_data, return_data=True):
             else:
                 return calculation_id
     else:
-        f = open('calculations\\' + calculation_id + ".txt")
+        f = open(loc + 'calculations\\' + calculation_id + ".txt")
         data = str(f.read())
         #dl.data("Calculation Result: ", data)
         
@@ -159,8 +165,20 @@ def do_calc_item_property(config, prop_name, schema, ref_id):
     dl.event('do_calc_item_property: ' + prop_name)
     prop_calc = property(value(prop_name), schema, reference(ref_id))
     prop = do_calculation(config, prop_calc, False)
-    dl.debug('prop: ' + prop_name + ' :: ' + prop)
-    return prop
+    dl.debug(str(prop))
+    prop_text = str(prop)
+    if "invalid_field" in prop_text:
+        return False
+    else:    
+        dl.debug('prop: ' + prop_name + ' :: ' + prop)
+        return prop
+
+def do_calc_structure(config, schema, params):
+    struct_calc = structure(schema, params)
+    print (struct_calc)
+    strut = do_calculation(iam, struct_calc, False)
+    dl.debug('strut: ' + strut)
+    return strut
 
 # Manually post a calculation request to extract an item out of an array
 #   param config: connection settings (url, user token, and ids for context and realm)
@@ -181,7 +199,20 @@ def do_calc_array_item(config, index, schema, ref_id):
 def post_immutable(config, json_data, obj_name):
     dl.event("Posting object to ISS...")
     # Post immutable object
-    res = requests.post(config["api_url"] + '/iss/named/' + config["app_name"] + "/" + obj_name + '/?context=' + config["context_id"], 
+    res = requests.post(config["api_url"] + '/iss/named/' + "rt_types" + "/" + obj_name + '/?context=' + config["context_id"], 
+        data = json.dumps(json_data), 
+        headers = {'Authorization': 'Bearer ' + config["user_token"]})
+    dl.event("    Immutable id: " + res.text)
+    return res
+
+# Post immutable array of objects to ISS
+#   param config: connection settings (url, user token, and ids for context and realm)
+#   param json_data: immutable array object in json format
+#   param obj_name: object name of items within the array to post
+def post_immutable_array(config, json_data, obj_name):
+    dl.event("Posting array object to ISS...")
+    # Post immutable object
+    res = requests.post(config["api_url"] + '/iss/array/named/' + "rt_types" + "/" + obj_name + '/?context=' + config["context_id"], 
         data = json.dumps(json_data), 
         headers = {'Authorization': 'Bearer ' + config["user_token"]})
     dl.event("    Immutable id: " + res.text)
@@ -235,7 +266,7 @@ def schema_array_named_type(type_name):
                 "element_schema": { \
                     "type": "named_type", \
                     "named_type": { \
-                        "app": "dosimetry", \
+                        "app": "rt_types", \
                         "name": type_name } } } }
 
 # Create a schema for an array of standard types
@@ -252,7 +283,7 @@ def schema_array_standard_type(type_name):
 def schema_named_type(type_name):
     return { "type": "named_type", \
             "named_type": { \
-                "app": "dosimetry", \
+                "app": "rt_types", \
                 "name": type_name } }
 
 # Create a schema for a standard type
@@ -269,6 +300,18 @@ def schema_standard_type(type_name):
 #   param v: value (alpha numeric)
 def value(v):
     return { "type": "value", "value": v }
+
+# Create an optional argument request
+#   param o: fully formatted item to make optional 
+def some(o):
+    return  { "type": "some", "some": o}
+
+# Create an optional value request
+#   param v: value (alpha numeric)
+def optional_value(v):
+    return some(value(v))    
+
+none = value({ "type": "none", "none": None })
 
 # Create a reference request.
 #   param id: immutable storage id of the object

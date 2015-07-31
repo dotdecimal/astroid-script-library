@@ -44,10 +44,9 @@ def debug(message):
 def linebreak():
 	print('\n')
 
-
 def data(message, data):
 	mes ='        ' + message
-	print(log_time() + Fore.CYAN + Style.BRIGHT + mes + Fore.RESET + ' ' + data  + Fore.RESET + Back.RESET + Style.RESET_ALL)
+	print(log_time() + Fore.CYAN + Style.BRIGHT + mes + Fore.RESET + ' ' + str(data)  + Fore.RESET + Back.RESET + Style.RESET_ALL)
 	# print ('\n')
 
 def debug_data(message, data):

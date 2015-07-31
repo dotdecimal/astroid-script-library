@@ -25,9 +25,7 @@ Provided Example File Usages:
 3) post_calc_request_sobp_dose_with_shifter.py
 	- Manually constructs an entire sobp dose calculation request and all required datatypes and using a constructed degrader. No prior postings to ISS is required for this script to run.
 	  All data types are constructed inline with the calling calculation request or posted with running the python script.
-4) post_immutable_obect_ct_image.py
-	- TODO: 
-5) post_iss_object_generic.py
+4) post_iss_object_generic.py
     - Posts any prebuilt json named_type dosimetry object to thinknode ISS.
 	
 Decimal Provided Libraries:
@@ -39,7 +37,11 @@ Decimal Provided Libraries:
 3) thinknode_worker.py
 	- Main worker to perform thinknode IAM, ISS, and calculation requests.
 	- Make sure to update thinknode.cfg prior to trying to authenticate with thinknode (see below)
-4) vtk_worker.py
+4) dosimetry_worker.py
+    - Provides functions to perform basic dosimetry calculation requests to make complex rt_types
+5) dicom_worker.py
+    - Provides functions to perform basic dicom parsing and translating into defined rt_types
+6) vtk_worker.py
     - Provides functions to write common rt_types into .vtk files to be opened in visualizers (e.g. Paraview)
 	- Example Usage:
         # Perform calculation (note: make_water_phantom() is a example function provided in the post_calc_request_sobp_dose.py file)
