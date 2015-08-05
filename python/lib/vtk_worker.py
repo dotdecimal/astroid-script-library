@@ -15,7 +15,7 @@ def write_vtk_image3(file_path, image):
     stream.write("# vtk DataFile Version 2.0\n")
     stream.write("CRADLE IMAGE3\n")
     stream.write("ASCII\n")
-    stream.write("DATASET RECTILINEAR_GRID\n")
+    stream.write("DATASET UNSTRUCTURED_GRID\n")
 
     coords = ["X", "Y", "Z"]
 
@@ -52,13 +52,13 @@ def write_vtk_image2(file_path, image):
 
     # Write header information
     stream.write("# vtk DataFile Version 2.0\n")
-    stream.write("CRADLE IMAGE3\n")
+    stream.write("CRADLE IMAGE2\n")
     stream.write("ASCII\n")
     stream.write("DATASET UNSTRUCTURED_GRID\n")
 
     # Write vertices to stream
-    ni = image['size'][0]
-    nj = image['size'][1]
+    ni = int(image['size'][0])
+    nj = int(image['size'][1])
     stream.write("POINTS " + str(ni * nj) + " double\n")
     k = 0
     originX = image['origin'][0]
@@ -67,18 +67,19 @@ def write_vtk_image2(file_path, image):
     stepY = image['axes'][1][1]
     for j in range(nj):
         for i in range(ni):
-            stream.write(originX + str(double(i) * stepX) + " " + str(originY + double(j) * stepY) + " " + image['pixels'][k] + "\n")
+            stream.write(str(originX + i * stepX) + " " + str(originY + j * stepY) + " " + str(image['pixels'][k]) + "\n")
             k += 1
 
     # Write faces to stream
-    face_count = (image['size'][0] - 1) * (image['size'][1] -1)
+    face_count = int((image['size'][0] - 1) * (image['size'][1] -1))
     stream.write("CELLS " + str(face_count) + " " + str(face_count * 5) + "\n")
     for j in range(nj - 1):
         for i in range(ni - 1):
             stream.write("4 " + str(j * ni + i) + " " + str((j+1) * ni + i) + " " + str((j+1) * ni + i + 1) + " " + str(j * ni + i + 1) + "\n")
+            # stream << "4 " << j * ni + i << " " << (j+1) * ni + i << " " << (j+1) * ni + i + 1 << " " << j * ni + i + 1 << "\n";
 
     # Write cell types to stream
-    stream.write("CELL_TYPES " + face_count + "\n")
+    stream.write("CELL_TYPES " + str(face_count) + "\n")
     for i in range(face_count):
         stream.write("7\n")
 

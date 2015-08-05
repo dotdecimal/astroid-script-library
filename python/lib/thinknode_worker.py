@@ -68,7 +68,9 @@ def authenticate(config):
 #   note: see post_calculation if you just want the calculation ID and don't need to wait for the calculation to finish or get results
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param json_data: calculation request in json format
-def do_calculation(config, json_data, return_data=True):
+#   param return_data: When True the data object will be returned, when false the thinknode id for the object will be returned
+#   param return_error: When False the script will exit when error is found, when True the sciprt will return the error
+def do_calculation(config, json_data, return_data=True, return_error=False):
     # Get calculation ID
     dl.event("Sending Calculation...")
     loc = sys.path[0]
@@ -81,9 +83,8 @@ def do_calculation(config, json_data, return_data=True):
     calculation_id = res.json()["id"]
     dl.data("Calculation ID: ", calculation_id)
     # Make sure calculation folder exists
-    if not os.path.exists(loc + 'calculations\\'):
+    if not os.path.isfile(loc + '/calculations\\' + calculation_id + ".txt"):
         os.makedirs(loc + 'calculations\\')
-    if not os.path.isfile(loc + 'calculations\\' + calculation_id + ".txt"):
         # Get calculation Status - using long polling
         dl.event("Checking Calculation Status...")
         res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["context_id"], 
@@ -97,8 +98,10 @@ def do_calculation(config, json_data, return_data=True):
             dl.event("Getting error logs for calculation")
             log_res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR', 
                 headers = {'Authorization': 'Bearer ' + config["user_token"]})
-            assert_success(res)
-            return json.loads(res.text)
+            if return_error:
+                return json.loads(res.text)
+            else:
+                assert_success(res)
             # return res.text
         else:
             # Get calculation Result
@@ -108,7 +111,7 @@ def do_calculation(config, json_data, return_data=True):
             # dl.data("Calculation Result: ", res.text)
             assert_success(res)
 
-            f = open(loc + 'calculations\\' + str(calculation_id) + ".txt", 'a')
+            f = open(loc + '/calculations\\' + str(calculation_id) + ".txt", 'a')
             f.write(res.text)
             f.close()
 
@@ -117,7 +120,7 @@ def do_calculation(config, json_data, return_data=True):
             else:
                 return calculation_id
     else:
-        f = open(loc + 'calculations\\' + calculation_id + ".txt")
+        f = open(loc + '/calculations\\' + calculation_id + ".txt")
         data = str(f.read())
         #dl.data("Calculation Result: ", data)
         
@@ -164,11 +167,12 @@ def post_calculation(config, json_data):
 def do_calc_item_property(config, prop_name, schema, ref_id):
     dl.event('do_calc_item_property: ' + prop_name)
     prop_calc = property(value(prop_name), schema, reference(ref_id))
-    prop = do_calculation(config, prop_calc, False)
+    prop = do_calculation(config, prop_calc, False, True)
     dl.debug(str(prop))
     prop_text = str(prop)
     if "invalid_field" in prop_text:
-        return False
+        dl.error('Calc failed::do_calc_item_property: invalid index')
+        sys.exit()
     else:    
         dl.debug('prop: ' + prop_name + ' :: ' + prop)
         return prop
@@ -189,8 +193,12 @@ def do_calc_array_item(config, index, schema, ref_id):
     dl.event('get_array_item: ')
     item_calc = array_item(value(index), schema, reference(ref_id))
     ai = do_calculation(config, item_calc, False)
-    dl.debug('array_item: ' + ai)
-    return ai
+    if 'failed' in ai:
+        dl.error('Calc failed::do_calc_array_item:invalid index')
+        sys.exit()
+    else:
+        dl.debug('array_item: ' + str(ai))
+        return ai
 
 # Post immutable object to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
