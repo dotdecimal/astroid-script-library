@@ -1,8 +1,8 @@
 # Copyright (c) 2015 .decimal, Inc. All rights reserved.
 # Author:	Travis DeMint
-# Date:		07/09/2015
+# Date:		08/07/2015
 # Desc:		Provides access to type usage for all types
-# RT_Types Version:		1.0.1.10
+# RT_Types Version:		1.0.0.2
 
 from collections import OrderedDict
 import base64
@@ -104,6 +104,10 @@ def parse_bytes_3u(buf, offset=0):
 		offset += 6
 	return data
 
+def parse_bytes_not_defined(buf, offset=0):
+	print("Parse Bytes Function Not Defined, Contact .decimal")
+	sys.exit()
+
 class blob_type(object):
 
 	def __init__(self):
@@ -140,6 +144,49 @@ class adaptive_grid(object):
 					self.extents.from_json(v)
 				else:
 					setattr(self, k, v)
+
+class adaptive_grid_region(object):
+
+	#Initialize
+	def __init__(self):
+		self.region = optimized_triangle_mesh()
+		self.maximum_spacing = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['region'] = self.region.expand_data()
+		data['maximum_spacing'] = self.maximum_spacing
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'region':
+					self.region.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class adaptive_grid_voxel(object):
+
+	#Initialize
+	def __init__(self):
+		self.index = 0.0 
+		self.volume_offset = 0.0 
+		self.inside_count = 0.0 
+		self.surface_count = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['index'] = self.index
+		data['volume_offset'] = self.volume_offset
+		data['inside_count'] = self.inside_count
+		data['surface_count'] = self.surface_count
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
 
 class aperture(object):
 
@@ -209,7 +256,6 @@ class aperture_creation_params(object):
 	def __init__(self):
 		self.targets = [] 
 		self.target_margin = 0.0 
-		self.view = multiple_source_view()
 		self.mill_radius = 0.0 
 		self.organs = [] 
 		self.half_planes = [] 
@@ -227,7 +273,6 @@ class aperture_creation_params(object):
 			target.append(s.expand_data())
 		data['targets'] = target
 		data['target_margin'] = self.target_margin
-		data['view'] = self.view.expand_data()
 		data['mill_radius'] = self.mill_radius
 		organ = []
 		for x in self.organs:
@@ -265,10 +310,7 @@ class aperture_creation_params(object):
 	def from_json(self, jdict):
 		for k, v in jdict.items():
 			if hasattr(self,k):
-				if k == 'view':
-					self.view.from_json(v)
-				else:
-					setattr(self, k, v)
+				setattr(self, k, v)
 
 class aperture_half_plane(object):
 
@@ -352,6 +394,53 @@ class aperture_target(object):
 					self.structure.from_json(v)
 				else:
 					setattr(self, k, v)
+
+class app_level_page(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# app_contents
+		# app_info
+		# settings
+		# notifications
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
+
+class base_zoom_type(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# stretch_to_fit
+		# fit_scene
+		# fit_scene_width
+		# fit_scene_height
+		# fill_canvas
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
 
 class beam_geometry(object):
 
@@ -530,6 +619,64 @@ class box_3d(object):
 			if hasattr(self,k):
 				setattr(self, k, v)
 
+class box_4d(object):
+
+	#Initialize
+	def __init__(self):
+		self.corner = [] 
+		self.size = [] 
+
+	def expand_data(self):
+		data = {}
+		data['corner'] = self.corner
+		data['size'] = self.size
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class camera(object):
+
+	#Initialize
+	def __init__(self):
+		self.zoom = 0.0 
+		self.position = [] 
+
+	def expand_data(self):
+		data = {}
+		data['zoom'] = self.zoom
+		data['position'] = self.position
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class camera3(object):
+
+	#Initialize
+	def __init__(self):
+		self.zoom = 0.0 
+		self.position = [] 
+		self.direction = [] 
+		self.up = [] 
+
+	def expand_data(self):
+		data = {}
+		data['zoom'] = self.zoom
+		data['position'] = self.position
+		data['direction'] = self.direction
+		data['up'] = self.up
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
 class channel_type(object):
 
 	#Initialize
@@ -559,12 +706,74 @@ class channel_type(object):
 		else:
 			self.name = jdict;
 
+class circle(object):
+
+	#Initialize
+	def __init__(self):
+		self.center = [] 
+		self.radius = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['center'] = self.center
+		data['radius'] = self.radius
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class color_map_level(object):
+
+	#Initialize
+	def __init__(self):
+		self.level = 0.0 
+		self.color = rgba()
+
+	def expand_data(self):
+		data = {}
+		data['level'] = self.level
+		data['color'] = self.color.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'color':
+					self.color.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class colored_vertex_2d(object):
+
+	#Initialize
+	def __init__(self):
+		self.position = [] 
+		self.color = rgba()
+
+	def expand_data(self):
+		data = {}
+		data['position'] = self.position
+		data['color'] = self.color.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'color':
+					self.color.from_json(v)
+				else:
+					setattr(self, k, v)
+
 class ct_image_set(object):
 
 	#Initialize
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -576,6 +785,8 @@ class ct_image_set(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -612,6 +823,8 @@ class ct_image_slice(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -623,6 +836,8 @@ class ct_image_slice(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -652,6 +867,26 @@ class ct_image_slice(object):
 					self.study.from_json(v)
 				else:
 					setattr(self, k, v)
+
+class data_reporting_parameters(object):
+
+	#Initialize
+	def __init__(self):
+		self.label = "" 
+		self.units = "" 
+		self.digits = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['label'] = self.label
+		data['units'] = self.units
+		data['digits'] = self.digits
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
 
 class degrader_geometry(object):
 
@@ -739,6 +974,8 @@ class dicom_item(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -747,6 +984,8 @@ class dicom_item(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -773,6 +1012,8 @@ class dicom_metadata(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -784,6 +1025,8 @@ class dicom_metadata(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -899,6 +1142,8 @@ class dicom_structure_geometry(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -908,6 +1153,8 @@ class dicom_structure_geometry(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -940,6 +1187,8 @@ class dicom_structure_geometry_slice(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -951,6 +1200,8 @@ class dicom_structure_geometry_slice(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -1010,8 +1261,8 @@ class dij_matrix(object):
 		data = {}
 		data['n_points'] = self.n_points
 		data['n_beamlets'] = self.n_beamlets
-		data['rows'] = parse_bytes_oin(base64.b64decode(self.rows['blob']))
-		data['entries'] = parse_bytes_ose(base64.b64decode(self.entries['blob']))
+		data['rows'] = parse_bytes_2u(base64.b64decode(self.rows['blob']))
+		data['entries'] = parse_bytes_2d(base64.b64decode(self.entries['blob']))
 		return data
 
 	def from_json(self, jdict):
@@ -1036,6 +1287,171 @@ class dij_row(object):
 		for k, v in jdict.items():
 			if hasattr(self,k):
 				setattr(self, k, v)
+
+class display_layout_type(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# main_plus_row
+		# main_plus_column
+		# two_rows
+		# two_columns
+		# squares
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
+
+class display_state(object):
+
+	#Initialize
+	def __init__(self):
+		self.controls_expanded = False 
+
+	def expand_data(self):
+		data = {}
+		data['controls_expanded'] = self.controls_expanded
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class display_view_composition(object):
+
+	#Initialize
+	def __init__(self):
+		self.id = "" 
+		self.label = "" 
+		self.views = [] 
+		self.layout = display_layout_type()
+
+	def expand_data(self):
+		data = {}
+		data['id'] = self.id
+		data['label'] = self.label
+		view = []
+		for x in self.views:
+			s = display_view_instance()
+			s.from_json(x)
+			view.append(s.expand_data())
+		data['views'] = view
+		data['layout'] = self.layout.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'layout':
+					self.layout.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class display_view_instance(object):
+
+	#Initialize
+	def __init__(self):
+		self.instance_id = "" 
+		self.type_id = "" 
+
+	def expand_data(self):
+		data = {}
+		data['instance_id'] = self.instance_id
+		data['type_id'] = self.type_id
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class divergent_grid(object):
+
+	#Initialize
+	def __init__(self):
+		self.isUniform = False 
+		self.z_position = 0.0 
+		self.source_dist = 0.0 
+		self.cax_length = 0.0 
+		self.grid = regular_grid_2d()
+		blob = blob_type()
+		self.rays = blob.toStr()
+		blob = blob_type()
+		self.data = blob.toStr()
+
+	def expand_data(self):
+		data = {}
+		data['isUniform'] = self.isUniform
+		data['z_position'] = self.z_position
+		data['source_dist'] = self.source_dist
+		data['cax_length'] = self.cax_length
+		data['grid'] = self.grid.expand_data()
+		data['rays'] = parse_bytes_not_defined(base64.b64decode(self.rays['blob']))
+		data['data'] = parse_bytes_not_defined(base64.b64decode(self.data['blob']))
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'grid':
+					self.grid.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class dose_summation_type(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# PLAN
+		# FRACTION
+		# BEAM
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
+
+class dose_type(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# PHYSICAL
+		# EFFECTIVE
+		# ERROR
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
 
 class double_scattering_machine_spec(object):
 
@@ -1128,6 +1544,39 @@ class double_scattering_step(object):
 			if hasattr(self,k):
 				setattr(self, k, v)
 
+class drr_options(object):
+
+	#Initialize
+	def __init__(self):
+		self.image_display_options = gray_image_display_options()
+		self.min_z = 0.0 
+		self.max_z = 0.0 
+		self.min_value = 0.0 
+		self.max_value = 0.0 
+		self.image_z = 0.0 
+		self.sizing = regular_grid_2d()
+
+	def expand_data(self):
+		data = {}
+		data['image_display_options'] = self.image_display_options.expand_data()
+		data['min_z'] = self.min_z
+		data['max_z'] = self.max_z
+		data['min_value'] = self.min_value
+		data['max_value'] = self.max_value
+		data['image_z'] = self.image_z
+		data['sizing'] = self.sizing.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'image_display_options':
+					self.image_display_options.from_json(v)
+				elif k == 'sizing':
+					self.sizing.from_json(v)
+				else:
+					setattr(self, k, v)
+
 class filesystem_item(object):
 
 	#Initialize
@@ -1156,6 +1605,140 @@ class filesystem_item_contents(object):
 		self.type = ""
 		self.directory = []
 		self.file = blob_type()
+
+class function_sample(object):
+
+	#Initialize
+	def __init__(self):
+		self.value = 0.0 
+		self.delta = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['value'] = self.value
+		data['delta'] = self.delta
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class gaussian_sample_point(object):
+
+	#Initialize
+	def __init__(self):
+		self.point = [] 
+		self.weight = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['point'] = self.point
+		data['weight'] = self.weight
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class graph_line_style_info(object):
+
+	#Initialize
+	def __init__(self):
+		self.color = rgba()
+
+	def expand_data(self):
+		data = {}
+		data['color'] = self.color.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'color':
+					self.color.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class gray_image_display_options(object):
+
+	#Initialize
+	def __init__(self):
+		self.level = 0.0 
+		self.window = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['level'] = self.level
+		data['window'] = self.window
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class grid_cell_inclusion_info(object):
+
+	#Initialize
+	def __init__(self):
+		self.cells_inside = [] 
+
+	def expand_data(self):
+		data = {}
+		cells_insid = []
+		for x in self.cells_inside:
+			s = weighted_grid_index()
+			s.from_json(x)
+			cells_insid.append(s.expand_data())
+		data['cells_inside'] = cells_insid
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class gui_task_state(object):
+
+	#Initialize
+	def __init__(self):
+		self.type = "" 
+		self.completed_subtask_count = 0.0 
+		self.canceled_subtask_count = 0.0 
+		self.open_subtask_count = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['type'] = self.type
+		data['completed_subtask_count'] = self.completed_subtask_count
+		data['canceled_subtask_count'] = self.canceled_subtask_count
+		data['open_subtask_count'] = self.open_subtask_count
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class id_and_type(object):
+
+	#Initialize
+	def __init__(self):
+		self.id = "" 
+		self.type = "" 
+
+	def expand_data(self):
+		data = {}
+		data['id'] = self.id
+		data['type'] = self.type
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
 
 class image_1d(object):
 
@@ -1322,6 +1905,102 @@ class image_geometry_3d(object):
 				else:
 					setattr(self, k, v)
 
+class image_geometry_4d(object):
+
+	#Initialize
+	def __init__(self):
+		self.slicing = [] 
+		self.regular_grid = regular_grid_4d()
+
+	def expand_data(self):
+		data = {}
+		data['slicing'] = self.slicing
+		data['regular_grid'] = self.regular_grid.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'regular_grid':
+					self.regular_grid.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class image_slice_1d(object):
+
+	#Initialize
+	def __init__(self):
+		self.axis = 0.0 
+		self.position = 0.0 
+		self.thickness = 0.0 
+		self.content = image_1d()
+
+	def expand_data(self):
+		data = {}
+		data['axis'] = self.axis
+		data['position'] = self.position
+		data['thickness'] = self.thickness
+		data['content'] = self.content.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'content':
+					self.content.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class image_slice_2d(object):
+
+	#Initialize
+	def __init__(self):
+		self.axis = 0.0 
+		self.position = 0.0 
+		self.thickness = 0.0 
+		self.content = image_2d()
+
+	def expand_data(self):
+		data = {}
+		data['axis'] = self.axis
+		data['position'] = self.position
+		data['thickness'] = self.thickness
+		data['content'] = self.content.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'content':
+					self.content.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class image_slice_3d(object):
+
+	#Initialize
+	def __init__(self):
+		self.axis = 0.0 
+		self.position = 0.0 
+		self.thickness = 0.0 
+		self.content = image_3d()
+
+	def expand_data(self):
+		data = {}
+		data['axis'] = self.axis
+		data['position'] = self.position
+		data['thickness'] = self.thickness
+		data['content'] = self.content.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'content':
+					self.content.from_json(v)
+				else:
+					setattr(self, k, v)
+
 class interpolated_function(object):
 
 	#Initialize
@@ -1369,6 +2048,126 @@ class irregularly_sampled_function(object):
 				else:
 					setattr(self, k, v)
 
+class levelset2(object):
+
+	#Initialize
+	def __init__(self):
+		self.values = image_2d()
+
+	def expand_data(self):
+		data = {}
+		data['values'] = self.values.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'values':
+					self.values.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class line_profile(object):
+
+	#Initialize
+	def __init__(self):
+		self.axis = 0.0 
+		self.position = 0.0 
+		self.color = rgb()
+
+	def expand_data(self):
+		data = {}
+		data['axis'] = self.axis
+		data['position'] = self.position
+		data['color'] = self.color.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'color':
+					self.color.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class line_stipple(object):
+
+	#Initialize
+	def __init__(self):
+		self.factor = 0.0 
+		self.pattern = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['factor'] = self.factor
+		data['pattern'] = self.pattern
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class line_stipple_type(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# none
+		# solid
+		# dashed
+		# dotted
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
+
+class line_strip(object):
+
+	#Initialize
+	def __init__(self):
+		self.vertices = [] 
+
+	def expand_data(self):
+		data = {}
+		data['vertices'] = self.vertices
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class line_style(object):
+
+	#Initialize
+	def __init__(self):
+		self.width = 0.0 
+		self.stipple = line_stipple()
+
+	def expand_data(self):
+		data = {}
+		data['width'] = self.width
+		data['stipple'] = self.stipple.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'stipple':
+					self.stipple.from_json(v)
+				else:
+					setattr(self, k, v)
+
 class linear_function(object):
 
 	#Initialize
@@ -1380,6 +2179,52 @@ class linear_function(object):
 		data = {}
 		data['intercept'] = self.intercept
 		data['slope'] = self.slope
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class mco_navigation_objective(object):
+
+	#Initialize
+	def __init__(self):
+		self.is_maximization = False 
+		self.range = min_max()
+
+	def expand_data(self):
+		data = {}
+		data['is_maximization'] = self.is_maximization
+		data['range'] = self.range.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'range':
+					self.range.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class mco_navigation_system(object):
+
+	#Initialize
+	def __init__(self):
+		self.plan_count = 0.0 
+		self.objectives = [] 
+		self.p_matrix = [] 
+
+	def expand_data(self):
+		data = {}
+		data['plan_count'] = self.plan_count
+		objective = []
+		for x in self.objectives:
+			s = mco_navigation_objective()
+			s.from_json(x)
+			objective.append(s.expand_data())
+		data['objectives'] = objective
+		data['p_matrix'] = self.p_matrix
 		return data
 
 	def from_json(self, jdict):
@@ -1429,6 +2274,29 @@ class multiple_source_view(object):
 			if hasattr(self,k):
 				if k == 'display_surface':
 					self.display_surface.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class notable_data_point(object):
+
+	#Initialize
+	def __init__(self):
+		self.label = "" 
+		self.color = rgb()
+		self.position = [] 
+
+	def expand_data(self):
+		data = {}
+		data['label'] = self.label
+		data['color'] = self.color.expand_data()
+		data['position'] = self.position
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'color':
+					self.color.from_json(v)
 				else:
 					setattr(self, k, v)
 
@@ -1484,6 +2352,26 @@ class optimized_triangle_mesh(object):
 				else:
 					setattr(self, k, v)
 
+class out_of_plane_information(object):
+
+	#Initialize
+	def __init__(self):
+		self.axis = 0.0 
+		self.thickness = 0.0 
+		self.position = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['axis'] = self.axis
+		data['thickness'] = self.thickness
+		data['position'] = self.position
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
 class outside_domain_policy(object):
 
 	#Initialize
@@ -1511,6 +2399,8 @@ class patient(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -1526,6 +2416,8 @@ class patient(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -1611,6 +2503,225 @@ class patient_sex(object):
 		else:
 			self.name = jdict;
 
+class pbs_deliverable_energy(object):
+
+	#Initialize
+	def __init__(self):
+		self.r90 = 0.0 
+		self.energy = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['r90'] = self.r90
+		data['energy'] = self.energy
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class pbs_layer_spacing_strategy(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# constant
+		# distal_w80
+		# variable_w80
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
+
+class pbs_machine_spec(object):
+
+	#Initialize
+	def __init__(self):
+		self.modeled_energies = [] 
+		self.deliverable_energies = [] 
+		self.source_rotation_function = linear_function()
+		self.aperture_sad = [] 
+		self.sad = [] 
+		self.halo_sigma_sq_function = quadratic_function()
+
+	def expand_data(self):
+		data = {}
+		modeled_energie = []
+		for x in self.modeled_energies:
+			s = pbs_modeled_energy()
+			s.from_json(x)
+			modeled_energie.append(s.expand_data())
+		data['modeled_energies'] = modeled_energie
+		deliverable_energie = []
+		for x in self.deliverable_energies:
+			s = pbs_deliverable_energy()
+			s.from_json(x)
+			deliverable_energie.append(s.expand_data())
+		data['deliverable_energies'] = deliverable_energie
+		data['source_rotation_function'] = self.source_rotation_function.expand_data()
+		data['aperture_sad'] = self.aperture_sad
+		data['sad'] = self.sad
+		data['halo_sigma_sq_function'] = self.halo_sigma_sq_function.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'source_rotation_function':
+					self.source_rotation_function.from_json(v)
+				elif k == 'halo_sigma_sq_function':
+					self.halo_sigma_sq_function.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class pbs_modeled_energy(object):
+
+	#Initialize
+	def __init__(self):
+		self.r90 = 0.0 
+		self.w80 = 0.0 
+		self.energy = 0.0 
+		self.sigma = pbs_optical_sigma()
+		self.pristine_peak = irregularly_sampled_function()
+
+	def expand_data(self):
+		data = {}
+		data['r90'] = self.r90
+		data['w80'] = self.w80
+		data['energy'] = self.energy
+		data['sigma'] = self.sigma.expand_data()
+		data['pristine_peak'] = self.pristine_peak.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'sigma':
+					self.sigma.from_json(v)
+				elif k == 'pristine_peak':
+					self.pristine_peak.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class pbs_optical_sigma(object):
+
+	#Initialize
+	def __init__(self):
+		self.x = quadratic_function()
+		self.y = quadratic_function()
+
+	def expand_data(self):
+		data = {}
+		data['x'] = self.x.expand_data()
+		data['y'] = self.y.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'x':
+					self.x.from_json(v)
+				elif k == 'y':
+					self.y.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class pbs_pb_aperture_model(object):
+
+	#Initialize
+	def __init__(self):
+		self.aperture = aperture()
+		self.sad = [] 
+
+	def expand_data(self):
+		data = {}
+		data['aperture'] = self.aperture.expand_data()
+		data['sad'] = self.sad
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'aperture':
+					self.aperture.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class pbs_pb_calculation_layer(object):
+
+	#Initialize
+	def __init__(self):
+		self.flixels = [] 
+		self.r90 = 0.0 
+		self.energy = 0.0 
+		self.sigma = pbs_optical_sigma()
+		self.flixel_rotation = 0.0 
+		self.pristine_peak = interpolated_function()
+
+	def expand_data(self):
+		data = {}
+		flixel = []
+		for x in self.flixels:
+			s = projected_isocentric_vector()
+			s.from_json(x)
+			flixel.append(s.expand_data())
+		data['flixels'] = flixel
+		data['r90'] = self.r90
+		data['energy'] = self.energy
+		data['sigma'] = self.sigma.expand_data()
+		data['flixel_rotation'] = self.flixel_rotation
+		data['pristine_peak'] = self.pristine_peak.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'sigma':
+					self.sigma.from_json(v)
+				elif k == 'pristine_peak':
+					self.pristine_peak.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class pbs_spot_layer(object):
+
+	#Initialize
+	def __init__(self):
+		self.num_spot_positions = 0.0 
+		self.spots = [] 
+		self.spot_size = [] 
+		self.num_paintings = 0.0 
+		self.spot_tune_id = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['num_spot_positions'] = self.num_spot_positions
+		spot = []
+		for x in self.spots:
+			s = weighted_spot()
+			s.from_json(x)
+			spot.append(s.expand_data())
+		data['spots'] = spot
+		data['spot_size'] = self.spot_size
+		data['num_paintings'] = self.num_paintings
+		data['spot_tune_id'] = self.spot_tune_id
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
 class person_name(object):
 
 	#Initialize
@@ -1656,6 +2767,68 @@ class pixel_format(object):
 					setattr(self, k, v)
 		else:
 			self.name = jdict;
+
+class plane(object):
+
+	#Initialize
+	def __init__(self):
+		self.point = [] 
+		self.normal = [] 
+
+	def expand_data(self):
+		data = {}
+		data['point'] = self.point
+		data['normal'] = self.normal
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class point_rendering_options(object):
+
+	#Initialize
+	def __init__(self):
+		self.size = 0.0 
+		self.line_type = line_stipple_type()
+		self.line_thickness = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['size'] = self.size
+		data['line_type'] = self.line_type.expand_data()
+		data['line_thickness'] = self.line_thickness
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'line_type':
+					self.line_type.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class point_sample_2d(object):
+
+	#Initialize
+	def __init__(self):
+		self.position = [] 
+		self.color = rgb()
+
+	def expand_data(self):
+		data = {}
+		data['position'] = self.position
+		data['color'] = self.color.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'color':
+					self.color.from_json(v)
+				else:
+					setattr(self, k, v)
 
 class polygon2(object):
 
@@ -1766,6 +2939,26 @@ class proton_material_properties(object):
 				else:
 					setattr(self, k, v)
 
+class quadratic_function(object):
+
+	#Initialize
+	def __init__(self):
+		self.a = 0.0 
+		self.b = 0.0 
+		self.c = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['a'] = self.a
+		data['b'] = self.b
+		data['c'] = self.c
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
 class range_analysis_context(object):
 
 	#Initialize
@@ -1797,6 +2990,100 @@ class range_analysis_context(object):
 					self.patient_image.from_json(v)
 				else:
 					setattr(self, k, v)
+
+class ray_2d(object):
+
+	#Initialize
+	def __init__(self):
+		self.origin = [] 
+		self.direction = [] 
+
+	def expand_data(self):
+		data = {}
+		data['origin'] = self.origin
+		data['direction'] = self.direction
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class ray_3d(object):
+
+	#Initialize
+	def __init__(self):
+		self.origin = [] 
+		self.direction = [] 
+
+	def expand_data(self):
+		data = {}
+		data['origin'] = self.origin
+		data['direction'] = self.direction
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class ray_box_intersection_2d(object):
+
+	#Initialize
+	def __init__(self):
+		self.n_intersections = 0.0 
+		self.entrance_distance = 0.0 
+		self.exit_distance = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['n_intersections'] = self.n_intersections
+		data['entrance_distance'] = self.entrance_distance
+		data['exit_distance'] = self.exit_distance
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class ray_box_intersection_3d(object):
+
+	#Initialize
+	def __init__(self):
+		self.n_intersections = 0.0 
+		self.entrance_distance = 0.0 
+		self.exit_distance = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['n_intersections'] = self.n_intersections
+		data['entrance_distance'] = self.entrance_distance
+		data['exit_distance'] = self.exit_distance
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class ray_points(object):
+
+	#Initialize
+	def __init__(self):
+		self.n_points = 0.0 
+		self.offset = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['n_points'] = self.n_points
+		data['offset'] = self.offset
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
 
 class rc_geometry(object):
 
@@ -1922,6 +3209,51 @@ class regular_grid_3d(object):
 			if hasattr(self,k):
 				setattr(self, k, v)
 
+class regular_grid_4d(object):
+
+	#Initialize
+	def __init__(self):
+		self.p0 = [] 
+		self.spacing = [] 
+		self.n_points = [] 
+
+	def expand_data(self):
+		data = {}
+		data['p0'] = self.p0
+		data['spacing'] = self.spacing
+		data['n_points'] = self.n_points
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class regularly_sampled_function(object):
+
+	#Initialize
+	def __init__(self):
+		self.x0 = 0.0 
+		self.x_spacing = 0.0 
+		self.samples = [] 
+		self.outside_domain_policy = outside_domain_policy()
+
+	def expand_data(self):
+		data = {}
+		data['x0'] = self.x0
+		data['x_spacing'] = self.x_spacing
+		data['samples'] = self.samples
+		data['outside_domain_policy'] = self.outside_domain_policy.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'outside_domain_policy':
+					self.outside_domain_policy.from_json(v)
+				else:
+					setattr(self, k, v)
+
 class rgb(object):
 
 	#Initialize
@@ -1970,6 +3302,8 @@ class rt_control_point(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -1993,11 +3327,14 @@ class rt_control_point(object):
 		self.table_top_roll_angle = 0.0 
 		self.table_top_pitch_direction = "" 
 		self.table_top_roll_direction = "" 
+		self.layer = pbs_spot_layer()
 
 	def expand_data(self):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2031,12 +3368,16 @@ class rt_control_point(object):
 		data['table_top_roll_angle'] = self.table_top_roll_angle
 		data['table_top_pitch_direction'] = self.table_top_pitch_direction
 		data['table_top_roll_direction'] = self.table_top_roll_direction
+		data['layer'] = self.layer.expand_data()
 		return data
 
 	def from_json(self, jdict):
 		for k, v in jdict.items():
 			if hasattr(self,k):
-				setattr(self, k, v)
+				if k == 'layer':
+					self.layer.from_json(v)
+				else:
+					setattr(self, k, v)
 
 class rt_dose(object):
 
@@ -2044,6 +3385,8 @@ class rt_dose(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2052,11 +3395,16 @@ class rt_dose(object):
 		self.frame_spacing = [] 
 		self.frame_increment_pointer = "" 
 		self.study = rt_study()
+		self.type = dose_type()
+		self.summation_type = dose_summation_type()
+		self.frame_of_ref_uid = "" 
 
 	def expand_data(self):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2075,6 +3423,9 @@ class rt_dose(object):
 		data['frame_spacing'] = self.frame_spacing
 		data['frame_increment_pointer'] = self.frame_increment_pointer
 		data['study'] = self.study.expand_data()
+		data['type'] = self.type.expand_data()
+		data['summation_type'] = self.summation_type.expand_data()
+		data['frame_of_ref_uid'] = self.frame_of_ref_uid
 		return data
 
 	def from_json(self, jdict):
@@ -2084,6 +3435,10 @@ class rt_dose(object):
 					self.dose.from_json(v)
 				elif k == 'study':
 					self.study.from_json(v)
+				elif k == 'type':
+					self.type.from_json(v)
+				elif k == 'summation_type':
+					self.summation_type.from_json(v)
 				else:
 					setattr(self, k, v)
 
@@ -2093,6 +3448,8 @@ class rt_dose_reference(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2111,6 +3468,8 @@ class rt_dose_reference(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2147,6 +3506,8 @@ class rt_fraction(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2160,6 +3521,8 @@ class rt_fraction(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2383,6 +3746,8 @@ class rt_ion_beam(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2393,6 +3758,7 @@ class rt_ion_beam(object):
 		self.primary_dosimeter_unit = "" 
 		self.treatment_delivery_type = "" 
 		self.beam_type = rt_ion_beam_type()
+		self.beam_scan_mode = rt_ion_beam_scan_mode()
 		self.radiation_type = rt_radiation_type()
 		self.referenced_patient_setup = 0.0 
 		self.referenced_tolerance_table = 0.0 
@@ -2407,6 +3773,8 @@ class rt_ion_beam(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2427,6 +3795,7 @@ class rt_ion_beam(object):
 		data['primary_dosimeter_unit'] = self.primary_dosimeter_unit
 		data['treatment_delivery_type'] = self.treatment_delivery_type
 		data['beam_type'] = self.beam_type.expand_data()
+		data['beam_scan_mode'] = self.beam_scan_mode.expand_data()
 		data['radiation_type'] = self.radiation_type.expand_data()
 		data['referenced_patient_setup'] = self.referenced_patient_setup
 		data['referenced_tolerance_table'] = self.referenced_tolerance_table
@@ -2458,12 +3827,36 @@ class rt_ion_beam(object):
 			if hasattr(self,k):
 				if k == 'beam_type':
 					self.beam_type.from_json(v)
+				elif k == 'beam_scan_mode':
+					self.beam_scan_mode.from_json(v)
 				elif k == 'radiation_type':
 					self.radiation_type.from_json(v)
 				elif k == 'block':
 					self.block.from_json(v)
 				else:
 					setattr(self, k, v)
+
+class rt_ion_beam_scan_mode(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# NONE
+		# UNIFORM
+		# MODULATED
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
 
 class rt_ion_beam_type(object):
 
@@ -2492,6 +3885,8 @@ class rt_ion_block(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2510,6 +3905,8 @@ class rt_ion_block(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2574,6 +3971,8 @@ class rt_ion_rangecompensator(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2593,6 +3992,8 @@ class rt_ion_rangecompensator(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2657,6 +4058,8 @@ class rt_patient_setup(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2668,6 +4071,8 @@ class rt_patient_setup(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2700,6 +4105,8 @@ class rt_plan(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2723,6 +4130,8 @@ class rt_plan(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2822,6 +4231,8 @@ class rt_ref_beam(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2832,6 +4243,8 @@ class rt_ref_beam(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2860,6 +4273,8 @@ class rt_snout(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2870,6 +4285,8 @@ class rt_snout(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2898,6 +4315,8 @@ class rt_structure(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2913,6 +4332,8 @@ class rt_structure(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -2953,6 +4374,8 @@ class rt_structure_set(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -2969,6 +4392,8 @@ class rt_structure_set(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -3038,6 +4463,8 @@ class rt_study(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -3051,6 +4478,8 @@ class rt_study(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -3082,6 +4511,8 @@ class rt_tolerance_table(object):
 	def __init__(self):
 		self.class_uid = "" 
 		self.instance_uid = "" 
+		self.ref_class_uid = "" 
+		self.ref_instance_uid = "" 
 		self.series_uid = "" 
 		self.elements = [] 
 		self.sequences = [] 
@@ -3100,6 +4531,8 @@ class rt_tolerance_table(object):
 		data = {}
 		data['class_uid'] = self.class_uid
 		data['instance_uid'] = self.instance_uid
+		data['ref_class_uid'] = self.ref_class_uid
+		data['ref_instance_uid'] = self.ref_instance_uid
 		data['series_uid'] = self.series_uid
 		element = []
 		for x in self.elements:
@@ -3168,6 +4601,57 @@ class shifter_geometry(object):
 			if hasattr(self,k):
 				setattr(self, k, v)
 
+class simple_2d_image_view_state(object):
+
+	#Initialize
+	def __init__(self):
+		self.camera = camera()
+		self.measurement = simple_2d_view_measurement_state()
+
+	def expand_data(self):
+		data = {}
+		data['camera'] = self.camera.expand_data()
+		data['measurement'] = self.measurement.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'camera':
+					self.camera.from_json(v)
+				elif k == 'measurement':
+					self.measurement.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class simple_2d_view_measurement_state(object):
+
+	#Initialize
+	def __init__(self):
+		self.profiles = [] 
+		self.point_samples = [] 
+
+	def expand_data(self):
+		data = {}
+		profile = []
+		for x in self.profiles:
+			s = line_profile()
+			s.from_json(x)
+			profile.append(s.expand_data())
+		data['profiles'] = profile
+		point_sample = []
+		for x in self.point_samples:
+			s = point_sample_2d()
+			s.from_json(x)
+			point_sample.append(s.expand_data())
+		data['point_samples'] = point_sample
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
 class slice_description(object):
 
 	#Initialize
@@ -3179,6 +4663,102 @@ class slice_description(object):
 		data = {}
 		data['position'] = self.position
 		data['thickness'] = self.thickness
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class sliced_3d_image_view_state(object):
+
+	#Initialize
+	def __init__(self):
+		self.view_axis = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['view_axis'] = self.view_axis
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class sliced_3d_structure_set_view_state(object):
+
+	#Initialize
+	def __init__(self):
+		self.view_axis = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['view_axis'] = self.view_axis
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class sliced_3d_structure_view_state(object):
+
+	#Initialize
+	def __init__(self):
+		self.view_axis = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['view_axis'] = self.view_axis
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class sliced_3d_view_state(object):
+
+	#Initialize
+	def __init__(self):
+		self.slice_positions = [] 
+
+	def expand_data(self):
+		data = {}
+		data['slice_positions'] = self.slice_positions
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class sliced_scene_geometry_2d(object):
+
+	#Initialize
+	def __init__(self):
+		self.slicing = [] 
+
+	def expand_data(self):
+		data = {}
+		data['slicing'] = self.slicing
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class sliced_scene_geometry_3d(object):
+
+	#Initialize
+	def __init__(self):
+		self.slicing = [] 
+
+	def expand_data(self):
+		data = {}
+		data['slicing'] = self.slicing
 		return data
 
 	def from_json(self, jdict):
@@ -3214,6 +4794,125 @@ class sobp_calculation_layer(object):
 					self.depth_dose_curve.from_json(v)
 				else:
 					setattr(self, k, v)
+
+class spatial_region_display_options(object):
+
+	#Initialize
+	def __init__(self):
+		self.fill = spatial_region_fill_options()
+		self.outline = spatial_region_outline_options()
+
+	def expand_data(self):
+		data = {}
+		data['fill'] = self.fill.expand_data()
+		data['outline'] = self.outline.expand_data()
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'fill':
+					self.fill.from_json(v)
+				elif k == 'outline':
+					self.outline.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class spatial_region_fill_options(object):
+
+	#Initialize
+	def __init__(self):
+		self.enabled = False 
+		self.opacity = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['enabled'] = self.enabled
+		data['opacity'] = self.opacity
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class spatial_region_outline_options(object):
+
+	#Initialize
+	def __init__(self):
+		self.type = line_stipple_type()
+		self.width = 0.0 
+		self.opacity = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['type'] = self.type.expand_data()
+		data['width'] = self.width
+		data['opacity'] = self.opacity
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'type':
+					self.type.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class spot_placement(object):
+
+	#Initialize
+	def __init__(self):
+		self.energy = 0.0 
+		self.position = [] 
+
+	def expand_data(self):
+		data = {}
+		data['energy'] = self.energy
+		data['position'] = self.position
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class spot_spacing_strategy(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# constant
+		# sigma
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
+
+class statistics(object):
+
+	#Initialize
+	def __init__(self):
+		self.n_samples = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['n_samples'] = self.n_samples
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
 
 class structure_geometry(object):
 
@@ -3259,6 +4958,49 @@ class structure_geometry_slice(object):
 				else:
 					setattr(self, k, v)
 
+class subtask_event(object):
+
+	#Initialize
+	def __init__(self):
+		self.type = subtask_event_type()
+		self.task_id = "" 
+
+	def expand_data(self):
+		data = {}
+		data['type'] = self.type.expand_data()
+		data['task_id'] = self.task_id
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'type':
+					self.type.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class subtask_event_type(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# task_completed
+		# value_produced
+		# task_canceled
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
+
 class triangle_mesh(object):
 
 	#Initialize
@@ -3298,6 +5040,72 @@ class triangle_mesh_with_normals(object):
 		data['vertex_normals'] = parse_bytes_3d(base64.b64decode(self.vertex_normals['blob']))
 		data['face_position_indices'] = parse_bytes_3i(base64.b64decode(self.face_position_indices['blob']))
 		data['face_normal_indices'] = parse_bytes_3i(base64.b64decode(self.face_normal_indices['blob']))
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class tristate_expansion(object):
+
+	#Initialize
+	def __init__(self):
+		self.name = ""
+
+		# Acceptable enum strings for name:
+		# closed
+		# halfway
+		# open
+
+	def expand_data(self):
+		return self.name
+
+	def from_json(self, jdict):
+		if hasattr(jdict, 'items'):
+			for k, v in jdict.items():
+				if hasattr(self,k):
+					setattr(self, k, v)
+		else:
+			self.name = jdict;
+
+class unboxed_image_2d(object):
+
+	#Initialize
+	def __init__(self):
+		self.size = [] 
+		self.pixels = [] 
+		self.origin = [] 
+		self.axes = [] 
+
+	def expand_data(self):
+		data = {}
+		data['size'] = self.size
+		data['pixels'] = self.pixels
+		data['origin'] = self.origin
+		data['axes'] = self.axes
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class unboxed_image_3d(object):
+
+	#Initialize
+	def __init__(self):
+		self.size = [] 
+		self.pixels = [] 
+		self.origin = [] 
+		self.axes = [] 
+
+	def expand_data(self):
+		data = {}
+		data['size'] = self.size
+		data['pixels'] = self.pixels
+		data['origin'] = self.origin
+		data['axes'] = self.axes
 		return data
 
 	def from_json(self, jdict):
@@ -3348,3 +5156,41 @@ class weighted_bixel(object):
 					self.geometry.from_json(v)
 				else:
 					setattr(self, k, v)
+
+class weighted_grid_index(object):
+
+	#Initialize
+	def __init__(self):
+		self.index = 0.0 
+		self.weight = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['index'] = self.index
+		data['weight'] = self.weight
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)
+
+class weighted_spot(object):
+
+	#Initialize
+	def __init__(self):
+		self.energy = 0.0 
+		self.position = [] 
+		self.fluence = 0.0 
+
+	def expand_data(self):
+		data = {}
+		data['energy'] = self.energy
+		data['position'] = self.position
+		data['fluence'] = self.fluence
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				setattr(self, k, v)

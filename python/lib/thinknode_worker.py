@@ -74,8 +74,8 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
     # Get calculation ID
     dl.event("Sending Calculation...")
     loc = sys.path[0]
-    if loc[len(loc)-1] != '\\':
-        loc += '\\'
+    if loc[len(loc)-1] != '/':
+        loc += '/'
     res = requests.post(config["api_url"] + '/calc/?context=' + config["context_id"], 
         data = json.dumps(json_data), 
         headers = {'Authorization': 'Bearer ' + config["user_token"]})
@@ -83,8 +83,9 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
     calculation_id = res.json()["id"]
     dl.data("Calculation ID: ", calculation_id)
     # Make sure calculation folder exists
-    if not os.path.isfile(loc + '/calculations\\' + calculation_id + ".txt"):
+    if not os.path.exists(loc + 'calculations\\'):
         os.makedirs(loc + 'calculations\\')
+    if not os.path.isfile(loc + '/calculations/' + calculation_id + ".txt"):
         # Get calculation Status - using long polling
         dl.event("Checking Calculation Status...")
         res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["context_id"], 
