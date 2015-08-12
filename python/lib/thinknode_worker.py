@@ -83,9 +83,9 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
     calculation_id = res.json()["id"]
     dl.data("Calculation ID: ", calculation_id)
     # Make sure calculation folder exists
-    if not os.path.exists(loc + 'calculations\\'):
-        os.makedirs(loc + 'calculations\\')
-    if not os.path.isfile(loc + '/calculations/' + calculation_id + ".txt"):
+    if not os.path.exists(loc + 'calculations' + os.sep):
+        os.makedirs(loc + 'calculations' + os.sep)
+    if not os.path.isfile(loc + 'calculations' + os.sep + calculation_id + ".txt"):
         # Get calculation Status - using long polling
         dl.event("Checking Calculation Status...")
         res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["context_id"], 
@@ -112,7 +112,7 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
             # dl.data("Calculation Result: ", res.text)
             assert_success(res)
 
-            f = open(loc + '/calculations\\' + str(calculation_id) + ".txt", 'a')
+            f = open(loc + 'calculations' + os.sep + calculation_id + ".txt", 'a')
             f.write(res.text)
             f.close()
 
