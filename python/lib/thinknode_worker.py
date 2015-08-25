@@ -91,35 +91,45 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
         res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["context_id"], 
             headers = {'Authorization': 'Bearer ' + config["user_token"]})
         dl.data("response: ", res.text)
-        res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/status/?status=completed&progress=1&timeout=30', 
-            headers = {'Authorization': 'Bearer ' + config["user_token"]})
-        assert_success(res)
-        if res.json()["type"] == "failed":
-            dl.error("Server Responded: " + res.text)
-            dl.event("Getting error logs for calculation")
-            log_res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR', 
+        calculating = True
+        while calculating:
+            res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/status/?status=completed&progress=1&timeout=30', 
                 headers = {'Authorization': 'Bearer ' + config["user_token"]})
-            if return_error:
-                return json.loads(res.text)
-            else:
-                assert_success(res)
-            # return res.text
-        else:
-            # Get calculation Result
-            dl.event("Fetching Calculation Result...")
-            res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/result/?context=' + config["context_id"], 
-                headers = {'Authorization': 'Bearer ' + config["user_token"]})
-            # dl.data("Calculation Result: ", res.text)
             assert_success(res)
-
-            f = open(loc + 'calculations' + os.sep + calculation_id + ".txt", 'a')
-            f.write(res.text)
-            f.close()
-
-            if return_data:
-                return json.loads(res.text)
+            if res.json()["type"] == "failed":
+                calculating = False
+                dl.error("Server Responded: " + res.text)
+                dl.event("Getting error logs for calculation")
+                log_res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR', 
+                    headers = {'Authorization': 'Bearer ' + config["user_token"]})
+                if return_error:
+                    return json.loads(res.text)
+                else:
+                    assert_success(res)
+                # return res.text
+            elif res.json()["type"] == "calculating":
+                dl.event("Request is still calculating...")
+                dl.data("response: ", res.text)
+            elif res.json()["type"] == "queued":
+                dl.event("Request is queued...")
+                dl.data("response: ", res.text)
             else:
-                return calculation_id
+                calculating = False
+                # Get calculation Result
+                dl.event("Fetching Calculation Result...")
+                res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/result/?context=' + config["context_id"], 
+                    headers = {'Authorization': 'Bearer ' + config["user_token"]})
+                # dl.data("Calculation Result: ", res.text)
+                assert_success(res)
+
+                f = open(loc + '/calculations\\' + str(calculation_id) + ".txt", 'a')
+                f.write(res.text)
+                f.close()
+
+                if return_data:
+                    return json.loads(res.text)
+                else:
+                    return calculation_id
     else:
         f = open(loc + '/calculations\\' + calculation_id + ".txt")
         data = str(f.read())
