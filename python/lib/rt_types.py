@@ -1,44 +1,12 @@
 # Copyright (c) 2015 .decimal, Inc. All rights reserved.
-# Author:	Travis DeMint
-# Date:		08/07/2015
+# Author:	Travis DeMint & Daniel Patenaude
+# Date:		08/28/2015
 # Desc:		Provides access to type usage for all types
 # RT_Types Version:		1.0.0.2
 
 from collections import OrderedDict
 import base64
 import struct as st
-
-def parse_bytes_d(buf, offset=0):
-	data = []
-	while offset < len(buf):
-		tmp = st.unpack_from('d',buf,offset)
-		data.append(tmp[0])
-		offset += 8
-	return data
-
-def parse_bytes_1d(buf, offset=0):
-	data = []
-	while offset < len(buf):
-		tmp = st.unpack_from('d',buf,offset)
-		data.append([tmp[0]])
-		offset += 8
-	return data
-
-def parse_bytes_2d(buf, offset=0):
-	data = []
-	while offset < len(buf):
-		tmp = st.unpack_from('dd',buf,offset)
-		data.append([tmp[0],tmp[1]])
-		offset += 16
-	return data
-
-def parse_bytes_3d(buf, offset=0):
-	data = []
-	while offset < len(buf):
-		tmp = st.unpack_from('ddd',buf,offset)
-		data.append([tmp[0],tmp[1],tmp[2]])
-		offset += 24
-	return data
 
 def parse_bytes_i(buf, offset=0):
 	data = []
@@ -72,36 +40,55 @@ def parse_bytes_3i(buf, offset=0):
 		offset += 12
 	return data
 
-def parse_bytes_u(buf, offset=0):
+def parse_bytes_d(buf, offset=0):
 	data = []
 	while offset < len(buf):
-		tmp = st.unpack_from('u',buf,offset)
+		tmp = st.unpack_from('d',buf,offset)
 		data.append(tmp[0])
-		offset += 2
+		offset += 8
 	return data
 
-def parse_bytes_1u(buf, offset=0):
+def parse_bytes_1d(buf, offset=0):
 	data = []
 	while offset < len(buf):
-		tmp = st.unpack_from('u',buf,offset)
+		tmp = st.unpack_from('d',buf,offset)
 		data.append([tmp[0]])
-		offset += 2
+		offset += 8
 	return data
 
-def parse_bytes_2u(buf, offset=0):
+def parse_bytes_2d(buf, offset=0):
 	data = []
 	while offset < len(buf):
-		tmp = st.unpack_from('uu',buf,offset)
+		tmp = st.unpack_from('dd',buf,offset)
 		data.append([tmp[0],tmp[1]])
-		offset += 4
+		offset += 16
 	return data
 
-def parse_bytes_3u(buf, offset=0):
+def parse_bytes_3d(buf, offset=0):
 	data = []
 	while offset < len(buf):
-		tmp = st.unpack_from('uuu',buf,offset)
+		tmp = st.unpack_from('ddd',buf,offset)
 		data.append([tmp[0],tmp[1],tmp[2]])
-		offset += 6
+		offset += 24
+	return data
+
+def parse_bytes_ul(buf, offset=0):
+	tmp = st.unpack_from('Q',buf,offset)
+	return tmp[0]
+
+def parse_bytes_u(buf, offset=0):
+	tmp = st.unpack_from('I',buf,offset)
+	return tmp[0]
+
+def parse_bytes_f(buf, offset=0):
+	tmp = st.unpack_from('f',buf,offset)
+	return tmp[0]
+
+def parse_array(obj, buf, offset=0):
+	data = []
+	while len(buf) - offset >= obj.get_offset():
+		data.append(obj.parse_self(buf,offset))
+		offset += obj.get_offset()
 	return data
 
 def parse_bytes_not_defined(buf, offset=0):
@@ -1235,6 +1222,14 @@ class dij_entry(object):
 		self.beamlet_index = 0.0 
 		self.dose = 0.0 
 
+	def parse_self(self, buf, offset):
+		self.beamlet_index = parse_bytes_u(buf, offset)
+		self.dose = parse_bytes_f(buf, offset + 4)
+		return self.expand_data()
+
+	def get_offset(self):
+		return 8
+
 	def expand_data(self):
 		data = {}
 		data['beamlet_index'] = self.beamlet_index
@@ -1261,8 +1256,10 @@ class dij_matrix(object):
 		data = {}
 		data['n_points'] = self.n_points
 		data['n_beamlets'] = self.n_beamlets
-		data['rows'] = parse_bytes_2u(base64.b64decode(self.rows['blob']))
-		data['entries'] = parse_bytes_2d(base64.b64decode(self.entries['blob']))
+		dijrow = dij_row()
+		data['rows'] = parse_array(dijrow, base64.b64decode(self.rows['blob']))
+		dijentry = dij_entry()
+		data['entries'] = parse_array(dijentry, base64.b64decode(self.entries['blob']))
 		return data
 
 	def from_json(self, jdict):
@@ -1276,6 +1273,14 @@ class dij_row(object):
 	def __init__(self):
 		self.offset = 0.0 
 		self.n_entries = 0.0 
+
+	def parse_self(self, buf, offset):
+		self.offset = parse_bytes_ul(buf, offset)
+		self.n_entries = parse_bytes_u(buf, offset + 8)
+		return self.expand_data()
+
+	def get_offset(self):
+		return 16
 
 	def expand_data(self):
 		data = {}
