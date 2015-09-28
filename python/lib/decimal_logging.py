@@ -11,7 +11,7 @@ import json
 from colorama import init, Fore, Back, Style
 init(autoreset=True)
 
-isDebug = True # Turn this flag to True to enable output of all dl.debug calls
+isDebug = False # Turn this flag to True to enable output of all dl.debug calls
 display_timestamps = True
 display_types = True
 

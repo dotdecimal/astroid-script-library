@@ -98,6 +98,11 @@ def make_grid(iam, corner, size, spacing):
                 thinknode.value(spacing)
             ])
 
+# Make a 2d grid about the origin and spanning the size of the stopping image.
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param stopping_img: stopping image, origin and size of are used for grid
+#   param spacing: spacing between the points in the grid
+#   returns: 2d grid matching stopping image origin and size
 def get_grid_on_image_2d(iam, stopping_img, spacing):
     dl.debug("get_grid_on_image")
     # Get image origin
@@ -106,8 +111,12 @@ def get_grid_on_image_2d(iam, stopping_img, spacing):
     # Get image size
     size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("number_type"), stopping_img)
     size = json.loads(thinknode.get_immutable(iam, 'dicom', size_id))
+    # Get image axes
+    axes_id = thinknode.do_calc_item_property(iam, 'axes', thinknode.schema_array_array_standard_type("number_type"), stopping_img)
+    axes = json.loads(thinknode.get_immutable(iam, 'dicom', axes_id))
+    dl.debug("image axes: " + str(axes))
 
-    grid = make_grid(iam, [origin[0], origin[1]], [size[0], size[1]], [spacing, spacing])
+    grid = make_grid(iam, [origin[0], origin[1]], [axes[0][0]*size[0], axes[1][1]*size[1]], [spacing, spacing])
     res = thinknode.do_calculation(iam, grid, False)
     return res
 
@@ -121,11 +130,17 @@ def get_dose_grid(iam, stopping_img, spacing):
     # Get image origin
     origin_id = thinknode.do_calc_item_property(iam, 'origin', thinknode.schema_array_standard_type("number_type"), stopping_img)
     origin = json.loads(thinknode.get_immutable(iam, 'dicom', origin_id))
+    dl.debug("image origin: " + str(origin))
     # Get image size
     size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("number_type"), stopping_img)
     size = json.loads(thinknode.get_immutable(iam, 'dicom', size_id))
+    dl.debug("image size: " + str(size))
+    # Get image axes
+    axes_id = thinknode.do_calc_item_property(iam, 'axes', thinknode.schema_array_array_standard_type("number_type"), stopping_img)
+    axes = json.loads(thinknode.get_immutable(iam, 'dicom', axes_id))
+    dl.debug("image axes: " + str(axes))
 
-    dose_grid = make_grid(iam, origin, size, [spacing, spacing, spacing])
+    dose_grid = make_grid(iam, origin, [axes[0][0]*size[0], axes[1][1]*size[1], axes[2][2]*size[2]], [spacing, spacing, spacing])
     res = thinknode.do_calculation(iam, dose_grid, False)
     return res
 

@@ -308,6 +308,22 @@ def schema_array_standard_type(type_name):
                     "type": type_name, \
                     type_name: {} } } }
 
+# Create a schema for an array of array of standard types
+#   param type_name: the standard type (number_type, string_type) for the array of array of items
+def schema_array_array_standard_type(type_name):
+    return  { "array_type": {
+                "element_schema": {
+                    "array_type": {
+                        "element_schema": {
+                            type_name: {},
+                            "type": type_name
+                        }
+                    },
+                    "type": "array_type"
+                }
+            },
+            "type": "array_type" }
+
 # Create a schema for a named type
 #   param type_name: the named_type for the schema
 def schema_named_type(type_name):
