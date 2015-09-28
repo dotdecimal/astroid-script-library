@@ -1,0 +1,13 @@
+{
+   "density": 1.150,
+   "theta_curve": {
+      "outside_domain_policy": "extend_with_copies",
+      "samples": {
+         "blob": "bvDPVm8eaD8AMxOxLaj0PtQWMrK/R2g/AIEV8ecl8D7WQRSCC2hoPwBEHOviNuo+Gl7/ZEKCaD8Ax+4CJQXmPuFMAopHmGg/AJ43XzZL4z5/hGHAkqtoPwDTizW3neE+UhCXdzC9aD8AHlVNEHXfPuG6vf/qzGg/AKInZVJD2z6yTvCojNpoPwC8UdCSbNo+kHdY8sLnaD8ADNARVOjXPpZfYRy382g/AFxOUxVk1T7EBgsnaf5oPwBq44i1+NQ+eXjPgeUIaT8AnjdfNkvTPkgU/xyLEmk/ALhhynZ00j4kRWRYxRtpPwDgIGtXMtE+lNUZhF4kaT8A/ErWl1vQPhL7BFCMLGk/ACjqgrAJzz6ctSW8TjRpPwBgPlkxXM0+NAV8yKU7aT8AfGjEcYXMPlMf7STHQmk/AMjmBTMByj4Fma5xR0lpPwCwvJry18o+MUhVbv1PaT8AADvcs1PIPvFWTFsSVmk/ABhlR/R8xz43MF6Y8VtpPwAYZUf0fMc+fQlw1dBhaT8AULkddc/FPtF3t7JEZ2k/AGjjiLX4xD6rsBnggmxpPwCEDfT1IcQ+DLSWXYtxaT8AhA309SHEPm23E9uTdmk/AJw3XzZLwz5UhauoZntpPwC8Ycp2dMI+wx1exgOAaT8A0Is1t53BPreAKzRrhGk/APC1oPfGwD4zrhPynIhpPwDQizW3ncE+JxHhXwSNaT8A8LWg98bAPqM+yR02kWk/AEAU7vAyvj4rAed7/JRpPwAQwBdw4L8+LfnpifiYaT8ASBTu8DK+Pra7B+i+nGk/AEgU7vAyvj4/fiVGhaBpPwCwvJry17o+1dV4ROCjaT8AeGjEcYW8Pg==",
+         "type": "base64-encoded-blob"
+      },
+      "x0": 2.0,
+      "x_spacing": 1.0
+   },
+   "water_equivalent_ratio": 1.0
+}

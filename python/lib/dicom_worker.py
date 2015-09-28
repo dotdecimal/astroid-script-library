@@ -6,13 +6,13 @@
 import os.path
 import binascii
 from lib import thinknode_worker as thinknode
+from lib import dosimetry_worker as dosimetry
 from lib import decimal_logging as dl
 from lib import rt_types as rt_types
 import requests
 import json
 
 app_name = "dicom"
-iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
 dicom_filetypes = [".img", ".dcm"]
 
 #####################################################################
@@ -22,6 +22,7 @@ dicom_filetypes = [".img", ".dcm"]
 # Takes in a file name and returns true if its extension is valid, otherwise returns false
 # 	param filename: The name of the file to check
 def valid_dicom_filetype(filename):
+	dl.debug("valid_dicom_filetype")
 	for ext in dicom_filetypes:
 		if filename[len(filename)-len(ext):] == ext:
 			return True;
@@ -29,15 +30,21 @@ def valid_dicom_filetype(filename):
 	return False
 
 # Posts a filesystem_item to iss in thinknode and returns the id of the item
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param item: The filesystem_item to be posted to thinknode
-def post_filesystem_item(item):
-	res = thinknode.post_dependency_immutable(iam, "rt_types", item, 'filesystem_item')
+#	returns filesystem iss id
+def post_filesystem_item(iam, item):
+	dl.debug("post_filesystem_item")
+	res = thinknode.post_immutable_named(iam, 'dicom', item, 'filesystem_item')
 	obj = json.loads(res.text)
 	return obj['id']
 
 # Posts a filesystem_item_contents to iss in thinknode and returns the id of the item
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param item: The filesystem_item_contents to be posted to thinknode
-def post_filesystem_item_contents(item):
+#	returns filesystem item contents iss id
+def post_filesystem_item_contents(iam, item):
+	dl.debug("post_filesystem_item_contents")
 	res = thinknode.post_dependency_immutable(iam, "rt_types", item, 'filesystem_item_contents')
 	obj = json.loads(res.text)
 	return obj['id']
@@ -46,6 +53,7 @@ def post_filesystem_item_contents(item):
 #	param filename: The name of the file to read in to a blob
 # 	returns a blob of the file
 def read_file(filename):
+	dl.debug("read_file")
 	fp = open(filename, 'rb')
 	output_string = ''
 	bytes_read = fp.read()
@@ -58,9 +66,11 @@ def read_file(filename):
 	return b
 
 # Takes in a filename, reads in the file to a blob and uploads to thinknode as filesystem_item
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param filename: The name of the file to be uploaded to thinknode
-#	returns the id of teh filesystem_item
-def upload_file(filename):
+#	returns the id of the filesystem_item
+def upload_file(iam, filename):
+	dl.debug("upload_file")
 	dl.event('Reading file: ' + filename)
 
 	if valid_dicom_filetype(filename) == True:
@@ -69,11 +79,12 @@ def upload_file(filename):
 		fsic = rt_types.filesystem_item_contents()
 		fsic.type = "file"
 		fsic.file = b
+		del fsic.directory
 		fsi = rt_types.filesystem_item()
 		fsi.name = filename
 		fsi.contents = fsic
 
-		obj_id = post_filesystem_item(thinknode.to_json(fsi))
+		obj_id = post_filesystem_item(iam, thinknode.to_json(fsi))
 		dl.debug('Filesystem item: ' + obj_id)
 		
 		return obj_id
@@ -81,9 +92,11 @@ def upload_file(filename):
 		return 'bad filetype'
 
 # Takes in a directory path and uploads all the files in the path to thinknode as filesystem_items
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param dirname: The name of the directory to be uploaded to thinknode
 # 	returns id of the filesystem_item that holds a directory of the files
-def upload_dir(dirname):
+def upload_dir(iam, dirname):
+	dl.debug("upload_dir")
 	dl.event('Uploading directory: ' + dirname)
 	
 	tn_dir = rt_types.filesystem_item_contents()
@@ -91,77 +104,74 @@ def upload_dir(dirname):
 
 	for fi in os.listdir(dirname):
 		filename = dirname + '/' + fi
-		obj_id = upload_file(filename)
+		obj_id = upload_file(iam, filename)
 		if (obj_id != 'bad filetype'):
 			tn_dir.directory.append(obj_id)
 
+	# fsic = rt_types.filesystem_item_contents()
+	# fsic.type = "directory"
+	# fsic.directory = tn_dir
+	del tn_dir.file
 	fsi = rt_types.filesystem_item()
 	fsi.name = dirname
 	fsi.contents = tn_dir
 
-	obj_id = post_filesystem_item(thinknode.to_json(fsi))
+	print(thinknode.to_json(fsi))
+
+	obj_id = post_filesystem_item(iam, thinknode.to_json(fsi))
 	dl.debug('Directory id: ' + obj_id)	
 	return obj_id
 
-# def get_dicom_dir_by_id(dir_id):
-# 	res = thinknode.get_immutable(iam, dir_id)
-# 	dir_obj = json.loads(res)
-# 	return dir_obj
-
-# Takes in a thinknode id for a directory of dicom files and processes the files into a dicom_patient
-#	param dir_id: thinknode id for the directory of files
-#	returns the id of the dicom_patient
-def make_patient_from_dir_id(dir_id):
-	res = thinknode.get_immutable(iam, dir_id)
+# Upload a directory of dicom files into new rt_study
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param dir_name: complete directory path
+# 	returns a study iss ID
+def make_rt_study_from_dir(iam, dir_name):
+	dl.debug("make_rt_study_from_dir")
+	dir_id = upload_dir(iam, dir_name)
+	# dir_id = '56058bf500c00dc060f0207a0f8bd34a' # Procure Prostate
+	dl.debug('dir_id')
+	dl.debug(dir_id)
+	res = thinknode.get_immutable(iam, 'dicom', dir_id)
+	dl.debug('Got immutable: ' + res)
 	dir_obj = json.loads(res)
-	dicom_ids = []
+	file_ids = []
 	for file_id in dir_obj["contents"]["directory"]:
-		dl.debug("File id: " + file_id)
-		dicom_id = run_calc_parse_dicom_filesystem(file_id)
-		dicom_ids.append(thinknode.reference(dicom_id))
-	dicom_patient_array = thinknode.array_named_type('rt_types', 'dicom_data', dicom_ids)
+		file_ids.append(thinknode.reference(file_id))
+	calc = \
+		thinknode.function(iam["account_name"], 'dicom', "import_files_to_new_study",
+			[
+				thinknode.array_named_type('rt_types', 'filesystem_item', file_ids)
+				# thinknode.array_referenced_named_type('rt_types', 'filesystem_item', file_ids)
+				# file_ids
+			])
+	dl.debug(str(calc))
 
-	calc_id = run_calc_make_patient(dicom_patient_array)
-	dl.debug('Make patient calc id: ' + calc_id)
-	return calc_id
+	res = thinknode.do_calculation(iam, calc, False, False)
+	dl.debug('initial study:')
+	dl.debug(res)
 
-# Takes in a directory name and then uploads the directory to thinknode as filesystem_items and then
-# 	runs the calculation to make a dicom_paitnet
-#	param dir_name: Name of the directory to turn into a dicom_patient
-#	returns the thinknode id of the dicom_patient
-def make_patient_from_dir(dir_name):
-	dir_id = upload_dir(dir_name)
-	print (dir_id)
-	calc_id = make_patient_from_dir_id(dir_id)
-	dl.debug('Make patient calc id: ' + calc_id)
-	return calc_id
+	# study_calc = \
+	# 	thinknode.function(app_name, "merge_ct_image_slices",
+	# 		[
+	# 			thinknode.reference(res)
+	# 		])
+	# study_res = thinknode.do_calculation(iam, study_calc, False)
+	return res
 
 # Run a calcuation to turn a filesytem_item in to a dicom_data object
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param filesytem_item_id: The thinknode id for the filesystem_item
 #	returns the id of the dicom_data object
-def run_calc_parse_dicom_filesystem(filesytem_item_id):	
-	dl.event('run_calc_parse_dicom_filesystem')
+def run_calc_parse_dicom_filesystem(iam, filesytem_item_id):	
+	dl.debug("run_calc_parse_dicom_filesystem")
 	calc = \
-		thinknode.function(app_name, "parse_dicom_filesystem_item",
+		thinknode.function("dicom", "parse_dicom_filesystem_item",
 			[
 				thinknode.reference(filesytem_item_id)
 			])
 
-	res = thinknode.do_calculation(iam, calc, False)
-	return res
-
-# Run a calcuation to turn an array of dicom_data objects into a dicom_patient
-#	param dicom_objs: The array of thinknode ids for the dicom_data objects
-#	returns the id of the dicom_patient object
-def run_calc_make_patient(dicom_objs):
-	dl.event("run_calc_make_patient")
-	calc = \
-		thinknode.function(app_name, "make_patient",
-			[
-				dicom_objs
-			])
-
-	res = thinknode.do_calculation(iam, calc, False)
+	res = thinknode.do_calculation(iam, 'dicom', calc, False)
 	return res
 
 #####################################################################
@@ -169,9 +179,11 @@ def run_calc_make_patient(dicom_objs):
 #####################################################################
 
 # Takes in a thinknode id for a dicom_patient and returns id for the rt_plan
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param patient_id: The thinknode id for the dicom_patient to pull the plan from
 #	returns the id of the rt_plan from the patient
-def get_plan(patient_id):
+def get_plan(iam, patient_id):
+	dl.debug("get_plan")
 	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dicom_data"), patient_id)
 	dl.debug('dd_array: ' + dd_array)
 
@@ -193,28 +205,70 @@ def get_plan(patient_id):
 			dl.debug('plan: ' + plan)
 			return plan
 
+# Create a beam_geometry data type based on dicom study and specified beam index
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param study_id: rt_study iss id
+#	param beam_index: index of the beam to create geometry for
+#	returns: a beam_geometry data type for the specific plan and beam
+def get_beam_geometry(iam, study_id, beam_index):
+	dl.debug("get_beam_geometry")
+
+	beam_id = get_beam_from_study(iam, study_id, beam_index)
+
+	control_pt_id = get_first_control_point_from_beam(iam, beam_id)
+
+	sad = thinknode.do_calc_item_property(iam, 'virtual_sad', thinknode.schema_array_standard_type("number_type"), beam_id)
+
+	iso_center = thinknode.do_calc_item_property(iam, 'iso_center_position', thinknode.schema_array_standard_type("number_type"), control_pt_id)
+
+	gantry_angle = thinknode.do_calc_item_property(iam, 'gantry_angle', thinknode.schema_standard_type("number_type"), control_pt_id)
+
+	couch_angle = thinknode.do_calc_item_property(iam, 'patient_support_angle', thinknode.schema_standard_type("number_type"), control_pt_id)
+
+	# patient_position = thinknode.do_calc_item_property(iam, 'dicom', 'patient_position', thinknode.schema_standard_type("string"), control_pt_id)
+	plan_id = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
+	setups_array = thinknode.do_calc_item_property(iam, 'patient_setups', thinknode.schema_array_named_type('rt_patient_setup'), plan_id)
+	setup = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type('rt_patient_setup'), setups_array)
+
+	patient_position = thinknode.do_calc_item_property(iam, 'position', thinknode.schema_named_type('patient_position_type'), setup)
+
+	calc = \
+		thinknode.function(iam["account_name"], "dosimetry", "construct_beam_geometry",
+			[
+				thinknode.reference(sad),
+				thinknode.reference(iso_center),
+				thinknode.reference(gantry_angle),
+				thinknode.reference(couch_angle),
+				thinknode.reference(patient_position)
+			])
+
+	res = thinknode.do_calculation(iam, calc, False)
+	return res
+
 # Takes in a thinknode id for a rt_plan and the index of the beam returns id for the rt_ion_beam
-#	param plan_id: The thinknode id for the rt_plan to pull the rt_ion_beam from
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param study_id: The thinknode id for the rt_plan to pull the rt_ion_beam from
 #	param beam_index: The index of the beam to get
 #	returns the id of the rt_ion_beam from the rt_plan
-def get_beam_by_index(plan_id, beam_index):
-	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan_id)
-	print ('beam_array: ' + beam_array)
+def get_beam_by_index(iam, study_id, beam_index):
+	dl.debug("get_beam_by_index")
+	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), study_id)
 
 	beam = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beam_array)
-	print ('beam: ' + beam)
 	return beam
 
 # Takes in a thinknode id for a rt_plan and the index of the beam returns id for the aperture associated  with that beam
-#	param plan_id: The thinknode id for the rt_plan to pull the aperture from
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param study_id: The thinknode id for the rt_plan to pull the aperture from
 #	param beam_index: The index of the beam to get
 #	returns the id of the aperture from the specified rt_ion_beam
-def get_aperture_from_beam(plan_id, beam_index):
-	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan_id)
-	print ('beam_array: ' + beam_array)
+def get_aperture_from_beam(iam, study_id, beam_index):
+	dl.debug("get_aperture_from_beam")
+	plan = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
+
+	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan)
 
 	beam_id = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beam_array)
-	print ('beam_id: ' + beam_id)
 
 	rt_ap = thinknode.do_calc_item_property(iam, 'block', thinknode.schema_named_type('rt_ion_block'), beam_id)
 	ap_poly = thinknode.do_calc_item_property(iam, 'data', thinknode.schema_named_type('polyset'), rt_ap)
@@ -226,41 +280,140 @@ def get_aperture_from_beam(plan_id, beam_index):
 				"downstream_edge": thinknode.reference(ap_ds_edge), 
 				"shape": thinknode.reference(ap_poly)
 			})
-	aperture = thinknode.do_calculation(iam, struct_calc, False)
-	dl.debug('aperture: ' + aperture)
+	aperture = thinknode.do_calculation(iam, 'dicom', struct_calc, False)
 	return aperture
 
-def get_pbs_spots_from_beam(beam_id):
-	spots_calc = \
-		thinknode.function('dicom', 'get_weighted_spot_list_from_beam',
-			{
+# Get the SAD from a defined beam
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param beam_id: beam number to get the sad for
+#	returns: the specific beam SAD object iss id
+def get_sad(iam, beam_id):
+	dl.debug("get_sad")
+	sad_array = thinknode.do_calc_item_property(iam, 'virtual_sad', thinknode.schema_array_standard_type("number_type"), beam_id)
+
+	sad = json.loads(thinknode.get_immutable(iam, 'dicom', sad_array))
+	dl.debug("sad: " + str(sad))
+	return sad_array
+
+# Get the weighted spot list from a pbs beam
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param beam_id: beam issid to get the spot list from
+#	returns: weighted_spot_list
+def get_weighted_spot_list_from_beam(iam, beam_id):
+	dl.debug("get_weighted_spot_list_from_beam")
+	calc = \
+		thinknode.function(iam["account_name"], "dicom", "get_weighted_spot_list_from_beam",
+			[
 				thinknode.reference(beam_id)
-			})
-	spots = thinknode.do_calculation(iam, spots_calc, False)
-	dl.debug('spots_calc: ' + spots)
-	return spots
+			])
+	res = thinknode.do_calculation(iam, calc, False)
+
+	spot_list = json.loads(thinknode.get_immutable(iam, 'dicom', res))
+
+	sorted_spots = dosimetry.sort_spots_by_energy(spot_list)
+
+	return sorted_spots
+
+# Get PBS spots from a specific beam
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param beam_id: beam iss id
+# 	returns: specific beam's pbs spots
+def get_spots_from_beam(iam, beam_id):
+	dl.debug("get_spots_from_beam")
+	wsp_id = get_weighted_spot_list_from_beam(iam, beam_id)
+
+	calc = \
+		thinknode.function(iam["account_name"], "dosimetry", "extract_spot_placements",
+			[
+				thinknode.value(wsp_id)
+			])
+	res = thinknode.do_calculation(iam, calc, False)
+
+	return res	
+
+# Get PBS fluences from a specific beam
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param beam_id: beam iss id
+#	returns: specific beam's fluences
+def get_fluences_from_beam(iam, beam_id):
+	dl.debug("get_fluences_from_beam")
+	wsp_id = get_weighted_spot_list_from_beam(iam, beam_id)
+
+	calc = \
+		thinknode.function(iam["account_name"], "dosimetry", "extract_spot_fluence_values",
+			[
+				thinknode.value(wsp_id)
+			])
+	res = thinknode.do_calculation(iam, calc, False)
+	return res	
+
+# Create PBS layers from spots in DICOM rt_study
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param pbs_machine: the pbs machine model
+#   param spots: The spot list whose layers will be computed
+#   param beam_id: beam number to get the layers for
+def get_pbs_layers(iam, pbs_machine, spots, beam_id):
+    dl.debug("get_pbs_layers")
+    control_pt_id = get_first_control_point_from_beam(iam, beam_id)
+
+    gantry_angle = thinknode.do_calc_item_property(iam, 'gantry_angle', thinknode.schema_standard_type("number_type"), control_pt_id)
+
+    layers_calc = thinknode.function(iam["account_name"], "dosimetry", "create_pbs_layers_from_spots",
+            [
+                thinknode.reference(pbs_machine),
+                thinknode.reference(spots),
+                thinknode.reference(gantry_angle)
+            ])
+    res = thinknode.do_calculation(iam, layers_calc, False)
+    return res  
+
+# Get a specific beam's iss id from the dicom rt_study
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param study_id: rt_study iss id
+#	param beam_index: beam number from rt_plan to get iss id of
+#	returns: specified beam number's iss id
+def get_beam_from_study(iam, study_id, beam_index):
+	dl.debug("get_beam_from_study")
+	plan_id = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
+
+	beams = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan_id)
+
+	beam_id = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beams)
+	return beam_id
+
+# Get the first control point iss id of the specified beam
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param beam_id: beam iss id
+#	returns: first control point's iss id of specified beam
+def get_first_control_point_from_beam(iam, beam_id):
+	dl.debug("get_first_control_point_from_beam")
+	control_pts = thinknode.do_calc_item_property(iam, 'control_points', thinknode.schema_array_named_type("rt_control_point"), beam_id)	
+
+	control_pt_id = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type("rt_control_point"), control_pts)
+	dl.debug('control point id: ' + control_pt_id)
+	return control_pt_id
 
 # Takes in a thinknode id for a rt_plan and the index of the beam returns id for the range compensator associated  with that beam
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param plan_id: The thinknode id for the rt_plan to pull the range compensator from
 #	param beam_index: The index of the beam to get
 #	returns the id of the range compensator from the specified rt_ion_beam
-def get_range_compensator_from_beam(plan_id, beam_index):
+def get_range_compensator_from_beam(iam, plan_id, beam_index):
+	dl.debug("get_range_compensator_from_beam")
 	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan_id)
-	print ('beam_array: ' + beam_array)
 
 	beam_id = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beam_array)
-	print ('beam_id: ' + beam_id)
 
 	rt_rcs = thinknode.do_calc_item_property(iam, 'degraders', thinknode.schema_array_named_type('rt_ion_rangecompensator'), beam_id)
 	rt_rc = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type('rt_ion_rangecompensator'), rt_rcs)
-	print ('RC: ' + rt_rc)
 	return rt_rc
 
 # Takes in a thinknode id for a rt_plan and returns id for the patient_position_type for the first patient setup sequence
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param plan_id: The thinknode id for the rt_plan to pull the patient position from
 #	returns the id of the patient_position_type from the first patient setup sequence
-def get_patient_position(plan_id):
-	print ('get_patient_position')
+def get_patient_position(iam, plan_id):
+	dl.debug("get_patient_position")
 	setups_array = thinknode.do_calc_item_property(iam, 'patient_setups', thinknode.schema_array_named_type('rt_patient_setup'), plan_id)
 	setup = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type('rt_patient_setup'), setups_array)
 
@@ -269,9 +422,11 @@ def get_patient_position(plan_id):
 	return position
 
 # Takes in a thinknode id for a dicom_patient and returns id for the rt_structure_set
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param patient_id: The thinknode id for the dicom_patient to pull the structure set from
 #	returns the id of the rt_structure_set from the patient
-def get_structure_set(patient_id):
+def get_structure_set(iam, patient_id):
+	dl.debug("get_structure_set")
 	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dicom_data"), patient_id)
 	dl.debug('dd_array: ' + dd_array)
 
@@ -294,20 +449,23 @@ def get_structure_set(patient_id):
 			return ss
 
 # Takes in a thinknode id for a rt_structure_set and the index of the structure returns id for the rt_structure
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param ss_id: The thinknode id for the rt_structure_set to pull the structure from
 #	param index: The index of the structure to pull out from the structure set
 #	returns the id of the rt_structure 
-def get_structure_by_index(ss_id, index):
+def get_structure_by_index(iam, ss_id, index):
+	dl.debug("get_structure_by_index")
 	structures = thinknode.do_calc_item_property(iam, 'structures', thinknode.schema_array_named_type("rt_structure"), ss_id)
-	print('structures: ' + structures)
 	structure = thinknode.do_calc_array_item(iam, index, thinknode.schema_named_type("rt_structure"), structures)
 
 	return structure
 
 # Takes in a thinknode id for a rt_structure and returns id for the structure_geometry for the structure
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param s_id: The thinknode id for the rt_structure to pull the structure_geometry from
 #	returns the id of the structure_geometry from the given rt_structure
-def get_structure_geometry_from_structure(s_id):
+def get_structure_geometry_from_structure(iam, s_id):
+	dl.debug("get_structure_geometry_from_structure")
 	calc = \
 		thinknode.function("dicom", "get_geometry_from_structure",
 			[
@@ -317,9 +475,11 @@ def get_structure_geometry_from_structure(s_id):
 	return res
 
 # Takes in a thinknode id for a dicom_patient and returns id for the rt_dose
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param patient_id: The thinknode id for the dicom_patient to pull the dose from
 #	returns the id of the rt_dose from the patient
-def get_dose(patient_id):
+def get_dose(iam, patient_id):
+	dl.debug("get_dose")
 	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dicom_data"), patient_id)
 	dl.debug('dd_array: ' + dd_array)
 
@@ -341,10 +501,29 @@ def get_dose(patient_id):
 			dl.debug('dose: ' + dose)
 			return dose
 
+# Gets a stopping power image from a dicom study
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param study_id: rt_study iss id
+def get_stopping_power_img(iam, study_id):
+	dl.debug("get_stopping_power_img")
+	ct_img_data = thinknode.do_calc_item_property(iam, 'ct_image', thinknode.schema_named_type("ct_image_data"), study_id)
+	ct_img = thinknode.do_calc_item_property(iam, 'image_set', thinknode.schema_named_type("ct_image_set"), ct_img_data)
+	img = thinknode.do_calc_item_property(iam, 'image', thinknode.schema_named_type("image_3d"), ct_img)
+
+	calc = \
+		thinknode.function("decimal", "dosimetry", "hu_to_stopping_power",
+			[
+				thinknode.reference(img)
+			])
+	res = thinknode.do_calculation(iam, calc, False)
+	return res
+
 # Takes in a thinknode id for a dicom_patient and returns id for the ct_image_set
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #	param patient_id: The thinknode id for the dicom_patient to pull the CT image set from
 #	returns the id of the ct_image_set from the patient
-def get_ct_image_set(patient_id):
+def get_ct_image_set(iam, patient_id):
+	dl.debug("get_ct_image_set")
 	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dicom_data"), patient_id)
 	dl.debug('dd_array: ' + dd_array)
 

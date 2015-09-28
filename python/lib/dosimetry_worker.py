@@ -1,6 +1,7 @@
 # Copyright (c) 2015 .decimal, Inc. All rights reserved.
-# Author:   Andrew Brown
+# Author:   Andrew Brown, Kevin Erhart, Daniel Patenaude
 # Date:     07/10/2015
+# Modified: 09/25/2015
 # Desc:     Worker to perform common dosimetry calculations
 
 import os.path
@@ -8,60 +9,263 @@ import binascii
 import lib.thinknode_worker as thinknode
 import lib.decimal_logging as dl
 import lib.rt_types as rt_types
+import json
 
+#####################################################################
+# Device functions
+#####################################################################
 
+# Makes a funciton representation to constructs an aperture for a given target structure mesh
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param target: triangle_mesh object defining the beam target structure (must be thinknode ready, as ref, value, or function)
+#   param beam: beam_geometry object defining the beam position information (must be thinknode ready, as ref, value, or function)
+#   param margin: distance for aperture target structure margin (mm)
+#   param mill_radius: radial size of the milling tool that will be used to machine the aperture (mm)
+#   param downstream_edge: distance from the aperture downstream face to the isocenter (mm)
+def compute_aperture(iam, target, beam, margin, mill_radius, downstream_edge):
+    dl.debug("compute_aperture")
+    # Make aperture_creation_params
+    ap_params = rt_types.aperture_creation_params()
+    ap_params.targets.append(target)
+    args = {}
+    args["targets"] = thinknode.array_named_type("rt_types", "triangle_mesh", ap_params.targets)
+    args["target_margin"] = thinknode.value(margin)
+    args["mill_radius"] = thinknode.value(mill_radius)
+    args["organs"] = thinknode.value(ap_params.organs)
+    args["half_planes"] = thinknode.value(ap_params.half_planes)
+    args["corner_planes"] = thinknode.value(ap_params.corner_planes)
+    args["centerlines"] = thinknode.value(ap_params.centerlines)
+    args["overrides"] = thinknode.value(ap_params.overrides)
+    args["downstream_edge"] = thinknode.value(downstream_edge)
+
+    return \
+        thinknode.function(iam["account_name"], "dosimetry", "compute_aperture",
+            [
+                thinknode.structure_named_type("rt_types", "aperture_creation_params", args),
+                beam
+            ])
+
+# Manual aperture creation based on a list of points
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param points: array of points to construct the aperture polyset from
+#   param downstream_edge: distance from the aperture downstream face to the isocenter (mm)
+#   param mill_radius: radial size of the milling tool that will be used to machine the aperture (mm)
+def make_aperture(iam, points, downstream_edge, mill_radius):
+    dl.debug("make_aperture")
+    return \
+        thinknode.function(iam["account_name"], "dosimetry", "make_aperture",
+            [
+                thinknode.value(points),
+                thinknode.value(downstream_edge),
+                thinknode.value(mill_radius)
+            ])
+
+#####################################################################
+# Image functions
+#####################################################################
+
+# Makes a funciton representation for computing gamma index values to compare 2 doses
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param dose_id: thinknode id of dose
+#   param ref_dose_id: thinknode id of the reference dose
+#   param value_tolerance: Allowable dose difference between matching points on the actual and reference image
+#   param spatial_tolerance: Allowable distance-to-agreement (DTA) value, where DTA is the distance from a 
+#                                   reference point to the nearest point in the actual image the has the same 
+#                                   dose as the reference point
+def dose_comparison(iam, dose_id, ref_dose_id, value_tolerance, spatial_tolerance):
+    dl.debug("dose_comparision")
+    dose_compare_calc = \
+        thinknode.function(iam["account_name"], 'dosimetry', "compute_gamma_index_values_3d",
+            [
+                thinknode.reference(dose_id),
+                thinknode.reference(ref_dose_id),
+                thinknode.value(value_tolerance),
+                thinknode.value(spatial_tolerance)
+            ])
+    return dose_compare_calc
 
 # Makes a funciton representation of an grid at the given location with given size and spacing
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #   param corner: lower left corner of the grid
 #   param size: size of the grid
 #   param spacing: spacing between the points in the grid
-def make_grid(corner, size, spacing):
+def make_grid(iam, corner, size, spacing):
+    dl.debug("make_grid")
     return \
-        thinknode.function("dosimetry", "make_grid_for_box_" + str(len(corner)) + "d",
+        thinknode.function(iam["account_name"], 'dosimetry', "make_grid_for_box_" + str(len(corner)) + "d",
             [
                 thinknode.value({"corner": corner, "size": size}),
                 thinknode.value(spacing)
             ])
 
+def get_grid_on_image_2d(iam, stopping_img, spacing):
+    dl.debug("get_grid_on_image")
+    # Get image origin
+    origin_id = thinknode.do_calc_item_property(iam, 'origin', thinknode.schema_array_standard_type("number_type"), stopping_img)
+    origin = json.loads(thinknode.get_immutable(iam, 'dicom', origin_id))
+    # Get image size
+    size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("number_type"), stopping_img)
+    size = json.loads(thinknode.get_immutable(iam, 'dicom', size_id))
+
+    grid = make_grid(iam, [origin[0], origin[1]], [size[0], size[1]], [spacing, spacing])
+    res = thinknode.do_calculation(iam, grid, False)
+    return res
+
+# Make a grid about the origin and spanning the size of the stopping image.
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param stopping_img: stopping image, origin and size of are used for grid
+#   param spacing: spacing between the points in the grid
+#   returns: 3d dose grid matching stopping image origin and size
+def get_dose_grid(iam, stopping_img, spacing):
+    dl.debug("get_dose_grid")
+    # Get image origin
+    origin_id = thinknode.do_calc_item_property(iam, 'origin', thinknode.schema_array_standard_type("number_type"), stopping_img)
+    origin = json.loads(thinknode.get_immutable(iam, 'dicom', origin_id))
+    # Get image size
+    size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("number_type"), stopping_img)
+    size = json.loads(thinknode.get_immutable(iam, 'dicom', size_id))
+
+    dose_grid = make_grid(iam, origin, size, [spacing, spacing, spacing])
+    res = thinknode.do_calculation(iam, dose_grid, False)
+    return res
+
+# Makes a funciton representation of an grid at the given location with given size and spacing
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param corner: lower left corner of the grid
+#   param size: size of the grid
+#   param counts: count of items for each dim
+def make_grid_covering_box(iam, corner, size, counts):
+    dl.debug("make_grid_covering_box")
+    return \
+        thinknode.function(iam["account_name"], 'dosimetry', "make_grid_covering_box_3d",
+            [
+                thinknode.value({"corner": corner, "size": size}),
+                thinknode.value(counts)
+            ])
+
 # Makes a funciton representation of an image_3d at the given location with given size and pixel spacing and pixel value
+#   param iam: connection settings (url, user token, and ids for context and realm)
 #   param corner: lower left corner of the image
 #   param size: size of the image
 #   param spacing: spacing between the points in the image
 #   param v: value for the pixels in the image
-def make_image_3d(corner, size, spacing, v):
+def make_image_3d(iam, corner, size, spacing, v):
+    dl.debug("make_image_3d")
     return \
-        thinknode.function("dosimetry", "create_uniform_image_on_grid_3d",
+        thinknode.function(iam["account_name"], 'dosimetry', "create_uniform_image_on_grid_3d",
             [
-                make_grid(corner, size, spacing),
+                make_grid(iam, corner, size, spacing),
                 thinknode.value(v),
                 thinknode.value("relative_stopping_power")
             ])
 
-# Computes a gamma index values to compare 2 doses
-#   param dose_id: thinknode id of dose
-#   param ref_dose_id: thinknode id of the reference dose
-#   param value_tolerance: Allowable dose difference between matching points on the actual and reference image
-#   param spatial_tolerance: Allowable distance-to-agreement (DTA) value, where DTA is the distance from a 
-#									reference point to the nearest point in the actual image the has the same 
-#									dose as the reference point
-def dose_comparison(dose_id, ref_dose_id, value_tolerance, spatial_tolerance):
-	dose_compare_calc = \
-	    thinknode.function("dosimetry", "compute_gamma_index_values_3d ",
-	        [
-	        	thinknode.reference(dose_id),
-	        	thinknode.reference(ref_dose_id),
-	        	thinknode.value(value_tolerance),
-	        	thinknode.value(spatial_tolerance)
-	    	])
-	return dose_compare_calc
+#####################################################################
+# SOBP functions
+#####################################################################
 
+def make_sobp_layers(iam, sad, range, mod):
+    dl.debug("make_sobp_layers")
+    return \
+        thinknode.function(iam["account_name"], "dosimetry", "compute_double_scattering_layers",
+            [
+                thinknode.reference("560962db00c066690b7f0f5296385bdc"), # SOBP Machine from ISS
+                thinknode.value(sad),
+                thinknode.value(range),
+                thinknode.value(mod)
+            ])
 
+#####################################################################
+# PBS functions
+#####################################################################
 
+# Spot builder function
+#   param position: [x,y] position pair specified at the isocenter plane
+#   param fluence: weight of this spot
+#   param energy: energy of this spot
+def make_spot(position, fluence, energy):
+    dl.debug("make_spot")
+    spot = {}
+    spot["energy"] = energy
+    spot["position"] = position
+    spot["fluence"] = fluence
+    return spot
 
+# Sort pbs spots by energy ascending
+#   param data: dictionary of pbs spots to sort
+def sort_spots_by_energy(data):
+    dl.debug("sort_spots_by_energy")
+    d = {}
+    # Sort the data
+    for i in range(0, len(data)):
+        if d.get(data[i]["energy"], "") == "":
+            d[data[i]["energy"]] = []
+        d[data[i]["energy"]].append(data[i])
+        # Combine back into single array
+        out = []
+        ky = sorted(d.keys())
+        for j in ky:
+            for i in d[j]:
+                out.append(i)
+    return out
 
+def get_spot_size(machine, energy):
+    dl.debug("get_spot_size")
+    e = 0
+    i = 0
+    sigmax = 100
+    sigmay = 100
+    while e < energy:
+        e = machine["modeled_energies"][i]["energy"]
+        sigmax = machine["modeled_energies"][i]["sigma"]["x"]["c"]
+        sigmay = machine["modeled_energies"][i]["sigma"]["y"]["c"]
+        i += 1
+    return [math.sqrt(sigmax / 2), math.sqrt(sigmay / 2)]
 
+# Get the bounding box of a specific spot
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param spot_id: spot iss id
+#   returns: box_2d bounding box of the spot
+def get_spot_bounding_box(iam, spot_id):
+    dl.debug("get_spot_bounding_box")
+    spots = json.loads(thinknode.get_immutable(iam, 'dicom', spot_id))
 
+    x_min = 9999
+    x_max = -9999
+    y_min = 9999
+    y_max = -9999
 
+    for spot in spots:
+        if (spot['position'][0] < x_min):
+            x_min = spot['position'][0]
+        if (spot['position'][1] < y_min):
+            y_min = spot['position'][0]
+        if (spot['position'][0] > x_max):
+            x_max = spot['position'][0]
+        if (spot['position'][1] > y_max):
+            y_max = spot['position'][1]
 
+    x_size = x_max-x_min
+    y_size = y_max-y_min
 
+    box = rt_types.box_2d()
+    box.corner = [x_min, y_min]
+    box.size = [x_size, y_size]
+
+    return box.expand_data()
+
+# Make a bixel grid over the spot spot bounding box
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param spots: spot iss id
+#   param spacing: spacing between the points in the grid
+def get_pbs_bixel_grid(iam, spots, spacing):
+    dl.debug("get_pbs_bixel_grid")
+    box = get_spot_bounding_box(iam, spots)
+
+    bixel_grid = thinknode.function(iam["account_name"], "dosimetry", "make_grid_for_box_2d",
+            [
+                thinknode.value(box),
+                thinknode.value([spacing, spacing])
+            ])
+    res = thinknode.do_calculation(iam, bixel_grid, False)
+    return res  
 

@@ -15,7 +15,7 @@ def write_vtk_image3(file_path, image):
     stream.write("# vtk DataFile Version 2.0\n")
     stream.write("CRADLE IMAGE3\n")
     stream.write("ASCII\n")
-    stream.write("DATASET UNSTRUCTURED_GRID\n")
+    stream.write("DATASET RECTILINEAR_GRID\n")
 
     coords = ["X", "Y", "Z"]
 

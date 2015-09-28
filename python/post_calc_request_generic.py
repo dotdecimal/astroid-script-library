@@ -19,7 +19,5 @@ with open(request_dir + '/' + json_calc_file) as data_file:
     json_data = json.load(data_file)
 
 # Send calc request and wait for answer
-res = thinknode.do_calculation(iam, json_data, True)
+res = thinknode.do_calculation(iam, json_data)
 dl.data("Calculation Result: ", str(res))
-
-# thinknode.clear_calculations()

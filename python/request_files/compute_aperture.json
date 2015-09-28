@@ -1,11 +1,92 @@
 {
-   "type": "function",
-   "function": {
-       "app": "dosimetry",
-       "name": "compute_aperture",
-       "args": [{
-           "type": "reference",
-           "reference": "5584732a28c00020000c"
-       }]
-   }
+    "function": {
+        "account": "decimal",
+        "app": "dosimetry",
+        "args": [{
+            "structure": {
+                "schema": {
+                    "named_type": {
+                        "app": "rt_types",
+                        "name": "aperture_creation_params"
+                    },
+                    "type": "named_type"
+                },
+                "properties": {
+                    "target_margin": {
+                        "value": 20.0,
+                        "type": "value"
+                    },
+                    "corner_planes": {
+                        "value": [],
+                        "type": "value"
+                    },
+                    "mill_radius": {
+                        "value": 0.0,
+                        "type": "value"
+                    },
+                    "targets": {
+                        "array": {
+                            "items": [{
+                                "function": {
+                                    "account": "decimal",
+                                    "app": "dosimetry",
+                                    "args": [{
+                                        "value": [-32, -20, -30],
+                                        "type": "value"
+                                    }, {
+                                        "value": [16, -10, 30],
+                                        "type": "value"
+                                    }],
+                                    "name": "make_cube"
+                                },
+                                "type": "function"
+                            }],
+                            "item_schema": {
+                                "named_type": {
+                                    "app": "rt_types",
+                                    "name": "triangle_mesh"
+                                },
+                                "type": "named_type"
+                            }
+                        },
+                        "type": "array"
+                    },
+                    "downstream_edge": {
+                        "value": 250.5,
+                        "type": "value"
+                    },
+                    "organs": {
+                        "value": [],
+                        "type": "value"
+                    },
+                    "centerlines": {
+                        "value": [],
+                        "type": "value"
+                    },
+                    "overrides": {
+                        "value": [],
+                        "type": "value"
+                    },
+                    "half_planes": {
+                        "value": [],
+                        "type": "value"
+                    }
+                }
+            },
+            "type": "structure"
+        }, {
+            "value": {
+                "sad": [2270, 2270],
+                "image_to_beam": [
+                    [1, 0, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 1, 0, 0],
+                    [0, 0, 0, 1]
+                ]
+            },
+            "type": "value"
+        }],
+        "name": "compute_aperture"
+    },
+    "type": "function"
 }

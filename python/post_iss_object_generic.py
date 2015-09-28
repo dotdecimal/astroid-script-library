@@ -8,8 +8,8 @@ import requests
 import json
 
 iss_dir = "iss_files"
-json_iss_file = "aperture_creation_params.json"
-obj_name = "aperture_creation_params"
+json_iss_file = "lucite.json"
+obj_name = "proton_material_properties"
 
 # Get IAM ids
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
@@ -19,5 +19,5 @@ with open(iss_dir + '/' + json_iss_file) as data_file:
     json_data = json.load(data_file)
 
 # Post immutable object to ISS
-res = thinknode.post_immutable(iam, json_data, obj_name)
+res = thinknode.post_immutable_named(iam, "dicom", json_data, obj_name)
 

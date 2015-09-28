@@ -53,9 +53,26 @@ Decimal Provided Libraries:
 	
 Thinknode.cfg file syntax:
 {
-    "basic_user": "<Base64 encoded username:password>",
-    "api_url": "https://api.thinknode.com/v1.0",
-    "app_name": "dosimetry",
-    "app_version": "1.0.0.0",
-    "realm_name": "Realm Name"
+    "basic_user": "<Base64 encoded thinknode username:password>",
+    "api_url": "https://<thinknode_account>.thinknode.io/api/v1.0",
+    "apps":
+    {   
+        "dosimetry": 
+        {    
+            "app_version": "1.0.0-beta1",
+            "branch_name": "master"
+        },
+        "dicom":
+        {
+            "app_version": "",
+            "branch_name": "master"       
+        },
+        "rt_types":
+        {
+            "app_version": "",
+            "branch_name": "master"         
+        }
+    }, 
+    "realm_name": "<thinknode realm>",
+    "account_name": "<thinknode account>"
 }

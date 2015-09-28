@@ -11,6 +11,7 @@ import json
 from colorama import init, Fore, Back, Style
 init(autoreset=True)
 
+isDebug = True # Turn this flag to True to enable output of all dl.debug calls
 display_timestamps = True
 display_types = True
 
@@ -35,11 +36,13 @@ def message(message):
 	print(log_time() + Fore.RESET + mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
 def debug(message):
-	mes = ' '
-	if display_types:
-		mes = ' -- DEBUG: ' 
-	mes += message
-	print(log_time() + Fore.RESET + mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
+	if isDebug:
+		mes = ' '
+		if display_types:
+			mes = ' -- DEBUG: >>> ' 
+		mes += message
+		mes += ' <<<'
+		print(log_time() + Fore.RESET + mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
 def linebreak():
 	print('\n')
@@ -55,7 +58,7 @@ def debug_data(message, data):
 		mes = ' -- DATA: ' 
 	mes += message 
 	print(log_time() + Fore.BLUE + Back.WHITE + Style.BRIGHT +  mes)
-	print(Fore.WHITE + Back.RESET + Style.BRIGHT +  data  + Fore.RESET + Back.RESET + Style.RESET_ALL)
+	print(Fore.WHITE + Back.RESET + Style.BRIGHT + " " + data  + Fore.RESET + Back.RESET + Style.RESET_ALL)
 	# print ('\n')
 
 def alert(message):
@@ -82,14 +85,14 @@ def task(message):
 def error(err):
 	mes = ' '
 	if display_types:
-		mes = ' -- ERROR: ' 
+		mes = ' !! ERROR: ' 
 	mes += err
 	print(log_time() + Fore.RED + Style.BRIGHT +  mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
 def warning(warn):
 	mes = ' '
 	if display_types:
-		mes = ' -- WARNING: ' 
+		mes = ' !! WARNING: ' 
 	mes += warn 
 	print(log_time() + Fore.YELLOW + Style.BRIGHT +  mes + Fore.RESET + Back.RESET + Style.RESET_ALL)
 
@@ -129,5 +132,5 @@ def log_data(data):
 # 	error('decimal error')
 # 	event('decimal event')
 # 	debug_data('decimal debug_data', 'data')
-# 	message('decimal message')
+
 # test()
