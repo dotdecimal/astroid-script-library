@@ -9,7 +9,7 @@ import binascii
 import lib.thinknode_worker as thinknode
 import lib.decimal_logging as dl
 import lib.rt_types as rt_types
-import json
+import json, copy
 
 #####################################################################
 # Device functions
@@ -284,3 +284,48 @@ def get_pbs_bixel_grid(iam, spots, spacing):
     res = thinknode.do_calculation(iam, bixel_grid, False)
     return res  
 
+
+# Create a plan with custom defined pbs spots by energy
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param study_id: thinknode id for the study that the plan will be added to
+#   param machine: pbs machine config
+#   param spots_by_energy: an array of energies that each contain an array of spots
+#   returns: the id for a plan that contains a beam with the created spots
+def create_plan(iam, study_id, machine, spots_by_energy):
+
+    study_data = thinknode.get_immutable(iam, "rt_types", study_id)
+    study = json.loads(study_data)
+
+    cp = study["plan"]["beams"][0]['control_points'][0]
+    cp["layer"]["spots"] = []
+
+    cnt_pts = []
+    msw = 0
+    n = 0
+    for spot_list in spots_by_energy:
+        n += 1
+        cp["layer"]["spots"] = []
+        cp["layer"]["num_spot_positions"] = len(spot_list)
+        cp["layer"]["num_paintings"] = 1
+        cp["layer"]["spot_size"] = get_spot_size(machine, spot_list[0]["energy"])
+        ms = 0
+        for spot in spot_list:
+            ms += spot["fluence"]
+            cp["layer"]["spots"].append(spot)
+        msw += ms
+        cp["number"] = n
+        cp["meterset_weight"] = msw
+        cp["nominal_beam_energy"] = spot_list[0]["energy"]
+        cnt_pts.append(copy.deepcopy(cp))
+
+    # Overwrite the first beam control point list
+    study["plan"]["beams"][0]['final_meterset_weight'] = msw
+    study["plan"]["beams"][0]['control_points'] = cnt_pts
+
+    # Write plan back to file
+    plan_calc = thinknode.function(iam["account_name"], "dicom", "write_plan", 
+        [thinknode.value(study), 
+        thinknode.none])
+
+    res = thinknode.do_calculation(iam, plan_calc, False)
+    return res
