@@ -9,7 +9,7 @@ import binascii
 import lib.thinknode_worker as thinknode
 import lib.decimal_logging as dl
 import lib.rt_types as rt_types
-import json, copy
+import json, copy, math
 
 #####################################################################
 # Device functions

@@ -49,9 +49,9 @@ output_file = '../temp/PlanOut/Plan.dcm' # Desired Output File name
 study_id = dicom.make_rt_study_from_dir(iam, plan_file_path)
 
 # Generate the new plan
-res = dosimetry.create_plan(iam, plan_file_path, machine, spots_by_energy)
+res = dosimetry.create_plan(iam, study_id, machine, spots_by_energy)
 
-plan_data = thinknode.get_immutable(iam, "rt_types", res)
+plan_data = json.loads(thinknode.get_immutable(iam, "rt_types", res))
 
 stream = open(output_file, 'wb')
 stream.write(base64.b64decode(plan_data["blob"]))
