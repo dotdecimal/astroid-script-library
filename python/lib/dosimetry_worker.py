@@ -322,10 +322,14 @@ def create_plan(iam, study_id, machine, spots_by_energy):
     study["plan"]["beams"][0]['final_meterset_weight'] = msw
     study["plan"]["beams"][0]['control_points'] = cnt_pts
 
+    study_res = json.loads(thinknode.post_immutable_named(iam, "dicom", study, "rt_study").text)
+
     # Write plan back to file
     plan_calc = thinknode.function(iam["account_name"], "dicom", "write_plan", 
-        [thinknode.value(study), 
+        [thinknode.reference(study_res['id']), 
         thinknode.none])
+
+    print(plan_calc)
 
     res = thinknode.do_calculation(iam, plan_calc, False)
     return res
