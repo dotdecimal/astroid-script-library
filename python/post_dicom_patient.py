@@ -21,4 +21,4 @@ study_calc = \
           thinknode.reference(study_id)
       ])
 study_res = thinknode.do_calculation(iam, study_calc, False)
-dl.data("Patient rt_tudy ISS ID: " + study_res)
+dl.data("Patient rt_tudy ISS ID: ", study_res)
