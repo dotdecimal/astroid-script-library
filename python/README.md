@@ -1,20 +1,25 @@
 # Readme
-Copyright (c) 2015 .decimal, Inc. All rights reserved.
-Author:   Daniel Patenaude
-Date:     06/09/2015
+Copyright (c) 2015 .decimal, Inc. All rights reserved.  
+Author:   Daniel Patenaude  
+Date:     06/09/2015  
 
 ## Requirements
 
 Python Verion Required: 
-	- Python 34
+
+- Python 34
 
 Packages required to run: 
-	- requests
-	- colorama
 
-	python -m pip install requests
-	python -m pip install colorama
-    python -m pip install jsonpickle
+- requests
+- colorama
+- jsonpickle
+
+```
+   python -m pip install requests  
+   python -m pip install colorama  
+   python -m pip install jsonpickle  
+```
 
 ## Provided Example File Usages:
 1. post_dose_calc_from_dicom.py
@@ -57,7 +62,7 @@ Packages required to run:
         vtk.write_vtk_image3('testing_image3.vtk', img3.expand_data())
 	
 ## Thinknode.cfg file syntax:
-```
+```json
 {
     "basic_user": "<Base64 encoded thinknode username:password>",
     "api_url": "https://<thinknode_account>.thinknode.io/api/v1.0",
