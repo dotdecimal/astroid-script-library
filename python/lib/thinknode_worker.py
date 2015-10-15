@@ -10,25 +10,19 @@ import lib.decimal_logging as dl
 import jsonpickle as jp
 import os.path
 import shutil
+from datetime import datetime, timedelta
 
 #####################################################################
 # thinknode get/post functions
 #####################################################################
 
-# Check that the response returned a successful code
-#   param res: http response
-def assert_success(res):
-    if res.status_code != 200:
-        dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
-        sys.exit()
-
-# Read the thinknode config file
-#   param path: relative location of config file
-def read_config(path):
-    file = open(sys.path[0] + '/' + path)
-    config = json.load(file)
-    file.close()
-    return config
+# Worker function for getting the thinknode user token.
+#   param config: connection settings (url and unique basic user authentication)
+def get_user_token(config):
+    res = requests.get(config["api_url"] + '/cas/login',
+        headers = {'Authorization': 'Basic ' + config["basic_user"]})
+    assert_success(res)
+    config["user_token"] = res.json()["token"]
 
 # Authenticate with thinknode and store necessary ids.
 # Gets the context id for each app detailed in the thinknode config
@@ -37,12 +31,8 @@ def read_config(path):
 def authenticate(config):
     dl.event("Authenticating...")
     # Get user token
-    dl.event("Getting User Token...")
-    res = requests.get(config["api_url"] + '/cas/login',
-        headers = {'Authorization': 'Basic ' + config["basic_user"]})
-    assert_success(res)
-    dl.data("User Token:", res.text)
-    config["user_token"] = res.json()["token"]
+    get_cached_token(config)
+    dl.data("User Token:", config["user_token"])
     # Get context ID and app versions
     for app_name in config["apps"]:
         # Get the version if none is provided
@@ -123,7 +113,7 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
                     # dl.data("Calculation Result: ", res.text)
                     assert_success(res)
 
-                    f = open(loc + '/calculations' + os.sep + str(calculation_id) + ".txt", 'a')
+                    f = open(loc + os.sep + 'calculations' + os.sep + str(calculation_id) + ".txt", 'a')
                     f.write(res.text)
                     f.close()
 
@@ -133,7 +123,7 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
                     return calculation_id
     else:
         dl.event("Pulling Locally Cached Calculation...")        
-        f = open(loc + '/calculations' + os.sep + calculation_id + ".txt")
+        f = open(loc + 'calculations' + os.sep + calculation_id + ".txt")
         data = str(f.read())
         #dl.data("Calculation Result: ", data)
         
@@ -214,11 +204,6 @@ def do_calc_array_item(config, index, schema, ref_id):
     else:
         dl.debug('array_item: ' + str(ai))
         return ai
-
-# Clears the cached calculations in the calculation directory
-def clear_calculations():
-    shutil.rmtree('calculations')
-    os.makedirs('calculations')
 
 # Generic function to post an object to immutable storage system (ISS)
 #   param config: connection settings (url, user token, and ids for context and realm)
@@ -448,6 +433,63 @@ def array_number_type(app, a):
 # misc helpers
 #####################################################################
 
+# Check that the response returned a successful code
+#   param res: http response
+def assert_success(res):
+    if res.status_code != 200:
+        dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
+        sys.exit()
+
+# Read the thinknode config file
+#   param path: relative location of config file
+def read_config(path):
+    file = open(sys.path[0] + os.sep + path)
+    config = json.load(file)
+    file.close()
+    return config
+
+# Worker function for getting the thinknode user token.
+#   note: if you need to force a new token, delete the token.json file from the calculations directory
+#   param config: connection settings (url and unique basic user authentication)
+def get_cached_token(config):
+    now = datetime.now()
+    # Make sure calculation folder exists
+    loc = sys.path[0]
+    if loc[len(loc)-1] != os.sep:
+        loc += '/'
+    path = loc + 'calculations' + os.sep + "token.json"
+    # folder not present, make it
+    if not os.path.exists(loc + 'calculations' + os.sep):
+        os.makedirs(loc + 'calculations' + os.sep)
+    # cached token file not present, make a new one
+    if not os.path.isfile(path):
+        dl.event("Creating New User Token...")
+        get_user_token(config)
+        file = open(path, 'a')
+        file.write(json.dumps({'token': config["user_token"], 'refreshed': str(now) }))
+        file.close()
+    else:
+        file = open(path)
+        user_cache = json.load(file)
+        file.close()
+        cached_datetime = datetime.strptime(user_cache["refreshed"], "%Y-%m-%d %H:%M:%S.%f")
+        expiration_time = now - timedelta(hours=14)
+        # token is old
+        if (cached_datetime < expiration_time):
+            dl.event("Getting New User Token...")
+            get_user_token(config)
+            file = open(path, 'w')
+            file.write(json.dumps({'token': config["user_token"], 'refreshed': str(now) }))
+            file.close()
+        else:
+            dl.event("Getting Cached User Token...")
+            config["user_token"] = user_cache["token"]
+
+# Clears the cached calculations in the calculation directory
+def clear_calculations():
+    shutil.rmtree('calculations')
+    os.makedirs('calculations')
+           
 # Turn dosimetry_types class object into serialized json dictionary. 
 # This handles interdependent classes within dosimetry_types.
 #   param obj: instance of a dosimetry_types class
