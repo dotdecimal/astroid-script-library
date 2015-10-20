@@ -183,7 +183,7 @@ def write_vtk_polyset(file_path, poly, z=0):
         buff += str(vertex_count)
         for k in range(vertex_count):
             v1 = poly['polygons'][i]['vertices'][k]
-            stream.write(v1[0] + " " + v1[1] + " " + str(z) + "\n")
+            stream.write(str(v1[0]) + " " + str(v1[1]) + " " + str(z) + "\n")
             buff += " " + str(j)
             j += 1
         buff += "\n"
