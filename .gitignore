@@ -1,0 +1,9 @@
+#################
+## Python
+#################
+
+*.vtk
+*.pyc
+python/calculations/*
+python/temp/*
+
