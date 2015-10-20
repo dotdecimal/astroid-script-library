@@ -252,7 +252,9 @@ def get_beam_geometry(iam, study_id, beam_index):
 #	returns the id of the rt_ion_beam from the rt_plan
 def get_beam_by_index(iam, study_id, beam_index):
 	dl.debug("get_beam_by_index")
-	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), study_id)
+	plan = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
+
+	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan)
 
 	beam = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beam_array)
 	return beam
@@ -264,12 +266,13 @@ def get_beam_by_index(iam, study_id, beam_index):
 #	returns the id of the aperture from the specified rt_ion_beam
 def get_aperture_from_beam(iam, study_id, beam_index):
 	dl.debug("get_aperture_from_beam")
-	plan = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
+	# plan = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
 
-	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan)
+	# beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan)
 
-	beam_id = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beam_array)
+	# beam_id = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beam_array)
 
+	beam_id = get_beam_by_index(iam, study_id, beam_index)
 	rt_ap = thinknode.do_calc_item_property(iam, 'block', thinknode.schema_named_type('rt_ion_block'), beam_id)
 	ap_poly = thinknode.do_calc_item_property(iam, 'data', thinknode.schema_named_type('polyset'), rt_ap)
 	ap_ds_edge = thinknode.do_calc_item_property(iam, 'downstream_edge', thinknode.schema_standard_type('number_type'), rt_ap)
@@ -280,7 +283,7 @@ def get_aperture_from_beam(iam, study_id, beam_index):
 				"downstream_edge": thinknode.reference(ap_ds_edge), 
 				"shape": thinknode.reference(ap_poly)
 			})
-	aperture = thinknode.do_calculation(iam, 'dicom', struct_calc, False)
+	aperture = thinknode.do_calculation(iam, struct_calc, False)
 	return aperture
 
 # Get the SAD from a defined beam
@@ -293,7 +296,7 @@ def get_sad(iam, beam_id):
 
 	sad = thinknode.get_immutable(iam, 'dicom', sad_array)
 	dl.debug("sad: " + str(sad))
-	return sad_array
+	return sad
 
 # Get the weighted spot list from a pbs beam
 #   param iam: connection settings (url, user token, and ids for context and realm)

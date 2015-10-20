@@ -9,7 +9,7 @@ import binascii
 import lib.thinknode_worker as thinknode
 import lib.decimal_logging as dl
 import lib.rt_types as rt_types
-import json
+import json, copy, math
 
 #####################################################################
 # Device functions
@@ -98,6 +98,11 @@ def make_grid(iam, corner, size, spacing):
                 thinknode.value(spacing)
             ])
 
+# Make a 2d grid about the origin and spanning the size of the stopping image.
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param stopping_img: stopping image, origin and size of are used for grid
+#   param spacing: spacing between the points in the grid
+#   returns: 2d grid matching stopping image origin and size
 def get_grid_on_image_2d(iam, stopping_img, spacing):
     dl.debug("get_grid_on_image")
     # Get image origin
@@ -106,8 +111,12 @@ def get_grid_on_image_2d(iam, stopping_img, spacing):
     # Get image size
     size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("number_type"), stopping_img)
     size = thinknode.get_immutable(iam, 'dicom', size_id)
+    # Get image axes
+    axes_id = thinknode.do_calc_item_property(iam, 'axes', thinknode.schema_array_array_standard_type("number_type"), stopping_img)
+    axes = thinknode.get_immutable(iam, 'dicom', axes_id)
+    dl.debug("image axes: " + str(axes))
 
-    grid = make_grid(iam, [origin[0], origin[1]], [size[0], size[1]], [spacing, spacing])
+    grid = make_grid(iam, [origin[0], origin[1]], [axes[0][0]*size[0], axes[1][1]*size[1]], [spacing, spacing])
     res = thinknode.do_calculation(iam, grid, False)
     return res
 
@@ -121,11 +130,17 @@ def get_dose_grid(iam, stopping_img, spacing):
     # Get image origin
     origin_id = thinknode.do_calc_item_property(iam, 'origin', thinknode.schema_array_standard_type("number_type"), stopping_img)
     origin = thinknode.get_immutable(iam, 'dicom', origin_id)
+    dl.debug("image origin: " + str(origin))
     # Get image size
     size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("number_type"), stopping_img)
     size = thinknode.get_immutable(iam, 'dicom', size_id)
+    dl.debug("image size: " + str(size))
+    # Get image axes
+    axes_id = thinknode.do_calc_item_property(iam, 'axes', thinknode.schema_array_array_standard_type("number_type"), stopping_img)
+    axes = thinknode.get_immutable(iam, 'dicom', axes_id)
+    dl.debug("image axes: " + str(axes))
 
-    dose_grid = make_grid(iam, origin, size, [spacing, spacing, spacing])
+    dose_grid = make_grid(iam, origin, [axes[0][0]*size[0], axes[1][1]*size[1], axes[2][2]*size[2]], [spacing, spacing, spacing])
     res = thinknode.do_calculation(iam, dose_grid, False)
     return res
 
@@ -269,3 +284,51 @@ def get_pbs_bixel_grid(iam, spots, spacing):
     res = thinknode.do_calculation(iam, bixel_grid, False)
     return res  
 
+
+# Create a plan with custom defined pbs spots by energy
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param study_id: thinknode id for the study that the plan will be added to
+#   param machine: pbs machine config
+#   param spots_by_energy: an array of energies that each contain an array of spots
+#   returns: the id for a plan that contains a beam with the created spots
+def create_plan(iam, study_id, machine, spots_by_energy):
+
+    study = thinknode.get_immutable(iam, "rt_types", study_id)
+
+    cp = study["plan"]["beams"][0]['control_points'][0]
+    cp["layer"]["spots"] = []
+
+    cnt_pts = []
+    msw = 0
+    n = 0
+    for spot_list in spots_by_energy:
+        n += 1
+        cp["layer"]["spots"] = []
+        cp["layer"]["num_spot_positions"] = len(spot_list)
+        cp["layer"]["num_paintings"] = 1
+        cp["layer"]["spot_size"] = get_spot_size(machine, spot_list[0]["energy"])
+        ms = 0
+        for spot in spot_list:
+            ms += spot["fluence"]
+            cp["layer"]["spots"].append(spot)
+        msw += ms
+        cp["number"] = n
+        cp["meterset_weight"] = msw
+        cp["nominal_beam_energy"] = spot_list[0]["energy"]
+        cnt_pts.append(copy.deepcopy(cp))
+
+    # Overwrite the first beam control point list
+    study["plan"]["beams"][0]['final_meterset_weight'] = msw
+    study["plan"]["beams"][0]['control_points'] = cnt_pts
+
+    study_res = json.loads(thinknode.post_immutable_named(iam, "dicom", study, "rt_study").text)
+
+    # Write plan back to file
+    plan_calc = thinknode.function(iam["account_name"], "dicom", "write_plan", 
+        [thinknode.reference(study_res['id']), 
+        thinknode.none])
+
+    print(plan_calc)
+
+    res = thinknode.do_calculation(iam, plan_calc, False)
+    return res
