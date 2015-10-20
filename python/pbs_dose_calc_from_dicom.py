@@ -16,8 +16,8 @@ import json
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
 
 def get_pbs_machine():
-	# return '56059bf100c0de90c4a6290f98cf2afe' #MGH
-	return '56059baf00c041b883a89631a4a12e2f' #Procure
+	# return '56059bf100c0de90c4a6290f98cf2afe' #Machine 1 - M
+	return '56059baf00c041b883a89631a4a12e2f' #Machine 2 - PNJ
 
 def dose_to_vtk(dose_id):
 	img_data = json.loads(thinknode.get_immutable(iam, 'dicom', dose_id))
@@ -29,8 +29,8 @@ def dose_to_vtk(dose_id):
 	vtk.write_vtk_image3('dose_pbs.vtk', img2)
 
 def run():
-	study_id = dicom.make_rt_study_from_dir(iam, 'F:/Datasets/p.d/Proton/ProCure-PBS/prostate')
-	# study_id = '560596110100e6ecd3c01d49ac9b0fe4' #Procure Prostate
+	study_id = dicom.make_rt_study_from_dir(iam, 'F:/Datasets/p.d/Proton/XXX')
+	# study_id = '560596110100e6ecd3c01d49ac9b0fe4' #Prostate
 
 	study_calc = \
 		thinknode.function(iam["account_name"], 'dicom', "merge_ct_image_slices",
