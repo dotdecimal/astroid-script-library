@@ -26,7 +26,7 @@ def dose_to_vtk(dose_id):
 	vtk.write_vtk_image3('ct_set.vtk', img2)
 
 def run():
-	study_id = dicom.make_rt_study_from_dir(iam, 'F:/Datasets/p.d/Proton/UF Health/prone/prone')
+	study_id = dicom.make_rt_study_from_dir(iam, 'F:/Datasets/p.d/Proton/XXX')
 
 	study_calc = \
 		thinknode.function(iam["account_name"], 'dicom', "merge_ct_image_slices",
@@ -36,7 +36,7 @@ def run():
 	study_id = thinknode.do_calculation(iam, study_calc, False)
 	dl.debug("study_id: " + study_id)
 
-	# study_id = '5609a28901007957f8a36c1785d9cd16' #UF Prone after merge
+	# study_id = '5609a28901007957f8a36c1785d9cd16' #XXX Prone after merge
 
 	beam_index = 0
 
