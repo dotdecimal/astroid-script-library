@@ -133,8 +133,8 @@ def make_rt_study_from_dir(iam, dir_name):
 	dl.debug('dir_id')
 	dl.debug(dir_id)
 	res = thinknode.get_immutable(iam, 'dicom', dir_id)
-	dl.debug('Got immutable: ' + res)
-	dir_obj = json.loads(res)
+	dl.debug('Got immutable: ' + str(res))
+	dir_obj = res
 	file_ids = []
 	for file_id in dir_obj["contents"]["directory"]:
 		file_ids.append(thinknode.reference(file_id))
@@ -291,7 +291,7 @@ def get_sad(iam, beam_id):
 	dl.debug("get_sad")
 	sad_array = thinknode.do_calc_item_property(iam, 'virtual_sad', thinknode.schema_array_standard_type("number_type"), beam_id)
 
-	sad = json.loads(thinknode.get_immutable(iam, 'dicom', sad_array))
+	sad = thinknode.get_immutable(iam, 'dicom', sad_array)
 	dl.debug("sad: " + str(sad))
 	return sad_array
 
@@ -308,7 +308,7 @@ def get_weighted_spot_list_from_beam(iam, beam_id):
 			])
 	res = thinknode.do_calculation(iam, calc, False)
 
-	spot_list = json.loads(thinknode.get_immutable(iam, 'dicom', res))
+	spot_list = thinknode.get_immutable(iam, 'dicom', res)
 
 	sorted_spots = dosimetry.sort_spots_by_energy(spot_list)
 

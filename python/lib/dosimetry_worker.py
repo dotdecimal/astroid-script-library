@@ -102,10 +102,10 @@ def get_grid_on_image_2d(iam, stopping_img, spacing):
     dl.debug("get_grid_on_image")
     # Get image origin
     origin_id = thinknode.do_calc_item_property(iam, 'origin', thinknode.schema_array_standard_type("number_type"), stopping_img)
-    origin = json.loads(thinknode.get_immutable(iam, 'dicom', origin_id))
+    origin = thinknode.get_immutable(iam, 'dicom', origin_id)
     # Get image size
     size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("number_type"), stopping_img)
-    size = json.loads(thinknode.get_immutable(iam, 'dicom', size_id))
+    size = thinknode.get_immutable(iam, 'dicom', size_id)
 
     grid = make_grid(iam, [origin[0], origin[1]], [size[0], size[1]], [spacing, spacing])
     res = thinknode.do_calculation(iam, grid, False)
@@ -120,10 +120,10 @@ def get_dose_grid(iam, stopping_img, spacing):
     dl.debug("get_dose_grid")
     # Get image origin
     origin_id = thinknode.do_calc_item_property(iam, 'origin', thinknode.schema_array_standard_type("number_type"), stopping_img)
-    origin = json.loads(thinknode.get_immutable(iam, 'dicom', origin_id))
+    origin = thinknode.get_immutable(iam, 'dicom', origin_id)
     # Get image size
     size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("number_type"), stopping_img)
-    size = json.loads(thinknode.get_immutable(iam, 'dicom', size_id))
+    size = thinknode.get_immutable(iam, 'dicom', size_id)
 
     dose_grid = make_grid(iam, origin, size, [spacing, spacing, spacing])
     res = thinknode.do_calculation(iam, dose_grid, False)
@@ -227,7 +227,7 @@ def get_spot_size(machine, energy):
 #   returns: box_2d bounding box of the spot
 def get_spot_bounding_box(iam, spot_id):
     dl.debug("get_spot_bounding_box")
-    spots = json.loads(thinknode.get_immutable(iam, 'dicom', spot_id))
+    spots = thinknode.get_immutable(iam, 'dicom', spot_id)
 
     x_min = 9999
     x_max = -9999

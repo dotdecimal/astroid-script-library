@@ -252,7 +252,7 @@ def post_immutable_named(config, app_name, json_data, obj_name):
 #   param json_data: immutable array object in json format
 #   param obj_name: object name of items within the array to post
 def post_immutable_array(config, app_name, json_data, obj_name):
-    scope = '/iss/array/named/' + config["account_name"] + "rt_types" + "/" + obj_name
+    scope = '/iss/array/named/' + config["account_name"] + "/rt_types" + "/" + obj_name
     return post_immutable(config, app_name, json_data, scope)
 
 # Post immutable object to ISS of a dependency type 
@@ -261,7 +261,7 @@ def post_immutable_array(config, app_name, json_data, obj_name):
 #   param json_data: immutable object in json format
 #   param obj_name: object name of app to post to
 def post_dependency_immutable(config, dep_app, json_data, obj_name):
-    scope = '/iss/named/' + config["account_name"] + dep_app + "/" + obj_name
+    scope = '/iss/named/' + config["account_name"] + "/" + dep_app + "/" + obj_name
     return post_immutable(config, dep_app, json_data, scope)
 
 # Post immutable object to ISS
@@ -282,7 +282,7 @@ def get_immutable(config, app_name, obj_id):
     res = requests.get(url, 
         headers = {'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
-    return res.text
+    return json.loads(res.text)
 
 #####################################################################
 # thinknode schema type builders
@@ -339,7 +339,7 @@ def some(o):
 # Create an optional value request
 #   param v: value (alpha numeric)
 def optional_value(v):
-    return some(value(v))   
+    return value(some(v))
 
 # Create a none type (i.e. an empty optional type)
 none = value({ "type": "none", "none": None }) 
