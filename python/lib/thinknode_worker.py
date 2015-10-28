@@ -3,7 +3,7 @@
 # Date:     09/22/2015
 # Desc:     Worker to perform request and calculation tasks on thinknode framework
 
-import requests
+
 import json
 import sys
 import lib.decimal_logging as dl
@@ -12,6 +12,9 @@ import os.path
 import shutil
 from datetime import datetime, timedelta
 
+import requests
+session = requests.Session()
+
 #####################################################################
 # thinknode get/post functions
 #####################################################################
@@ -19,7 +22,7 @@ from datetime import datetime, timedelta
 # Worker function for getting the thinknode user token.
 #   param config: connection settings (url and unique basic user authentication)
 def get_user_token(config):
-    res = requests.get(config["api_url"] + '/cas/login',
+    res = session.get(config["api_url"] + '/cas/login',
         headers = {'Authorization': 'Basic ' + config["basic_user"]})
     assert_success(res)
     config["user_token"] = res.json()["token"]
@@ -39,7 +42,7 @@ def authenticate(config):
         if config["apps"][app_name]["app_version"] == "":
             dl.event("Getting " + app_name + " Version...")
             version_url = config["api_url"] + '/iam/realms/' + config["realm_name"] + '/versions'
-            res = requests.get(version_url, 
+            res = session.get(version_url, 
                 headers = {'Authorization': 'Bearer ' + config["user_token"]})
             assert_success(res)
             for app in json.loads(res.text):
@@ -50,7 +53,7 @@ def authenticate(config):
         dl.event("Getting Context ID...")
         context_url = config["api_url"] + '/iam/realms/' + config["realm_name"] + '/context?account=' + config["account_name"] + "&app=" + app_name + "&version=" + config["apps"][app_name]["app_version"]
         dl.data('context_url: ', context_url)
-        res = requests.get(context_url, 
+        res = session.get(context_url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"]})
         assert_success(res)
         config["apps"][app_name]["context_id"] = res.json()["id"]
@@ -87,7 +90,7 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
             if res.json()["type"] == "failed":
                 calculating = False
                 dl.event("Getting error logs for calculation")
-                log_res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR', 
+                log_res = session.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR', 
                     headers = {'Authorization': 'Bearer ' + config["user_token"]})
                 assert_success(res)
                 if return_error:
@@ -108,7 +111,7 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
                 if return_data:
                     # Get calculation Result
                     dl.event("Fetching Calculation Result...")
-                    res = requests.get(config["api_url"] + '/iss/' + calculation_id + '/?context=' + config["apps"][app_name]["context_id"], 
+                    res = session.get(config["api_url"] + '/iss/' + calculation_id + '/?context=' + config["apps"][app_name]["context_id"], 
                         headers = {'Authorization': 'Bearer ' + config["user_token"]})
                     # dl.data("Calculation Result: ", res.text)
                     assert_success(res)
@@ -141,12 +144,12 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
 def get_calculation_status(config, app_name, calculation_id, status="completed", timeout=0):
     if (timeout <= 0):
         dl.event("Checking Calculation Status...")
-        res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["apps"][app_name]["context_id"], 
+        res = session.get(config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["apps"][app_name]["context_id"], 
             headers = {'Authorization': 'Bearer ' + config["user_token"]})
         dl.data("Response: ", res.text)
     else:
         # using long polling if timeout > 0
-        res = requests.get(config["api_url"] + '/calc/' + calculation_id + '/status/?status=' + status + '&progress=1&timeout=' + str(timeout) + '&context=' + config["apps"][app_name]["context_id"], 
+        res = session.get(config["api_url"] + '/calc/' + calculation_id + '/status/?status=' + status + '&progress=1&timeout=' + str(timeout) + '&context=' + config["apps"][app_name]["context_id"], 
                 headers = {'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
     return res
@@ -162,7 +165,7 @@ def post_calculation(config, json_data):
     dl.event("Sending Calculation...")
     url = config["api_url"] + '/calc/?context=' + config["apps"][app_name]["context_id"]
     dl.debug(url)
-    res = requests.post(url, 
+    res = session.post(url, 
         data = json.dumps(json_data), 
         headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
     assert_success(res)
@@ -215,7 +218,7 @@ def post_immutable(config, app_name, json_data, qualified_scope):
     # Post immutable object
     post_url = config["api_url"] + qualified_scope + '/?context=' + config["apps"][app_name]["context_id"]
     dl.data('post_url: ', post_url)
-    res = requests.post(post_url, 
+    res = session.post(post_url, 
         data = json.dumps(json_data), 
         headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
     assert_success(res)
@@ -264,7 +267,7 @@ def post_blob(config, app_name, json_data):
 def get_immutable(config, app_name, obj_id):
     dl.event("Requesting Data from ISS...")
     url = config["api_url"] + '/iss/' + obj_id + '/?context=' + config['apps'][app_name]["context_id"]
-    res = requests.get(url, 
+    res = session.get(url, 
         headers = {'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
     return json.loads(res.text)
