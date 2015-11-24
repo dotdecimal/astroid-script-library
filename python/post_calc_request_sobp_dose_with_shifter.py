@@ -7,6 +7,7 @@ import json
 from lib import thinknode_worker as thinknode
 from lib import dosimetry_worker as dosimetry
 from lib import decimal_logging as dl
+from lib import thinknode_id as tn_id
 
 # Get IAM ids
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
@@ -50,7 +51,7 @@ degrader = \
     thinknode.function(iam["account_name"], "dosimetry", "make_degrader", 
         [
             thinknode.value(res_geom),
-            thinknode.reference("5609763d00c0d98726140d7f42ad819f") # Material spec from ISS
+            thinknode.reference("564cf0a500c06b391d4ce908c7a3fe9a") # Material spec from ISS
         ])
 proton_degr = thinknode.do_calculation(iam, degrader)
 

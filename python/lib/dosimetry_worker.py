@@ -9,6 +9,7 @@ import binascii
 import lib.thinknode_worker as thinknode
 import lib.decimal_logging as dl
 import lib.rt_types as rt_types
+from lib import thinknode_id as tn_id
 import json, copy, math
 
 #####################################################################
@@ -106,13 +107,13 @@ def make_grid(iam, corner, size, spacing):
 def get_grid_on_image_2d(iam, stopping_img, spacing):
     dl.debug("get_grid_on_image")
     # Get image origin
-    origin_id = thinknode.do_calc_item_property(iam, 'origin', thinknode.schema_array_standard_type("number_type"), stopping_img)
+    origin_id = thinknode.do_calc_item_property(iam, 'origin', thinknode.schema_array_standard_type("float_type"), stopping_img)
     origin = thinknode.get_immutable(iam, 'dicom', origin_id)
     # Get image size
-    size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("number_type"), stopping_img)
+    size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("integer_type"), stopping_img)
     size = thinknode.get_immutable(iam, 'dicom', size_id)
     # Get image axes
-    axes_id = thinknode.do_calc_item_property(iam, 'axes', thinknode.schema_array_array_standard_type("number_type"), stopping_img)
+    axes_id = thinknode.do_calc_item_property(iam, 'axes', thinknode.schema_array_array_standard_type("float_type"), stopping_img)
     axes = thinknode.get_immutable(iam, 'dicom', axes_id)
     dl.debug("image axes: " + str(axes))
 
@@ -128,20 +129,20 @@ def get_grid_on_image_2d(iam, stopping_img, spacing):
 def get_dose_grid(iam, stopping_img, spacing):
     dl.debug("get_dose_grid")
     # Get image origin
-    origin_id = thinknode.do_calc_item_property(iam, 'origin', thinknode.schema_array_standard_type("number_type"), stopping_img)
+    origin_id = thinknode.do_calc_item_property(iam, 'origin', thinknode.schema_array_standard_type("float_type"), stopping_img, True)
     origin = thinknode.get_immutable(iam, 'dicom', origin_id)
     dl.debug("image origin: " + str(origin))
     # Get image size
-    size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("number_type"), stopping_img)
+    size_id = thinknode.do_calc_item_property(iam, 'size', thinknode.schema_array_standard_type("integer_type"), stopping_img, True)
     size = thinknode.get_immutable(iam, 'dicom', size_id)
     dl.debug("image size: " + str(size))
     # Get image axes
-    axes_id = thinknode.do_calc_item_property(iam, 'axes', thinknode.schema_array_array_standard_type("number_type"), stopping_img)
+    axes_id = thinknode.do_calc_item_property(iam, 'axes', thinknode.schema_array_array_standard_type("float_type"), stopping_img, True)
     axes = thinknode.get_immutable(iam, 'dicom', axes_id)
     dl.debug("image axes: " + str(axes))
 
     dose_grid = make_grid(iam, origin, [axes[0][0]*size[0], axes[1][1]*size[1], axes[2][2]*size[2]], [spacing, spacing, spacing])
-    res = thinknode.do_calculation(iam, dose_grid, False)
+    res = thinknode.post_calculation(iam, dose_grid)
     return res
 
 # Makes a funciton representation of an grid at the given location with given size and spacing
@@ -183,7 +184,7 @@ def make_sobp_layers(iam, sad, range, mod):
     return \
         thinknode.function(iam["account_name"], "dosimetry", "compute_double_scattering_layers",
             [
-                thinknode.reference("560962db00c066690b7f0f5296385bdc"), # SOBP Machine from ISS
+                thinknode.reference(tn_id.sobp_machine()), # SOBP Machine from ISS
                 thinknode.value(sad),
                 thinknode.value(range),
                 thinknode.value(mod)
@@ -253,7 +254,7 @@ def get_spot_bounding_box(iam, spot_id):
         if (spot['position'][0] < x_min):
             x_min = spot['position'][0]
         if (spot['position'][1] < y_min):
-            y_min = spot['position'][0]
+            y_min = spot['position'][1]
         if (spot['position'][0] > x_max):
             x_max = spot['position'][0]
         if (spot['position'][1] > y_max):
@@ -265,6 +266,7 @@ def get_spot_bounding_box(iam, spot_id):
     box = rt_types.box_2d()
     box.corner = [x_min, y_min]
     box.size = [x_size, y_size]
+    print(str(box.expand_data()))
 
     return box.expand_data()
 
@@ -284,7 +286,6 @@ def get_pbs_bixel_grid(iam, spots, spacing):
     res = thinknode.do_calculation(iam, bixel_grid, False)
     return res  
 
-
 # Create a plan with custom defined pbs spots by energy
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #   param study_id: thinknode id for the study that the plan will be added to
@@ -293,7 +294,8 @@ def get_pbs_bixel_grid(iam, spots, spacing):
 #   returns: the id for a plan that contains a beam with the created spots
 def create_plan(iam, study_id, machine, spots_by_energy):
 
-    study = thinknode.get_immutable(iam, "rt_types", study_id)
+    study_data = thinknode.get_immutable(iam, "rt_types", study_id)
+    study = json.loads(study_data)
 
     cp = study["plan"]["beams"][0]['control_points'][0]
     cp["layer"]["spots"] = []
@@ -321,6 +323,7 @@ def create_plan(iam, study_id, machine, spots_by_energy):
     study["plan"]["beams"][0]['final_meterset_weight'] = msw
     study["plan"]["beams"][0]['control_points'] = cnt_pts
 
+
     study_res = json.loads(thinknode.post_immutable_named(iam, "dicom", study, "rt_study").text)
 
     # Write plan back to file
@@ -332,3 +335,5 @@ def create_plan(iam, study_id, machine, spots_by_energy):
 
     res = thinknode.do_calculation(iam, plan_calc, False)
     return res
+
+

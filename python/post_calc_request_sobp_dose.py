@@ -7,6 +7,7 @@ import json
 from lib import thinknode_worker as thinknode
 from lib import dosimetry_worker as dosimetry
 from lib import decimal_logging as dl
+from lib import thinknode_id as tn_id
 
 # Get IAM ids
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))

@@ -19,5 +19,5 @@ with open(iss_dir + '/' + json_iss_file) as data_file:
     json_data = json.load(data_file)
 
 # Post immutable object to ISS
-res = thinknode.post_immutable_named(iam, "dicom", json_data, obj_name)
+res = thinknode.post_immutable_named(iam, "dosimetry", json_data, obj_name, False)
 

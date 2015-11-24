@@ -12,7 +12,7 @@ from lib import decimal_logging as dl
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
  
 # Create a study
-study_id = dicom.make_rt_study_from_dir(iam, 'E:/dicom/MGH_Phantom_min/')
+study_id = dicom.make_rt_study_from_dir(iam, 'C:/Users/abrown/data/proton/brain/')
 
 # Combine uploaded CT image slices into an Image_3d datatype
 study_calc = \

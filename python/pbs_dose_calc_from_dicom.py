@@ -11,16 +11,14 @@ from lib import dicom_worker as dicom
 from lib import decimal_logging as dl
 from lib import rt_types as rt_types
 from lib import vtk_worker as vtk
+from lib import thinknode_id as tn_id
 import json
 
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
 
-def get_pbs_machine():
-	# return '56059bf100c0de90c4a6290f98cf2afe' #Machine 1 - M
-	return '56059baf00c041b883a89631a4a12e2f' #Machine 2 - PNJ
 
 def dose_to_vtk(dose_id):
-	img_data = json.loads(thinknode.get_immutable(iam, 'dicom', dose_id))
+	img_data = thinknode.get_immutable(iam, 'dicom', dose_id, False)
 
 	img = rt_types.image_3d()
 	img.from_json(img_data)
@@ -29,25 +27,32 @@ def dose_to_vtk(dose_id):
 	vtk.write_vtk_image3('dose_pbs.vtk', img2)
 
 def run():
-	study_id = dicom.make_rt_study_from_dir(iam, 'F:/Datasets/p.d/Proton/XXX')
-	# study_id = '560596110100e6ecd3c01d49ac9b0fe4' #Prostate
+	study_id = dicom.make_rt_study_from_dir(iam, 'C:/Users/abrown/data/proton/prostate')
 
 	study_calc = \
 		thinknode.function(iam["account_name"], 'dicom', "merge_ct_image_slices",
 			[
 				thinknode.reference(study_id)
 			])
-	study_id = thinknode.do_calculation(iam, study_calc, False)
+	study_id = thinknode.post_calculation(iam, study_calc)
+	# study_id = tn_id.prostate_patient_study()
 
 	beam_index = 0
-	pbs_machine = get_pbs_machine()
+	pbs_machine = tn_id.pbs_machine_procure()
 	beam_id = dicom.get_beam_from_study(iam, study_id, beam_index)
 	spots = dicom.get_spots_from_beam(iam, beam_id)
 
 	# Dose calc data
 	fluences = dicom.get_fluences_from_beam(iam, beam_id)
+	fluences_res = thinknode.get_immutable(iam, 'rt_types', fluences)
+
+	fluences_res2 = []
+	for f in fluences_res:
+		fluences_res2.append(1.0)
+
+	print("fluences: " + fluences)
 	stopping_img = dicom.get_stopping_power_img(iam, study_id)
-	dose_grid = dosimetry.get_dose_grid(iam, stopping_img, 16.0)
+	dose_grid = dosimetry.get_dose_grid(iam, stopping_img, 4.0)
 	beam_geometry = dicom.get_beam_geometry(iam, study_id, beam_index)
 	bixel_grid = dosimetry.get_pbs_bixel_grid(iam, spots, 2.0)
 	layers = dicom.get_pbs_layers(iam, pbs_machine, spots, beam_id)
@@ -65,7 +70,7 @@ def run():
 				thinknode.value([])
 			])
 
-	# dl.debug('Dose Calc Command: ' + calc)
+	# dl.debug('Dose Calc Command: ' + str(calc))
 
 	# Perform pbs dose calculation request
 	res = thinknode.do_calculation(iam, calc, False)

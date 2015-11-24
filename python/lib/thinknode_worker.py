@@ -1,17 +1,16 @@
 # Copyright (c) 2015 .decimal, Inc. All rights reserved.
 # Author:   Daniel Patenaude
-# Date:     09/22/2015
+# Date:     11/3/2015
 # Desc:     Worker to perform request and calculation tasks on thinknode framework
-
 
 import json
 import sys
+import msgpack
 import lib.decimal_logging as dl
 import jsonpickle as jp
 import os.path
 import shutil
 from datetime import datetime, timedelta
-
 
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
@@ -32,8 +31,34 @@ session.mount('https://', MyAdapter())
 # thinknode get/post functions
 #####################################################################
 
+# Perform a basic get request, useful for checking if something exists
+#   param config: connection settings (url and unique basic user authentication)
+#   param path: url to send get request to
+def get(config, path):
+    post_url = config["api_url"] + path
+    dl.data('get_url: ', post_url)
+    res = session.get(post_url, 
+        headers = {'Authorization': 'Bearer ' + config["user_token"]})
+    try:
+        return res.text
+    except:
+        return None
+
+# Perform a basic put request, useful for updating existing data
+#   param config: connection settings (url and unique basic user authentication)
+#   param path: url to send put request to
+#   param json_data: optional data to update in json format
+def put(config, path, json_data=None):
+    post_url = config["api_url"] + path
+    dl.data('put_url: ', post_url)
+    res = session.put(post_url, 
+        data = json.dumps(json_data), 
+        headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
+    assert_success(res)
+
 # Worker function for getting the thinknode user token.
 #   param config: connection settings (url and unique basic user authentication)
+#   returns: iam dictionary with the new user token
 def get_user_token(config):
     res = session.get(config["api_url"] + '/cas/login',
         headers = {'Authorization': 'Basic ' + config["basic_user"]})
@@ -44,6 +69,7 @@ def get_user_token(config):
 # Gets the context id for each app detailed in the thinknode config
 # Gets the app version (if non defined) for each app in the realm
 #   param config: connection settings (url and unique basic user authentication)
+#   returns: iam dictionary
 def authenticate(config):
     dl.event("Authenticating...")
     # Get user token
@@ -63,6 +89,9 @@ def authenticate(config):
                     config["apps"][app_name]["app_version"] = app.get('version')
                     dl.data(app_name + ' Version:', config["apps"][app_name]["app_version"])
         # Get context ID
+        if config["apps"][app_name]["app_version"] == "":
+            dl.data("**App " + app_name, "not installed in realm, skipping.")
+            continue
         dl.event("Getting Context ID...")
         context_url = config["api_url"] + '/iam/realms/' + config["realm_name"] + '/context?account=' + config["account_name"] + "&app=" + app_name + "&version=" + config["apps"][app_name]["app_version"]
         dl.data('context_url: ', context_url)
@@ -80,12 +109,14 @@ def authenticate(config):
 #   param json_data: calculation request in json format
 #   param return_data: When True the data object will be returned, when false the thinknode id for the object will be returned
 #   param return_error: When False the script will exit when error is found, when True the sciprt will return the error
+#   returns: either calculation data or id, based on return_flag. Default is ID.
 def do_calculation(config, json_data, return_data=True, return_error=False):
     # Output function name for debugging
     if 'function' in json_data:
         dl.debug('do_calculation function name: ' + json_data["function"]["name"])
     # Get app name from json request
     app_name = get_name_from_data(json_data, 'app')
+    dl.debug('do_calculation app name: ' + app_name)
     # Get calculation ID
     calculation_id = post_calculation(config, json_data)
     # Make sure calculation folder exists
@@ -96,47 +127,7 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
         os.makedirs(loc + 'calculations' + os.sep)
     if not os.path.isfile(loc + 'calculations' + os.sep + calculation_id + ".txt"):
         # Get calculation Status
-        res = get_calculation_status(config, app_name, calculation_id)
-        calculating = True
-        while calculating:
-            res = get_calculation_status(config, app_name, calculation_id, "completed", 30)
-            if res.json()["type"] == "failed":
-                calculating = False
-                dl.event("Getting error logs for calculation")
-                log_res = session.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR', 
-                    headers = {'Authorization': 'Bearer ' + config["user_token"]})
-                assert_success(res)
-                if return_error:
-                    return log_res.text
-                else:
-                    return res.text
-            elif res.json()["type"] == "calculating":
-                dl.event("Request is still calculating...")
-                dl.data("response: ", res.text)
-            elif res.json()["type"] == "queued":
-                dl.event("Request is queued...")
-                dl.data("response: ", res.text)
-            elif res.json()["type"] == "uploading":
-                dl.event("Request is uploading...")
-                dl.data("response: ", res.text)
-            else:
-                calculating = False
-                if return_data:
-                    # Get calculation Result
-                    dl.event("Fetching Calculation Result...")
-                    res = session.get(config["api_url"] + '/iss/' + calculation_id + '/?context=' + config["apps"][app_name]["context_id"], 
-                        headers = {'Authorization': 'Bearer ' + config["user_token"]})
-                    # dl.data("Calculation Result: ", res.text)
-                    assert_success(res)
-
-                    f = open(loc + os.sep + 'calculations' + os.sep + str(calculation_id) + ".txt", 'a')
-                    f.write(res.text)
-                    f.close()
-
-                    return json.loads(res.text)
-                else:
-                    dl.event("Fetching Calculation ID...")
-                    return calculation_id
+        return wait_for_calculation(config, app_name, calculation_id, return_data)
     else:
         dl.event("Pulling Locally Cached Calculation...")        
         f = open(loc + 'calculations' + os.sep + calculation_id + ".txt")
@@ -148,13 +139,67 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
         else:
             return calculation_id
 
+# Query thinknode calculation service for the calculation status and wait for the calculation to finish
+#   param config: connection settings (url, user token, and ids for context and realm)
+#   param app_name: app_name the calculation was posted to (used to get the calculation context id)
+#   param return_data: When True the data object will be returned, when false the thinknode id for the object will be returned
+#   param return_error: When False the script will exit when error is found, when True the sciprt will return the error
+#   returns: either calculation data or id, based on return_flag. Default is ID.
+def wait_for_calculation(config, app_name, calculation_id, return_data=True, return_error=False):
+    loc = sys.path[0]
+    res = get_calculation_status(config, app_name, calculation_id)
+    calculating = True
+    while calculating:
+        res = get_calculation_status(config, app_name, calculation_id, "completed", 30)
+        dl.data("Status", res.json())
+        if "Failed" in res.json():
+            calculating = False
+            dl.event("Getting error logs for calculation")
+            log_res = session.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR', 
+                headers = {'Authorization': 'Bearer ' + config["user_token"]})
+            assert_success(res)
+            if return_error:
+                return log_res.text
+            else:
+                dl.data("Error:", log_res.text)
+                sys.exit()
+        elif "Calculating" in res.json():
+            dl.event("Request is still calculating...")
+            dl.data("response: ", res.text)
+        elif "queued" in res.json():
+            dl.event("Request is queued...")
+            dl.data("response: ", res.text)
+        elif "uploading" in res.json():
+            dl.event("Request is uploading...")
+            dl.data("response: ", res.text)
+        else:
+            calculating = False
+            if return_data:
+                # Get calculation Result
+                dl.event("Fetching Calculation Result...")
+                res = session.get(config["api_url"] + '/iss/' + calculation_id + '/?context=' + config["apps"][app_name]["context_id"], 
+                    headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
+                # dl.data("Calculation Result: ", res.text)
+                assert_success(res)
+
+                f = open(loc + os.sep + 'calculations' + os.sep + str(calculation_id) + ".txt", 'a')
+                f.write(res.text)
+                f.close()
+
+                return json.loads(res.text)
+            else:
+                dl.event("Fetching Calculation ID...")
+                return calculation_id
+
 # Manually gets a calculation's status
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: name of the app to use to get the context id from the iam config
 #   param calc_id: calculation id of whos status to get
-#   param status: used for long polling when timeout > 0
+#   param status: used for long polling when timeout > 0 (see thinknode spec for long polling)
 #   param timeout: long polling timeout
+#   returns: The thinknode status of the calculation after the specified timeout
 def get_calculation_status(config, app_name, calculation_id, status="completed", timeout=0):
+    # dl.debug("get_calculation_status: " + calculation_id)
     if (timeout <= 0):
         dl.event("Checking Calculation Status...")
         res = session.get(config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["apps"][app_name]["context_id"], 
@@ -171,12 +216,13 @@ def get_calculation_status(config, app_name, calculation_id, status="completed",
 #   note: see do_calculation if you want to wait for the calculation to finish and get results
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param json_data: calculation request in json format
+#   returns: calculation id
 def post_calculation(config, json_data):
     # Get app name from json request
     app_name = get_name_from_data(json_data, 'app')
      # Get calculation ID
     dl.event("Sending Calculation...")
-    url = config["api_url"] + '/calc/?context=' + config["apps"][app_name]["context_id"]
+    url = config["api_url"] + '/calc?context=' + config["apps"][app_name]["context_id"]
     dl.debug(url)
     res = session.post(url, 
         data = json.dumps(json_data), 
@@ -191,11 +237,17 @@ def post_calculation(config, json_data):
 #   param prop_name: the name of the property you want to extract
 #   param schema: the schema of the property you want to extract (helper functions to generate these should be provided)
 #   param ref_id: the reference id of the object in thinknode you want to extract the property from
-def do_calc_item_property(config, prop_name, schema, ref_id):
+#   param wait_for_calc: flag to force the property calculation to wait for the calculation to finish before returning the ID
+#   returns: property calculation ID
+def do_calc_item_property(config, prop_name, schema, ref_id, wait_for_calc=False):
     dl.debug('do_calc_item_property: ' + prop_name)
     prop_calc = property(value(prop_name), schema, reference(ref_id))
     dl.debug(str(prop_calc))
-    prop = do_calculation(config, prop_calc, False, True)
+    prop = {} 
+    if (wait_for_calc == True):
+        prop = do_calculation(config, prop_calc, False)
+    else:
+        prop = post_calculation(config, prop_calc)        
     dl.debug(str(prop))
     prop_text = str(prop)
     if "invalid_field" in prop_text:
@@ -210,11 +262,13 @@ def do_calc_item_property(config, prop_name, schema, ref_id):
 #   param index: index of the array item you want to extract
 #   param schema: the schema of the array items you want to extract (helper functions to generate these should be provided)
 #   param ref_id: the reference id of the array in thinknode you want to extract the item from
-def do_calc_array_item(config, index, schema, ref_id):
+#   param return_on_fail: flag to return on failure instead of quitting
+#   returns: array calculation ID
+def do_calc_array_item(config, index, schema, ref_id, return_on_fail=False):
     dl.event('get_array_item: ')
     item_calc = array_item(value(index), schema, reference(ref_id))
-    ai = do_calculation(config, item_calc, False)
-    if 'failed' in ai:
+    ai = post_calculation(config, item_calc)
+    if 'failed' in ai and return_on_fail == False:
         dl.error('Calc failed::do_calc_array_item:invalid index')
         sys.exit()
     else:
@@ -226,14 +280,26 @@ def do_calc_array_item(config, index, schema, ref_id):
 #   param app_name: name of the app to use to get the context id from the iam config
 #   param json_data: immutable object in json format
 #   param qualified_scope: unique url for the iss type being posted (i.e. named types, blobs, arrays all have unique urls)
-def post_immutable(config, app_name, json_data, qualified_scope):
+#   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
+#   returns: iss immutable response object
+def post_immutable(config, app_name, json_data, qualified_scope, use_msgpack=True):
     dl.event("Posting object to ISS...")
     # Post immutable object
-    post_url = config["api_url"] + qualified_scope + '/?context=' + config["apps"][app_name]["context_id"]
+    post_url = config["api_url"] + qualified_scope + '?context=' + config["apps"][app_name]["context_id"]
     dl.data('post_url: ', post_url)
+    req_headers = {}
+    req_data = {}
+    if use_msgpack:
+        dl.debug("Using msgpack to post immutable")
+        req_data = msgpack.packb(json_data, use_bin_type=True)
+        req_headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/octet-stream'}
+    else:
+        dl.debug("Using json to post immutable")
+        req_data = json.dumps(json_data)
+        req_headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'}
     res = session.post(post_url, 
-        data = json.dumps(json_data), 
-        headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
+        data = req_data,
+        headers = req_headers)
     assert_success(res)
     dl.event("    Immutable id: " + res.text)
     return res
@@ -243,47 +309,67 @@ def post_immutable(config, app_name, json_data, qualified_scope):
 #   param app_name: name of the app to use to get the context id from the iam config
 #   param json_data: immutable object in json format
 #   param obj_name: object name of app to post to
-def post_immutable_named(config, app_name, json_data, obj_name):
+#   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
+#   returns: iss immutable response object
+def post_immutable_named(config, app_name, json_data, obj_name, use_msgpack=True):
     scope = '/iss/named/' + config["account_name"] + '/rt_types' + '/' + obj_name
-    return post_immutable(config, app_name, json_data, scope)
+    return post_immutable(config, app_name, json_data, scope, use_msgpack)
 
 # Post immutable array of objects to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: name of the app to use to get the context id from the iam config
 #   param json_data: immutable array object in json format
 #   param obj_name: object name of items within the array to post
-def post_immutable_array(config, app_name, json_data, obj_name):
-    scope = '/iss/array/named/' + config["account_name"] + "/rt_types" + "/" + obj_name
-    return post_immutable(config, app_name, json_data, scope)
+#   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
+#   returns: iss immutable response object
+def post_immutable_array(config, app_name, json_data, obj_name, use_msgpack=True):
+    scope = '/iss/array/named/' + config["account_name"] + "rt_types" + "/" + obj_name
+    return post_immutable(config, app_name, json_data, scope, use_msgpack)
 
 # Post immutable object to ISS of a dependency type 
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param dep_app: The name of the app the data type belongs too
 #   param json_data: immutable object in json format
 #   param obj_name: object name of app to post to
-def post_dependency_immutable(config, dep_app, json_data, obj_name):
-    scope = '/iss/named/' + config["account_name"] + "/" + dep_app + "/" + obj_name
-    return post_immutable(config, dep_app, json_data, scope)
+#   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
+#   returns: iss immutable response object
+def post_dependency_immutable(config, dep_app, json_data, obj_name, use_msgpack=True):
+    scope = '/iss/named/' + config["account_name"] + dep_app + "/" + obj_name
+    return post_immutable(config, dep_app, json_data, scope, use_msgpack)
 
 # Post immutable object to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: name of the app to use to get the context id from the iam config
 #   param json_data: immutable object blob in json format
-def post_blob(config, app_name, json_data):
+#   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
+#   returns: iss immutable response object
+def post_blob(config, app_name, json_data, use_msgpack=True):
     scope = '/iss/blob/' + 'blob'
-    return post_immutable(config, app_name, json_data, scope)
+    return post_immutable(config, app_name, json_data, scope, use_msgpack)
 
 # Post immutable object to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: name of the app to use to get the context id from the iam config
 #   param obj_id: thinknode iss reference id for object to get
-def get_immutable(config, app_name, obj_id):
+#   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
+#   returns: iss immutable response object
+def get_immutable(config, app_name, obj_id, use_msgpack=True):
     dl.event("Requesting Data from ISS...")
-    url = config["api_url"] + '/iss/' + obj_id + '/?context=' + config['apps'][app_name]["context_id"]
-    res = session.get(url, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"]})
-    assert_success(res)
-    return json.loads(res.text)
+    url = config["api_url"] + '/iss/' + obj_id + '?context=' + config['apps'][app_name]["context_id"]
+    dl.debug("iss url:" + url)
+    if use_msgpack:
+        dl.debug("Using msgpack to get immutable")
+        res = session.get(url, 
+            headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/octet-stream'})
+        assert_success(res)
+        decoded = msgpack.unpackb(res.content, encoding='utf-8')
+        return decoded
+    else:
+        dl.debug("Using json to get immutable")
+        res = session.get(url, 
+            headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
+        assert_success(res)
+        return json.loads(res.text)
 
 #####################################################################
 # thinknode schema type builders
@@ -292,10 +378,8 @@ def get_immutable(config, app_name, obj_id):
 # Create a schema for an array of named types
 #   param type_name: the named_type for the array items
 def schema_array_named_type(type_name):
-    return  { "type": "array_type", \
-            "array_type": { \
+    return  { "array_type": { \
                 "element_schema": { \
-                    "type": "named_type", \
                     "named_type": { \
                         "app": "rt_types", \
                         "name": type_name } } } }
@@ -303,10 +387,8 @@ def schema_array_named_type(type_name):
 # Create a schema for an array of standard types
 #   param type_name: the standard type (number_type, string_type) for the array items
 def schema_array_standard_type(type_name):
-    return  { "type": "array_type", \
-            "array_type": { \
+    return  { "array_type": { \
                 "element_schema": { \
-                    "type": type_name, \
                     type_name: {} } } }
 
 # Create a schema for an array of array of standard types
@@ -316,28 +398,23 @@ def schema_array_array_standard_type(type_name):
                 "element_schema": {
                     "array_type": {
                         "element_schema": {
-                            type_name: {},
-                            "type": type_name
+                            type_name: {}
                         }
-                    },
-                    "type": "array_type"
+                    }
                 }
-            },
-            "type": "array_type" }
+            } }
 
 # Create a schema for a named type
 #   param type_name: the named_type for the schema
 def schema_named_type(type_name):
-    return { "type": "named_type", \
-            "named_type": { \
+    return { "named_type": { \
                 "app": "rt_types", \
                 "name": type_name } }
 
 # Create a schema for a standard type
 #   param type_name: the standard type (number_type, string_type) for the schema
 def schema_standard_type(type_name):
-    return  { "type": type_name, \
-            type_name: {} }
+    return  { type_name: {} }
 
 #####################################################################
 # thinknode calculation request builders
@@ -346,12 +423,12 @@ def schema_standard_type(type_name):
 # Create a value request
 #   param v: value (alpha numeric)
 def value(v):
-    return { "type": "value", "value": v }
+    return { "value": v }
 
 # Create an optional argument request
 #   param o: fully formatted item to make optional 
 def some(o):
-    return  { "type": "some", "some": o}
+    return  { "some": o}
 
 # Create an optional value request
 #   param v: value (alpha numeric)
@@ -359,31 +436,30 @@ def optional_value(v):
     return value(some(v))
 
 # Create a none type (i.e. an empty optional type)
-none = value({ "type": "none", "none": None }) 
+none = value({ "none": None }) 
 
 # Create a reference request.
 #   param id: immutable storage id of the object
 def reference(id):
-    return { "type": "reference", "reference": id }
+    return { "reference": id }
 
 # Create a function request.
 #   param app: app name on thinknode
 #   param name: function name in app manifest
 #   param args: array of arguments to pass to the called function
 def function(account_name, app_name, function_name, args):
+    dl.debug("function: " + function_name)
     return {
-        "type": "function",
         "function": { "account": account_name, "app": app_name, "name": function_name, "args": args }
     }
 
 # Create a property function request to extract a property from an object
 #   param field: the field you want to extract
 #   param schema: the schema of the field you want to pull
-#   param structure: the item you want to pull the data from
-def property(field, schema, structure):
+#   param object: the item you want to pull the data from
+def property(field, schema, object):
     return {
-        "type": "property",
-        "property": { "field": field, "schema": schema, "structure": structure }
+        "property": { "field": field, "schema": schema, "object": object }
     }
 
 # Create a array item function request to extract a item from an array
@@ -392,25 +468,23 @@ def property(field, schema, structure):
 #   param array: the array you want to pull the data from
 def array_item(index, schema, array):
     return {
-        "type": "item",
         "item": { "index": index, "schema": schema, "array": array }
     }
 
-# Create a structure request
-#   param schema: the schema body of structure request
+# Create a object request
+#   param schema: the schema body of object request
 #   param properties: array of properties matching the schema for the request
 def structure(schema, properties):
     return {
-        "type": "structure",
-        "structure": { "schema": schema, "properties": properties }
+        "object": { "schema": schema, "properties": properties }
     }
     
-# Create a structure request for a named_type
+# Create a object request for a named_type
 #   param app: app name on thinknode
 #   param name: function name in app manifest
 #   param args: array of arguments
 def structure_named_type(app, name, args):
-    schema = { "type": "named_type", "named_type": { "name": name, "app": app } }
+    schema = { "named_type": { "name": name, "app": app } }
     return structure(schema, args)
 
 # Create an array request for a named_type
@@ -418,32 +492,26 @@ def structure_named_type(app, name, args):
 #   param item_name: name of the named_type
 #   param a: array of items
 def array_named_type(app, item_name, a):
-    return { "type": "array", "array": \
+    return { "array": \
             { "item_schema" : \
-            { "type": "named_type", \
-            "named_type": { "name": item_name, "app": app } }, "items": a } }  
+            { "named_type": { "name": item_name, "app": app } }, "items": a } }  
 
 # Create an array request for a named_type
 #   param app: app name on thinknode
 #   param item_name: name of the named_type
 #   param a: array of items
 def array_referenced_named_type(app, item_name, a):
-    return { "type": "array", "array": \
+    return { "array": \
             { "item_schema" : \
-            { "type": "reference_type", \
-            "reference_type": { "type": "named_type", \
-            "named_type": { "name": item_name, "app": app } } }, "items": a } } 
-            # { "type": "named_type", \
-            # "named_type": { "name": item_name, "app": app } }, "items": a } }  
+            { "reference_type": { "named_type": { "name": item_name, "app": app } } }, "items": a } } 
 
 # Create an array request for a number type
 #   param app: app name on thinknode
 #   param a: array of items
 def array_number_type(app, a):
-    return { "type": "array", "array": \
+    return { "array": \
             { "item_schema" : \
-            { "type": "number_type", \
-            "number_type": {} }, "items": a } } 
+            { "number_type": {} }, "items": a } } 
 
 #####################################################################
 # misc helpers

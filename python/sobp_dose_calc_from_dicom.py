@@ -12,6 +12,7 @@ from lib import decimal_logging as dl
 from lib import dicom_worker as dicom
 from lib import rt_types as rt_types
 from lib import vtk_worker as vtk
+from lib import thinknode_id as tn_id
 import json
 
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
@@ -36,13 +37,10 @@ def run():
 	study_id = thinknode.do_calculation(iam, study_calc, False)
 	dl.debug("study_id: " + study_id)
 
-	# study_id = '5609a28901007957f8a36c1785d9cd16' #XXX Prone after merge
-
 	beam_index = 0
 
 	# Dose calc data
 	stopping_img = dicom.get_stopping_power_img(iam, study_id)
-	# stopping_img = '5609a7a70100592605d28385f0d76c68'
 	dose_grid = dosimetry.get_dose_grid(iam, stopping_img, 8.0)
 	beam_geometry = dicom.get_beam_geometry(iam, study_id, beam_index)
 	bixel_grid = dosimetry.get_grid_on_image_2d(iam, stopping_img, 2)
@@ -56,7 +54,7 @@ def run():
 			thinknode.reference(dose_grid),
 			thinknode.reference(beam_geometry),
 			thinknode.reference(bixel_grid),         
-            dosimetry.make_sobp_layers(iam, sad[0], 120, 100), # got sad from DICOM, range and mod from energy and lookup (559d288b504000200010)
+            dosimetry.make_sobp_layers(iam, sad[0], 120, 100), # got sad from DICOM, range and mod from energy and lookup 
             thinknode.reference(dicom.get_aperture_from_beam(iam, study_id, beam_index)), 
             thinknode.value([]) # degraders
         ])

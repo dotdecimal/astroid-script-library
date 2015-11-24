@@ -12,7 +12,6 @@ from lib import rt_types as rt_types
 import requests
 import json
 
-app_name = "dicom"
 dicom_filetypes = [".img", ".dcm"]
 
 #####################################################################
@@ -57,13 +56,17 @@ def read_file(filename):
 	fp = open(filename, 'rb')
 	output_string = ''
 	bytes_read = fp.read()
-	output_string = binascii.b2a_base64(bytes_read)
-	o_s = output_string[:len(output_string)-1]
-	s = str(o_s)
-	blob_data = s[2:len(s)-1]
-	b = rt_types.blob_type()
-	b.blob = blob_data
-	return b
+	fp.close()
+	return bytes_read 
+
+	# Used for non-msgpack uploading
+	# output_string = binascii.b2a_base64(bytes_read)
+	# o_s = output_string[:len(output_string)-1]
+	# s = str(o_s)
+	# blob_data = s[2:len(s)-1]
+	# b = rt_types.blob_type()
+	# b.blob = blob_data
+	# return b
 
 # Takes in a filename, reads in the file to a blob and uploads to thinknode as filesystem_item
 #   param iam: connection settings (url, user token, and ids for context and realm)
@@ -75,16 +78,20 @@ def upload_file(iam, filename):
 
 	if valid_dicom_filetype(filename) == True:
 		b = read_file(filename)		
-		
+
 		fsic = rt_types.filesystem_item_contents()
-		fsic.type = "file"
-		fsic.file = b
+		# fsic.file = b
 		del fsic.directory
 		fsi = rt_types.filesystem_item()
 		fsi.name = filename
 		fsi.contents = fsic
 
-		obj_id = post_filesystem_item(iam, thinknode.to_json(fsi))
+		json_data = thinknode.to_json(fsi)
+		json_data["contents"]["file"] = b
+
+		# Used for non-msgpack uploading
+		# obj_id = post_filesystem_item(iam, thinknode.to_json(fsi))
+		obj_id = post_filesystem_item(iam, json_data)
 		dl.debug('Filesystem item: ' + obj_id)
 		
 		return obj_id
@@ -100,13 +107,15 @@ def upload_dir(iam, dirname):
 	dl.event('Uploading directory: ' + dirname)
 	
 	tn_dir = rt_types.filesystem_item_contents()
-	tn_dir.type = "directory"
 
+	count = 0
 	for fi in os.listdir(dirname):
 		filename = dirname + '/' + fi
 		obj_id = upload_file(iam, filename)
 		if (obj_id != 'bad filetype'):
 			tn_dir.directory.append(obj_id)
+		count += 1
+		dl.debug(" ** Upload Dir File Count = " + str(count))
 
 	# fsic = rt_types.filesystem_item_contents()
 	# fsic.type = "directory"
@@ -129,7 +138,7 @@ def upload_dir(iam, dirname):
 def make_rt_study_from_dir(iam, dir_name):
 	dl.debug("make_rt_study_from_dir")
 	dir_id = upload_dir(iam, dir_name)
-	# dir_id = '56058bf500c00dc060f0207a0f8bd34a' # Procure Prostate
+	# dir_id = '56390ae400c0a0202dd3f4f38449724a' # Procure Prostate
 	dl.debug('dir_id')
 	dl.debug(dir_id)
 	res = thinknode.get_immutable(iam, 'dicom', dir_id)
@@ -150,13 +159,35 @@ def make_rt_study_from_dir(iam, dir_name):
 	res = thinknode.do_calculation(iam, calc, False, False)
 	dl.debug('initial study:')
 	dl.debug(res)
+	return res
 
-	# study_calc = \
-	# 	thinknode.function(app_name, "merge_ct_image_slices",
-	# 		[
-	# 			thinknode.reference(res)
-	# 		])
-	# study_res = thinknode.do_calculation(iam, study_calc, False)
+# Upload a directory of dicom files into a list dicom_objects
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param dir_name: complete directory path
+# 	returns a study iss ID
+def make_dicom_object_from_dir(iam, dir_name):
+	dl.debug("make_dicom_object_from_dir")
+	dir_id = upload_dir(iam, dir_name)
+	# dir_id = '56464c1000c06eca900300bd485f47d4' # Procure Prostate
+	
+	dl.debug('dir_id')
+	dl.debug(dir_id)
+	res = thinknode.get_immutable(iam, 'dicom', dir_id)
+	dl.debug('Got immutable: ' + str(res))
+	dir_obj = res
+	file_ids = []
+	for file_id in dir_obj["contents"]["directory"]:
+		file_ids.append(thinknode.reference(file_id))
+	calc = \
+		thinknode.function(iam["account_name"], 'dicom', "import_files_to_dicom_object",
+			[
+				thinknode.array_named_type('rt_types', 'filesystem_item', file_ids)
+			])
+	dl.debug(str(calc))
+
+	res = thinknode.do_calculation(iam, calc, False, False)
+	dl.debug(res)
+
 	return res
 
 # Run a calcuation to turn a filesytem_item in to a dicom_data object
@@ -177,6 +208,28 @@ def run_calc_parse_dicom_filesystem(iam, filesytem_item_id):
 #####################################################################
 # functions to pull data out of a dicom_patient
 #####################################################################
+
+# Takes a list of dicom_objects and gets the individual ID for each object
+#	param iam: connection settings (url, user token, and ids for context and realm)
+#	param list_id: The thinknode id for the list of dicom_objects
+def get_dicom_object_ids(iam, list_id):
+	dl.debug("get_dicom_object_ids")
+
+	ids = []
+	dd_index = 0
+	not_end = True
+
+	while not_end:
+		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dicom_object"), list_id, True)
+		dl.debug('dd: ' + dd)
+		if 'failed' in dd:
+			not_end = False
+			break
+		ids.append(dd)
+		dd_index = dd_index + 1
+
+	dl.debug("Number of array items: " + str(dd_index))
+	return ids
 
 # Takes in a thinknode id for a dicom_patient and returns id for the rt_plan
 #   param iam: connection settings (url, user token, and ids for context and realm)
@@ -214,16 +267,11 @@ def get_beam_geometry(iam, study_id, beam_index):
 	dl.debug("get_beam_geometry")
 
 	beam_id = get_beam_from_study(iam, study_id, beam_index)
-
 	control_pt_id = get_first_control_point_from_beam(iam, beam_id)
-
-	sad = thinknode.do_calc_item_property(iam, 'virtual_sad', thinknode.schema_array_standard_type("number_type"), beam_id)
-
-	iso_center = thinknode.do_calc_item_property(iam, 'iso_center_position', thinknode.schema_array_standard_type("number_type"), control_pt_id)
-
-	gantry_angle = thinknode.do_calc_item_property(iam, 'gantry_angle', thinknode.schema_standard_type("number_type"), control_pt_id)
-
-	couch_angle = thinknode.do_calc_item_property(iam, 'patient_support_angle', thinknode.schema_standard_type("number_type"), control_pt_id)
+	sad = thinknode.do_calc_item_property(iam, 'virtual_sad', thinknode.schema_array_standard_type("float_type"), beam_id)
+	iso_center = thinknode.do_calc_item_property(iam, 'iso_center_position', thinknode.schema_array_standard_type("float_type"), control_pt_id)
+	gantry_angle = thinknode.do_calc_item_property(iam, 'gantry_angle', thinknode.schema_standard_type("float_type"), control_pt_id)
+	couch_angle = thinknode.do_calc_item_property(iam, 'patient_support_angle', thinknode.schema_standard_type("float_type"), control_pt_id)
 
 	# patient_position = thinknode.do_calc_item_property(iam, 'dicom', 'patient_position', thinknode.schema_standard_type("string"), control_pt_id)
 	plan_id = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
@@ -242,7 +290,9 @@ def get_beam_geometry(iam, study_id, beam_index):
 				thinknode.reference(patient_position)
 			])
 
-	res = thinknode.do_calculation(iam, calc, False)
+	print("    CALC: " + str(calc))	
+
+	res = thinknode.post_calculation(iam, calc)
 	return res
 
 # Takes in a thinknode id for a rt_plan and the index of the beam returns id for the rt_ion_beam
@@ -252,10 +302,9 @@ def get_beam_geometry(iam, study_id, beam_index):
 #	returns the id of the rt_ion_beam from the rt_plan
 def get_beam_by_index(iam, study_id, beam_index):
 	dl.debug("get_beam_by_index")
+
 	plan = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
-
 	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan)
-
 	beam = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beam_array)
 	return beam
 
@@ -266,16 +315,11 @@ def get_beam_by_index(iam, study_id, beam_index):
 #	returns the id of the aperture from the specified rt_ion_beam
 def get_aperture_from_beam(iam, study_id, beam_index):
 	dl.debug("get_aperture_from_beam")
-	# plan = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
-
-	# beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan)
-
-	# beam_id = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beam_array)
 
 	beam_id = get_beam_by_index(iam, study_id, beam_index)
 	rt_ap = thinknode.do_calc_item_property(iam, 'block', thinknode.schema_named_type('rt_ion_block'), beam_id)
 	ap_poly = thinknode.do_calc_item_property(iam, 'data', thinknode.schema_named_type('polyset'), rt_ap)
-	ap_ds_edge = thinknode.do_calc_item_property(iam, 'downstream_edge', thinknode.schema_standard_type('number_type'), rt_ap)
+	ap_ds_edge = thinknode.do_calc_item_property(iam, 'downstream_edge', thinknode.schema_standard_type('float_type'), rt_ap)
 
 	struct_calc = \
 		thinknode.structure(thinknode.schema_named_type('aperture'),
@@ -283,7 +327,7 @@ def get_aperture_from_beam(iam, study_id, beam_index):
 				"downstream_edge": thinknode.reference(ap_ds_edge), 
 				"shape": thinknode.reference(ap_poly)
 			})
-	aperture = thinknode.do_calculation(iam, struct_calc, False)
+	aperture = thinknode.post_calculation(iam, struct_calc)
 	return aperture
 
 # Get the SAD from a defined beam
@@ -292,7 +336,7 @@ def get_aperture_from_beam(iam, study_id, beam_index):
 #	returns: the specific beam SAD object iss id
 def get_sad(iam, beam_id):
 	dl.debug("get_sad")
-	sad_array = thinknode.do_calc_item_property(iam, 'virtual_sad', thinknode.schema_array_standard_type("number_type"), beam_id)
+	sad_array = thinknode.do_calc_item_property(iam, 'virtual_sad', thinknode.schema_array_standard_type("float_type"), beam_id)
 
 	sad = thinknode.get_immutable(iam, 'dicom', sad_array)
 	dl.debug("sad: " + str(sad))
@@ -309,8 +353,9 @@ def get_weighted_spot_list_from_beam(iam, beam_id):
 			[
 				thinknode.reference(beam_id)
 			])
-	res = thinknode.do_calculation(iam, calc, False)
+	res = thinknode.post_calculation(iam, calc)
 
+	thinknode.wait_for_calculation(iam, 'dicom', res, False)
 	spot_list = thinknode.get_immutable(iam, 'dicom', res)
 
 	sorted_spots = dosimetry.sort_spots_by_energy(spot_list)
@@ -330,9 +375,30 @@ def get_spots_from_beam(iam, beam_id):
 			[
 				thinknode.value(wsp_id)
 			])
-	res = thinknode.do_calculation(iam, calc, False)
+
+	res = thinknode.post_calculation(iam, calc)
 
 	return res	
+
+def get_sorted_weighted_spot_list_from_beam(iam, beam_id):
+	dl.debug("get_weighted_spot_list_from_beam")	
+	wsl_calc = \
+		thinknode.function(iam["account_name"], "dicom", "weighted_spot_list_from_beam",
+			[
+				thinknode.reference(beam_id)
+			])
+	wsl_res = thinknode.post_calculation(iam, wsl_calc)
+	print("Got wsl response: " + wsl_res)
+	dl.debug("get_weighted_spot_list_from_beam")	
+	sl_calc = \
+		thinknode.function(iam["account_name"], "dosimetry", "extract_spot_placements",
+			[
+				thinknode.reference(wsl_res)
+			])
+
+	sl_res = thinknode.post_calculation(iam, sl_calc)
+	return sl_res
+
 
 # Get PBS fluences from a specific beam
 #   param iam: connection settings (url, user token, and ids for context and realm)
@@ -347,7 +413,7 @@ def get_fluences_from_beam(iam, beam_id):
 			[
 				thinknode.value(wsp_id)
 			])
-	res = thinknode.do_calculation(iam, calc, False)
+	res = thinknode.post_calculation(iam, calc)
 	return res	
 
 # Create PBS layers from spots in DICOM rt_study
@@ -359,7 +425,7 @@ def get_pbs_layers(iam, pbs_machine, spots, beam_id):
     dl.debug("get_pbs_layers")
     control_pt_id = get_first_control_point_from_beam(iam, beam_id)
 
-    gantry_angle = thinknode.do_calc_item_property(iam, 'gantry_angle', thinknode.schema_standard_type("number_type"), control_pt_id)
+    gantry_angle = thinknode.do_calc_item_property(iam, 'gantry_angle', thinknode.schema_standard_type("float_type"), control_pt_id)
 
     layers_calc = thinknode.function(iam["account_name"], "dosimetry", "create_pbs_layers_from_spots",
             [
@@ -367,7 +433,7 @@ def get_pbs_layers(iam, pbs_machine, spots, beam_id):
                 thinknode.reference(spots),
                 thinknode.reference(gantry_angle)
             ])
-    res = thinknode.do_calculation(iam, layers_calc, False)
+    res = thinknode.post_calculation(iam, layers_calc)
     return res  
 
 # Get a specific beam's iss id from the dicom rt_study
@@ -474,7 +540,7 @@ def get_structure_geometry_from_structure(iam, s_id):
 			[
 				thinknode.reference(s_id)
 			])
-	res = thinknode.do_calculation(iam, calc, False)
+	res = thinknode.post_calculation(iam, calc)
 	return res
 
 # Takes in a thinknode id for a dicom_patient and returns id for the rt_dose
@@ -518,7 +584,7 @@ def get_stopping_power_img(iam, study_id):
 			[
 				thinknode.reference(img)
 			])
-	res = thinknode.do_calculation(iam, calc, False)
+	res = thinknode.post_calculation(iam, calc)
 	return res
 
 # Takes in a thinknode id for a dicom_patient and returns id for the ct_image_set
