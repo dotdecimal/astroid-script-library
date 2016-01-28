@@ -575,7 +575,7 @@ def get_dose(iam, patient_id):
 #	param study_id: rt_study iss id
 def get_stopping_power_img(iam, study_id):
 	dl.debug("get_stopping_power_img")
-	ct_img_data = thinknode.do_calc_item_property(iam, 'ct_image', thinknode.schema_named_type("ct_image_data"), study_id)
+	ct_img_data = thinknode.do_calc_item_property(iam, 'ct', thinknode.schema_named_type("ct_image_data"), study_id)
 	ct_img = thinknode.do_calc_item_property(iam, 'image_set', thinknode.schema_named_type("ct_image_set"), ct_img_data)
 	img = thinknode.do_calc_item_property(iam, 'image', thinknode.schema_named_type("image_3d"), ct_img)
 
