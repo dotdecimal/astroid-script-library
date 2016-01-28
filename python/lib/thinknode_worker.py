@@ -323,7 +323,7 @@ def post_immutable_named(config, app_name, json_data, obj_name, use_msgpack=True
 #   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
 #   returns: iss immutable response object
 def post_immutable_array(config, app_name, json_data, obj_name, use_msgpack=True):
-    scope = '/iss/array/named/' + config["account_name"] + "rt_types" + "/" + obj_name
+    scope = '/iss/array/named/' + config["account_name"] + "/rt_types" + "/" + obj_name
     return post_immutable(config, app_name, json_data, scope, use_msgpack)
 
 # Post immutable object to ISS of a dependency type 
@@ -334,7 +334,7 @@ def post_immutable_array(config, app_name, json_data, obj_name, use_msgpack=True
 #   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
 #   returns: iss immutable response object
 def post_dependency_immutable(config, dep_app, json_data, obj_name, use_msgpack=True):
-    scope = '/iss/named/' + config["account_name"] + dep_app + "/" + obj_name
+    scope = '/iss/named/' + config["account_name"] + "/" + dep_app + "/" + obj_name
     return post_immutable(config, dep_app, json_data, scope, use_msgpack)
 
 # Post immutable object to ISS
