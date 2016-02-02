@@ -163,7 +163,7 @@ def wait_for_calculation(config, app_name, calculation_id, return_data=True, ret
             else:
                 dl.data("Error:", log_res.text)
                 sys.exit()
-        elif "Calculating" in res.json():
+        elif "calculating" in res.json():
             dl.event("Request is still calculating...")
             dl.data("response: ", res.text)
         elif "queued" in res.json():
