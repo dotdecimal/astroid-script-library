@@ -109,8 +109,9 @@ def authenticate(config):
 #   param json_data: calculation request in json format
 #   param return_data: When True the data object will be returned, when false the thinknode id for the object will be returned
 #   param return_error: When False the script will exit when error is found, when True the sciprt will return the error
+#   param force: boolean flag indicating if the calculation should be forced to rerun if it already exists
 #   returns: either calculation data or id, based on return_flag. Default is ID.
-def do_calculation(config, json_data, return_data=True, return_error=False):
+def do_calculation(config, json_data, return_data=True, return_error=False, force=False):
     # Output function name for debugging
     if 'function' in json_data:
         dl.debug('do_calculation function name: ' + json_data["function"]["name"])
@@ -118,7 +119,7 @@ def do_calculation(config, json_data, return_data=True, return_error=False):
     app_name = get_name_from_data(json_data, 'app')
     dl.debug('do_calculation app name: ' + app_name)
     # Get calculation ID
-    calculation_id = post_calculation(config, json_data)
+    calculation_id = post_calculation(config, json_data, force)
     # Make sure calculation folder exists
     loc = sys.path[0]
     if loc[len(loc)-1] != '/':
@@ -216,13 +217,16 @@ def get_calculation_status(config, app_name, calculation_id, status="completed",
 #   note: see do_calculation if you want to wait for the calculation to finish and get results
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param json_data: calculation request in json format
+#   param force: boolean flag indicating if the calculation should be forced to rerun if it already exists
 #   returns: calculation id
-def post_calculation(config, json_data):
+def post_calculation(config, json_data, force=False):
     # Get app name from json request
     app_name = get_name_from_data(json_data, 'app')
      # Get calculation ID
     dl.event("Sending Calculation...")
     url = config["api_url"] + '/calc?context=' + config["apps"][app_name]["context_id"]
+    if force:
+        url += '&force_run=true'
     dl.debug(url)
     res = session.post(url, 
         data = json.dumps(json_data), 
