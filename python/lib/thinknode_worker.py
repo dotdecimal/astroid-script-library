@@ -242,8 +242,9 @@ def post_calculation(config, json_data, force=False):
 #   param schema: the schema of the property you want to extract (helper functions to generate these should be provided)
 #   param ref_id: the reference id of the object in thinknode you want to extract the property from
 #   param wait_for_calc: flag to force the property calculation to wait for the calculation to finish before returning the ID
+#   param force: boolean flag indicating if the calculation should be forced to rerun if it already exists
 #   returns: property calculation ID
-def do_calc_item_property(config, prop_name, schema, ref_id, wait_for_calc=False):
+def do_calc_item_property(config, prop_name, schema, ref_id, wait_for_calc=False, force=False:
     dl.debug('do_calc_item_property: ' + prop_name)
     prop_calc = property(value(prop_name), schema, reference(ref_id))
     dl.debug(str(prop_calc))
@@ -251,7 +252,7 @@ def do_calc_item_property(config, prop_name, schema, ref_id, wait_for_calc=False
     if (wait_for_calc == True):
         prop = do_calculation(config, prop_calc, False)
     else:
-        prop = post_calculation(config, prop_calc)        
+        prop = post_calculation(config, prop_calc, force)        
     dl.debug(str(prop))
     prop_text = str(prop)
     if "invalid_field" in prop_text:
@@ -267,11 +268,12 @@ def do_calc_item_property(config, prop_name, schema, ref_id, wait_for_calc=False
 #   param schema: the schema of the array items you want to extract (helper functions to generate these should be provided)
 #   param ref_id: the reference id of the array in thinknode you want to extract the item from
 #   param return_on_fail: flag to return on failure instead of quitting
+#   param force: boolean flag indicating if the calculation should be forced to rerun if it already exists
 #   returns: array calculation ID
-def do_calc_array_item(config, index, schema, ref_id, return_on_fail=False):
+def do_calc_array_item(config, index, schema, ref_id, return_on_fail=False, force=False):
     dl.event('get_array_item: ')
     item_calc = array_item(value(index), schema, reference(ref_id))
-    ai = post_calculation(config, item_calc)
+    ai = post_calculation(config, item_calc, force)
     if 'failed' in ai and return_on_fail == False:
         dl.error('Calc failed::do_calc_array_item:invalid index')
         sys.exit()
