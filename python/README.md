@@ -66,7 +66,7 @@ Packages required to run:
 ## Thinknode.cfg file syntax:
 ```json
 {
-    "basic_user": "<Base64 encoded thinknode username:password>",
+    "user_token": "<API token generated from thinknode.com for your account>",
     "api_url": "https://<thinknode_account>.thinknode.io/api/v1.0",
     "apps":
     {   
