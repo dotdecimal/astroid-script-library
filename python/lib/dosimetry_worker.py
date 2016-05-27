@@ -46,6 +46,67 @@ def compute_aperture(iam, target, beam, margin, mill_radius, downstream_edge):
                 beam
             ])
 
+# Makes a function representation to construct an aperture for a given target structure mesh reference list
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#   param target: triangle_mesh reference defining the beam target structure (must be thinknode ready, as ref, value, or function)
+#   param beam: beam_geometry object defining the beam position information (must be thinknode ready, as ref, value, or function)
+#   param margin: distance for aperture target structure margin (mm)
+#   param mill_radius: radial size of the milling tool that will be used to machine the aperture (mm)
+#   param downstream_edge: distance from the aperture downstream face to the isocenter (mm)
+def compute_aperture_ref(iam, target, beam, margin, mill_radius, downstream_edge):
+    dl.debug("compute_aperture_ref")
+    ap_params = rt_types.aperture_creation_params()
+    ap_params.targets.append(target)
+    args = {}
+    # args["targets"] = thinknode.array_named_type("rt_types", "triangle_mesh", ap_params.targets)
+    args["targets"] = thinknode.array_referenced_named_type("rt_types", "triangle_mesh", ap_params.targets)
+    args["target_margin"] = thinknode.value(margin)
+    args["mill_radius"] = thinknode.value(mill_radius)
+    args["organs"] = thinknode.value([])
+    args["half_planes"] = thinknode.value([])
+    args["corner_planes"] = thinknode.value([])
+    args["centerlines"] = thinknode.value([])
+    args["overrides"] = thinknode.value([])
+    args["downstream_edge"] = thinknode.value(downstream_edge)
+
+    aper_calc = \
+        thinknode.function(iam["account_name"], "dosimetry", "compute_aperture",
+            [
+                thinknode.structure_named_type("rt_types", "aperture_creation_params", args),
+                beam
+            ])
+    print("Compute Aperture2: " + str(aper_calc))
+    res = thinknode.do_calculation(iam, aper_calc)
+    # print("COmpute Aperture2: " + str(res))
+    return res 
+
+# Makes a structure representation of a beam_properties data_type
+def make_beam_properties(geometry, field_size, ssd, bixel_grid, r90, index):
+    dl.debug("make_beam_properties")
+    args = {}
+    args["geometry"] = geometry
+    args["field"] = field_size
+    args["ssd"] = ssd
+    args["bixel_grid"] = bixel_grid
+    args["range"] = r90
+    args["beam_index"] = index
+    return args
+
+# Makes a structure representation of a rc_opt_properties data_type
+def make_rc_opt_properties(target_distal, target_inner, iter_count, smear_w, smear_s, shift_direction):
+    dl.debug("make_rc_opt_properties")
+    args = {}
+    args["target_distal_dose"] = target_distal
+    args["target_inner_border"] = target_inner
+    args["iteration_count"] = iter_count
+    args["smear_weight"] = smear_w
+    args["smear_span"] = smear_s
+    args["shift_direction"] = shift_direction
+    args["dose_grid"] = {'none': None}
+    args["current_dose"] = {'none': None}
+    args["patch_distal_dose"] = {'none': None}
+    return args
+
 # Manual aperture creation based on a list of points
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #   param points: array of points to construct the aperture polyset from
@@ -286,6 +347,24 @@ def get_pbs_bixel_grid(iam, spots, spacing):
     res = thinknode.do_calculation(iam, bixel_grid, False)
     return res  
 
+# Makes a structure representation of a dose_objective with the given data_type
+def make_dose_objective(data_type, voxel_list):
+    dl.debug("make_dose_objective")
+    args = {}
+    args[data_type] = voxel_list
+    return args
+
+# Makes a structure representation of a given dose_constraint data_type
+def make_dose_constraint(data_type, voxel_list, dose_level):
+    dl.debug("make_dose_constraint")
+    sdc = {}
+    sdc["voxels"] = voxel_list
+    sdc["dose_level"] = dose_level
+    sdc["beams"] = [1,1]
+    args = {}
+    args[data_type] = sdc
+    return args
+
 # Create a plan with custom defined pbs spots by energy
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #   param study_id: thinknode id for the study that the plan will be added to
@@ -335,5 +414,3 @@ def create_plan(iam, study_id, machine, spots_by_energy):
 
     res = thinknode.do_calculation(iam, plan_calc, False)
     return res
-
-
