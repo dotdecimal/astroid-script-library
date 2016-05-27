@@ -193,3 +193,12 @@ def write_vtk_polyset(file_path, poly, z=0):
 
     # Close stream
     stream.close()
+
+# Write a VTK file for an adaptive grid
+#   param file_path: file path where the VTK can be created
+#   param grid: adaptive grid object to get decoded
+def write_vtk_adaptivegrid(file_path, grid):
+    # Get list of points in grid
+    points = get_points_on_adaptive_grid(grid)
+    # Write a VTK file for a list of coordinates
+    write_vtk_vector3d(file_path, points)
