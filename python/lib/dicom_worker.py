@@ -115,7 +115,7 @@ def upload_dir(iam, dirname):
 		if (obj_id != 'bad filetype'):
 			tn_dir.directory.append(obj_id)
 		count += 1
-		dl.debug(" ** Upload Dir File Count = " + str(count))
+		dl.debug(" ** Upload Dir File Count = " + str(count) + " **")
 
 	# fsic = rt_types.filesystem_item_contents()
 	# fsic.type = "directory"
@@ -138,7 +138,6 @@ def upload_dir(iam, dirname):
 def make_rt_study_from_dir(iam, dir_name):
 	dl.debug("make_rt_study_from_dir")
 	dir_id = upload_dir(iam, dir_name)
-	# dir_id = '56390ae400c0a0202dd3f4f38449724a' # Procure Prostate
 	dl.debug('dir_id')
 	dl.debug(dir_id)
 	res = thinknode.get_immutable(iam, 'dicom', dir_id)
@@ -168,8 +167,6 @@ def make_rt_study_from_dir(iam, dir_name):
 def make_dicom_object_from_dir(iam, dir_name):
 	dl.debug("make_dicom_object_from_dir")
 	dir_id = upload_dir(iam, dir_name)
-	# dir_id = '56464c1000c06eca900300bd485f47d4' # Procure Prostate
-	
 	dl.debug('dir_id')
 	dl.debug(dir_id)
 	res = thinknode.get_immutable(iam, 'dicom', dir_id)
@@ -179,7 +176,7 @@ def make_dicom_object_from_dir(iam, dir_name):
 	for file_id in dir_obj["contents"]["directory"]:
 		file_ids.append(thinknode.reference(file_id))
 	calc = \
-		thinknode.function(iam["account_name"], 'dicom', "import_files_to_dicom_object",
+		thinknode.function(iam["account_name"], 'dicom', "import_files_for_planning",
 			[
 				thinknode.array_named_type('rt_types', 'filesystem_item', file_ids)
 			])
@@ -220,7 +217,7 @@ def get_dicom_object_ids(iam, list_id):
 	not_end = True
 
 	while not_end:
-		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dicom_object"), list_id, True)
+		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dicom_object"), list_id, True, False, True)
 		dl.debug('dd: ' + dd)
 		if 'failed' in dd:
 			not_end = False
@@ -228,6 +225,26 @@ def get_dicom_object_ids(iam, list_id):
 		ids.append(dd)
 		dd_index = dd_index + 1
 
+	dl.debug("Number of array items: " + str(dd_index))
+	return ids
+
+# Takes a property that is a list of items and gets the individual ID for each item
+#	param iam: connection settings (url, user token, and ids for context and realm)
+#	param list_id: The thinknode id for the property array
+#	param type_name: The named type of the items in the array
+def get_property_array_item_ids(iam, list_id, type_name):
+	dl.debug("get_property_array_item_ids")
+	ids = []
+	dd_index = 0
+	not_end = True
+	while not_end:
+		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type(type_name), list_id, True, True)
+		dl.debug('dd: ' + dd)
+		if 'failed' in dd:
+			not_end = False
+			break
+		ids.append(dd)
+		dd_index = dd_index + 1
 	dl.debug("Number of array items: " + str(dd_index))
 	return ids
 
@@ -337,7 +354,7 @@ def get_aperture_from_beam(iam, study_id, beam_index):
 def get_sad(iam, beam_id):
 	dl.debug("get_sad")
 	sad_array = thinknode.do_calc_item_property(iam, 'virtual_sad', thinknode.schema_array_standard_type("float_type"), beam_id)
-
+	sad_wait = thinknode.wait_for_calculation(iam, 'dosimetry', sad_array, False)
 	sad = thinknode.get_immutable(iam, 'dicom', sad_array)
 	dl.debug("sad: " + str(sad))
 	return sad
@@ -575,7 +592,7 @@ def get_dose(iam, patient_id):
 #	param study_id: rt_study iss id
 def get_stopping_power_img(iam, study_id):
 	dl.debug("get_stopping_power_img")
-	ct_img_data = thinknode.do_calc_item_property(iam, 'ct', thinknode.schema_named_type("ct_image_data"), study_id)
+	ct_img_data = thinknode.do_calc_item_property(iam, 'ct', thinknode.schema_named_type("ct_image"), study_id)
 	ct_img = thinknode.do_calc_item_property(iam, 'image_set', thinknode.schema_named_type("ct_image_set"), ct_img_data)
 	img = thinknode.do_calc_item_property(iam, 'image', thinknode.schema_named_type("image_3d"), ct_img)
 
