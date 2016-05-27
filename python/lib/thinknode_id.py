@@ -21,4 +21,7 @@ def prostate_patient_study():
 def brain_patient_study():
 	return "XXXX"
 
+def material_lucite():
+    return "XXXX"
+
 

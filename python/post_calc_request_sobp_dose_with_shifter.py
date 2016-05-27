@@ -51,7 +51,7 @@ degrader = \
     thinknode.function(iam["account_name"], "dosimetry", "make_degrader", 
         [
             thinknode.value(res_geom),
-            thinknode.reference("564cf0a500c06b391d4ce908c7a3fe9a") # Material spec from ISS
+            thinknode.reference(tn_id.material_lucite()) # Material spec from ISS
         ])
 proton_degr = thinknode.do_calculation(iam, degrader)
 

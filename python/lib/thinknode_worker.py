@@ -221,8 +221,8 @@ def wait_for_calculation(config, app_name, calculation_id, return_data=True, ret
                 assert_success(res)
                 decoded = msgpack.unpackb(res.content, encoding='utf-8')
 
-                f = open(loc + os.sep + 'calculations' + os.sep + str(calculation_id) + ".txt", 'a')
-                f.write(str(decoded))
+                f = open(loc + os.sep + 'calculations' + os.sep + str(calculation_id) + ".txt", 'w')
+                f.write(json.dumps(str(decoded)))
                 f.close()
 
                 return decoded
