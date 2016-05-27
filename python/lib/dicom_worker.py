@@ -597,7 +597,7 @@ def get_stopping_power_img(iam, study_id):
 	img = thinknode.do_calc_item_property(iam, 'image', thinknode.schema_named_type("image_3d"), ct_img)
 
 	calc = \
-		thinknode.function("decimal", "dosimetry", "hu_to_stopping_power",
+		thinknode.function(iam["account_name"], "dosimetry", "hu_to_stopping_power",
 			[
 				thinknode.reference(img)
 			])
