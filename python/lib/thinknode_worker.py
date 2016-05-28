@@ -46,8 +46,8 @@ def get(config, path):
 
 def get_thinknode_usage(config):
     dl.event('get_usage')
-    # url = config["api_url"] + '/ams/accounts/decimal/usage?include_users=true&month=201604'
-    url = config["api_url"] + '/ams/accounts/decimal/usage?include_users=true'
+    # url = config["api_url"] + '/ams/accounts/' + config["account_name"] + '/usage?include_users=true&month=201604'
+    url = config["api_url"] + '/ams/accounts/' + config["account_name"] + '/usage?include_users=true'
     dl.debug(url)
     res = session.get(url, 
         headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
