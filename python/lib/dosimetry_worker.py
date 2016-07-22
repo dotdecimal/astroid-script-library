@@ -146,7 +146,7 @@ def dose_comparison(iam, dose_id, ref_dose_id, value_tolerance, spatial_toleranc
             ])
     return dose_compare_calc
 
-# Makes a funciton representation of an grid at the given location with given size and spacing
+# Makes a function representation of an grid at the given location with given size and spacing
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #   param corner: lower left corner of the grid
 #   param size: size of the grid
@@ -159,6 +159,14 @@ def make_grid(iam, corner, size, spacing):
                 thinknode.value({"corner": corner, "size": size}),
                 thinknode.value(spacing)
             ])
+
+# Defines a grid at the given location with given size and spacing
+#   param p0: lower left point of the grid (position of the first grid point)
+#   param n_points: number of  points in the grid
+#   param spacing: spacing between the points in the grid
+def define_grid(p0, n_points, spacing):
+    dl.debug("define_grid")
+    return {"p0": p0, "n_points": n_points, "spacing": spacing}
 
 # Make a 2d grid about the origin and spanning the size of the stopping image.
 #   param iam: connection settings (url, user token, and ids for context and realm)
