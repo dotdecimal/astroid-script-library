@@ -238,7 +238,7 @@ def get_property_array_item_ids(iam, list_id, type_name):
 	dd_index = 0
 	not_end = True
 	while not_end:
-		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type(type_name), list_id, True, True)
+		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type(type_name), list_id, True, False, True)
 		dl.debug('dd: ' + dd)
 		if 'failed' in dd:
 			not_end = False
