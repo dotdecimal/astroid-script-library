@@ -7,7 +7,7 @@ import json
 
 
 def sobp_machine():
-	return "57aa1f1400c0f50191bc667ee562cb7c"
+	return "XXXX"
 
 def pbs_machine_MGH():
 	return "XXXX"
