@@ -576,20 +576,11 @@ def structure_named_type(app, name, args):
 # Create an array request for a named_type
 #   param app: app name on thinknode
 #   param item_name: name of the named_type
-#   param a: array of items
+#   param a: array of items (can be values or references or functions)
 def array_named_type(app, item_name, a):
     return { "array": \
             { "item_schema" : \
             { "named_type": { "name": item_name, "app": app } }, "items": a } }  
-
-# Create an array request for a named_type
-#   param app: app name on thinknode
-#   param item_name: name of the named_type
-#   param a: array of items
-def array_referenced_named_type(app, item_name, a):
-    return { "array": \
-            { "item_schema" : \
-            { "reference_type": { "named_type": { "name": item_name, "app": app } } }, "items": a } } 
 
 # Create an array request for a number type
 #   param app: app name on thinknode

@@ -148,6 +148,10 @@ def parse_byte_f(buf, offset=0):
 	tmp = st.unpack_from('f',buf,offset)
 	return tmp[0]
 
+def parse_byte_d(buf, offset=0):
+	tmp = st.unpack_from('d',buf,offset)
+	return tmp[0]
+
 def parse_array(obj, buf, offset=0):
 	data = []
 	while len(buf) - offset >= obj.get_offset():
@@ -2028,8 +2032,8 @@ class function_sample(object):
 		self.delta = 0.0 
 
 	def parse_self(self, buf, offset):
-		self.delta = parse_bytes_d(buf, offset)
-		self.value = parse_bytes_d(buf, offset + 8)
+		self.value = parse_byte_d(buf, offset)
+		self.delta = parse_byte_d(buf, offset + 8)
 		return self.expand_data()
 
 	def get_offset(self):
