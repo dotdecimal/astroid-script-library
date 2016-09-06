@@ -29,7 +29,7 @@ def compute_aperture(iam, target, beam, margin, mill_radius, downstream_edge):
     ap_params = rt_types.aperture_creation_params()
     ap_params.targets.append(target)
     args = {}
-    args["targets"] = thinknode.array_named_type("rt_types", "triangle_mesh", ap_params.targets)
+    args["targets"] = thinknode.array_named_type("dosimetry", "triangle_mesh", ap_params.targets)
     args["target_margin"] = thinknode.value(margin)
     args["mill_radius"] = thinknode.value(mill_radius)
     args["organs"] = thinknode.value(ap_params.organs)
@@ -42,7 +42,7 @@ def compute_aperture(iam, target, beam, margin, mill_radius, downstream_edge):
     return \
         thinknode.function(iam["account_name"], "dosimetry", "compute_aperture",
             [
-                thinknode.structure_named_type("rt_types", "aperture_creation_params", args),
+                thinknode.structure_named_type("dosimetry", "aperture_creation_params", args),
                 beam
             ])
 
@@ -58,8 +58,7 @@ def compute_aperture_ref(iam, target, beam, margin, mill_radius, downstream_edge
     ap_params = rt_types.aperture_creation_params()
     ap_params.targets.append(target)
     args = {}
-    # args["targets"] = thinknode.array_named_type("rt_types", "triangle_mesh", ap_params.targets)
-    args["targets"] = thinknode.array_referenced_named_type("rt_types", "triangle_mesh", ap_params.targets)
+    args["targets"] = thinknode.array_referenced_named_type("dosimetry", "triangle_mesh", ap_params.targets)
     args["target_margin"] = thinknode.value(margin)
     args["mill_radius"] = thinknode.value(mill_radius)
     args["organs"] = thinknode.value([])
@@ -72,7 +71,7 @@ def compute_aperture_ref(iam, target, beam, margin, mill_radius, downstream_edge
     aper_calc = \
         thinknode.function(iam["account_name"], "dosimetry", "compute_aperture",
             [
-                thinknode.structure_named_type("rt_types", "aperture_creation_params", args),
+                thinknode.structure_named_type("dosimetry", "aperture_creation_params", args),
                 beam
             ])
     print("Compute Aperture2: " + str(aper_calc))
@@ -381,7 +380,7 @@ def make_dose_constraint(data_type, voxel_list, dose_level):
 #   returns: the id for a plan that contains a beam with the created spots
 def create_plan(iam, study_id, machine, spots_by_energy):
 
-    study_data = thinknode.get_immutable(iam, "rt_types", study_id)
+    study_data = thinknode.get_immutable(iam, "dosimetry", study_id)
     study = json.loads(study_data)
 
     cp = study["plan"]["beams"][0]['control_points'][0]

@@ -44,7 +44,7 @@ def post_filesystem_item(iam, item):
 #	returns filesystem item contents iss id
 def post_filesystem_item_contents(iam, item):
 	dl.debug("post_filesystem_item_contents")
-	res = thinknode.post_dependency_immutable(iam, "rt_types", item, 'filesystem_item_contents')
+	res = thinknode.post_dependency_immutable(iam, "dosimetry", item, 'filesystem_item_contents')
 	obj = json.loads(res.text)
 	return obj['id']
 
@@ -149,8 +149,8 @@ def make_rt_study_from_dir(iam, dir_name):
 	calc = \
 		thinknode.function(iam["account_name"], 'dicom', "import_files_to_new_study",
 			[
-				thinknode.array_named_type('rt_types', 'filesystem_item', file_ids)
-				# thinknode.array_referenced_named_type('rt_types', 'filesystem_item', file_ids)
+				thinknode.array_named_type('dosimetry', 'filesystem_item', file_ids)
+				# thinknode.array_referenced_named_type('dosimetry', 'filesystem_item', file_ids)
 				# file_ids
 			])
 	dl.debug(str(calc))
@@ -178,7 +178,7 @@ def make_dicom_object_from_dir(iam, dir_name):
 	calc = \
 		thinknode.function(iam["account_name"], 'dicom', "import_files_for_planning",
 			[
-				thinknode.array_named_type('rt_types', 'filesystem_item', file_ids)
+				thinknode.array_named_type('dosimetry', 'filesystem_item', file_ids)
 			])
 	dl.debug(str(calc))
 

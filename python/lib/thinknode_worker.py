@@ -398,7 +398,7 @@ def post_immutable(config, app_name, json_data, qualified_scope, use_msgpack=Tru
 #   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
 #   returns: iss immutable response object
 def post_immutable_named(config, app_name, json_data, obj_name, use_msgpack=True):
-    scope = '/iss/named/' + config["account_name"] + '/rt_types' + '/' + obj_name
+    scope = '/iss/named/' + config["account_name"] + '/dosimetry' + '/' + obj_name
     return post_immutable(config, app_name, json_data, scope, use_msgpack)
 
 # Post immutable array of objects to ISS
@@ -409,7 +409,7 @@ def post_immutable_named(config, app_name, json_data, obj_name, use_msgpack=True
 #   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
 #   returns: iss immutable response object
 def post_immutable_array(config, app_name, json_data, obj_name, use_msgpack=True):
-    scope = '/iss/array/named/' + config["account_name"] + "/rt_types" + "/" + obj_name
+    scope = '/iss/array/named/' + config["account_name"] + "/dosimetry" + "/" + obj_name
     return post_immutable(config, app_name, json_data, scope, use_msgpack)
 
 # Post immutable object to ISS of a dependency type 
@@ -467,7 +467,7 @@ def schema_array_named_type(type_name):
     return  { "array_type": { \
                 "element_schema": { \
                     "named_type": { \
-                        "app": "rt_types", \
+                        "app": "dosimetry", \
                         "name": type_name } } } }
 
 # Create a schema for an array of standard types
@@ -494,7 +494,7 @@ def schema_array_array_standard_type(type_name):
 #   param type_name: the named_type for the schema
 def schema_named_type(type_name):
     return { "named_type": { \
-                "app": "rt_types", \
+                "app": "dosimetry", \
                 "name": type_name } }
 
 # Create a schema for a standard type
@@ -627,7 +627,7 @@ def get_name_from_data(obj, key):
     json_string = str(obj)
     if key not in json_string:
         dl.debug(key + ' not found in data: ' + json_string)
-        return 'rt_types'
+        return 'dosimetry'
     else:
         return get_value_by_key(obj, key)
 
