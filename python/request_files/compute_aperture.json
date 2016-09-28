@@ -1,12 +1,12 @@
 {
     "function": {
-        "account": "decimal",
+        "account": "mgh",
         "app": "dosimetry",
         "args": [{
             "object": {
                 "schema": {
                     "named_type": {
-                        "app": "rt_types",
+                        "app": "dosimetry",
                         "name": "aperture_creation_params"
                     }
                 },
@@ -24,7 +24,7 @@
                         "array": {
                             "items": [{
                                 "function": {
-                                    "account": "decimal",
+                                    "account": "mgh",
                                     "app": "dosimetry",
                                     "args": [{
                                         "value": [-32, -20, -30]
@@ -36,7 +36,7 @@
                             }],
                             "item_schema": {
                                 "named_type": {
-                                    "app": "rt_types",
+                                    "app": "dosimetry",
                                     "name": "triangle_mesh"
                                 }
                             }
