@@ -1,6 +1,6 @@
 {
     "function": {
-        "account": "mgh",
+        "account": "decimal",
         "app": "dosimetry",
         "args": [{
             "object": {
@@ -24,7 +24,7 @@
                         "array": {
                             "items": [{
                                 "function": {
-                                    "account": "mgh",
+                                    "account": "decimal",
                                     "app": "dosimetry",
                                     "args": [{
                                         "value": [-32, -20, -30]
