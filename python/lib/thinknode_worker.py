@@ -3,7 +3,7 @@
 # Date:     11/3/2015
 # Desc:     Worker to perform request and calculation tasks on thinknode framework
 
-import json
+import json, ast
 import sys
 import msgpack
 import lib.decimal_logging as dl
@@ -168,11 +168,11 @@ def do_calculation(config, json_data, return_data=True, return_error=False, forc
     else:
         dl.event("Pulling Locally Cached Calculation...")        
         f = open(loc + 'calculations' + os.sep + calculation_id + ".txt")
-        data = str(f.read())
-        #dl.data("Calculation Result: ", data)
+        data = f.read()
+        # dl.data("Calculation Result: ", data)
         
         if return_data:
-            return json.loads(data)
+            return ast.literal_eval(data)
         else:
             return calculation_id
 
@@ -222,7 +222,7 @@ def wait_for_calculation(config, app_name, calculation_id, return_data=True, ret
                 decoded = msgpack.unpackb(res.content, encoding='utf-8')
 
                 f = open(loc + os.sep + 'calculations' + os.sep + str(calculation_id) + ".txt", 'w')
-                f.write(json.dumps(str(decoded)))
+                f.write(str(decoded))
                 f.close()
 
                 return decoded
