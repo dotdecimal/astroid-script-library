@@ -44,6 +44,26 @@ def get(config, path):
     except:
         return None
 
+# Perform a basic post request
+def post(config, path, content):
+    url = iam["api_url"] + path
+    response = requests.post(url, 
+        headers = {'Authorization': 'Bearer ' + config["user_token"]},
+        data = content)
+    assert_success(response)
+    try:
+        return response.json()
+    except:
+        return None
+
+# Perform a basic patch request
+def patch(config, path, content):
+    url = config["api_url"] + path
+    response = requests.patch(url, 
+        headers = {'Authorization': 'Bearer ' + config["user_token"]},
+        data = content)
+    assert_success(response)
+
 def get_thinknode_usage(config):
     dl.event('get_usage')
     # url = config["api_url"] + '/ams/accounts/' + config["account_name"] + '/usage?include_users=true&month=201604'
@@ -69,7 +89,6 @@ def put(config, path, json_data=None):
 
 def delete(config, path):
     delete_url = config["api_url"] + path
-
     res = session.delete(delete_url, 
         headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
     assert_success(res)
@@ -638,3 +657,29 @@ def get_value_by_key(obj, key):
             item = get_value_by_key(v, key)
             if item is not None:
                 return item
+
+# Get the username associated with the given session
+def get_username(iam):
+    return get(iam, "/cas/session")["username"]
+
+# Get the list of apps
+def get_app_list(iam):
+    return get(iam, "/apm/apps")
+
+# Get the list of versions for an app
+def get_app_versions(iam, app_name):
+    return get(iam, "/apm/apps/" + self.config["account"] + "/" + app_name + "/versions")
+
+# Get the list of app versions installed in this realm
+def get_installed_app_versions(iam):
+    return filter(lambda v: v["status"] == "installed",
+        get(iam, "/iam/realms/" + iam['realm_name'] + "/versions"))
+
+# Get the version of a particular app that's installed in this realm
+def get_installed_app_version(iam, app_name):
+    versions = [v for v in get_installed_app_versions(iam)
+        if v["app"] == app_name]
+    try:
+        return versions[0]
+    except:
+        return None
