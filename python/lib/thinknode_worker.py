@@ -38,17 +38,21 @@ def get(config, path):
     post_url = config["api_url"] + path
     dl.data('get_url: ', post_url)
     res = session.get(post_url, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"]})
+        headers = {'Authorization': 'Bearer ' + config["user_token"],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'})
     try:
-        return res.text
+        return res.json()
     except:
         return None
 
 # Perform a basic post request
 def post(config, path, content):
-    url = iam["api_url"] + path
+    url = config["api_url"] + path
     response = requests.post(url, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"]},
+        headers = {'Authorization': 'Bearer ' + config["user_token"],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'},
         data = content)
     assert_success(response)
     try:
@@ -60,7 +64,9 @@ def post(config, path, content):
 def patch(config, path, content):
     url = config["api_url"] + path
     response = requests.patch(url, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"]},
+        headers = {'Authorization': 'Bearer ' + config["user_token"],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'},
         data = content)
     assert_success(response)
 
@@ -83,7 +89,7 @@ def put(config, path, json_data=None):
     post_url = config["api_url"] + path
     dl.data('put_url: ', post_url)
     res = session.put(post_url, 
-        data = json.dumps(json_data), 
+        data = json_data, 
         headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
     assert_success(res)
 
