@@ -279,13 +279,13 @@ def make_spot(position, fluence, energy):
 def sort_spots_by_energy(data):
     dl.debug("sort_spots_by_energy")
     d = {}
+    out = []
     # Sort the data
     for i in range(0, len(data)):
         if d.get(data[i]["energy"], "") == "":
             d[data[i]["energy"]] = []
         d[data[i]["energy"]].append(data[i])
         # Combine back into single array
-        out = []
         ky = sorted(d.keys())
         for j in ky:
             for i in d[j]:
@@ -380,8 +380,7 @@ def make_dose_constraint(data_type, voxel_list, dose_level):
 #   returns: the id for a plan that contains a beam with the created spots
 def create_plan(iam, study_id, machine, spots_by_energy):
 
-    study_data = thinknode.get_immutable(iam, "dosimetry", study_id)
-    study = json.loads(study_data)
+    study = thinknode.get_immutable(iam, "dosimetry", study_id)
 
     cp = study["plan"]["beams"][0]['control_points'][0]
     cp["layer"]["spots"] = []

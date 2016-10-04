@@ -44,7 +44,7 @@ def run():
 
 	# Dose calc data
 	fluences = dicom.get_fluences_from_beam(iam, beam_id)
-	fluences_res = thinknode.get_immutable(iam, 'rt_types', fluences)
+	fluences_res = thinknode.get_immutable(iam, 'dosimetry', fluences)
 
 	fluences_res2 = []
 	for f in fluences_res:

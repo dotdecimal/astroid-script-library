@@ -3,7 +3,7 @@
 # Date:     11/3/2015
 # Desc:     Worker to perform request and calculation tasks on thinknode framework
 
-import json
+import json, ast
 import sys
 import msgpack
 import lib.decimal_logging as dl
@@ -38,11 +38,37 @@ def get(config, path):
     post_url = config["api_url"] + path
     dl.data('get_url: ', post_url)
     res = session.get(post_url, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"]})
+        headers = {'Authorization': 'Bearer ' + config["user_token"],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'})
     try:
-        return res.text
+        return res.json()
     except:
         return None
+
+# Perform a basic post request
+def post(config, path, content):
+    url = config["api_url"] + path
+    response = requests.post(url, 
+        headers = {'Authorization': 'Bearer ' + config["user_token"],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'},
+        data = content)
+    assert_success(response)
+    try:
+        return response.json()
+    except:
+        return None
+
+# Perform a basic patch request
+def patch(config, path, content):
+    url = config["api_url"] + path
+    response = requests.patch(url, 
+        headers = {'Authorization': 'Bearer ' + config["user_token"],
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'},
+        data = content)
+    assert_success(response)
 
 def get_thinknode_usage(config):
     dl.event('get_usage')
@@ -63,13 +89,12 @@ def put(config, path, json_data=None):
     post_url = config["api_url"] + path
     dl.data('put_url: ', post_url)
     res = session.put(post_url, 
-        data = json.dumps(json_data), 
+        data = json_data, 
         headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
     assert_success(res)
 
 def delete(config, path):
     delete_url = config["api_url"] + path
-
     res = session.delete(delete_url, 
         headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
     assert_success(res)
@@ -168,11 +193,11 @@ def do_calculation(config, json_data, return_data=True, return_error=False, forc
     else:
         dl.event("Pulling Locally Cached Calculation...")        
         f = open(loc + 'calculations' + os.sep + calculation_id + ".txt")
-        data = str(f.read())
-        #dl.data("Calculation Result: ", data)
+        data = f.read()
+        # dl.data("Calculation Result: ", data)
         
         if return_data:
-            return json.loads(data)
+            return ast.literal_eval(data)
         else:
             return calculation_id
 
@@ -222,7 +247,7 @@ def wait_for_calculation(config, app_name, calculation_id, return_data=True, ret
                 decoded = msgpack.unpackb(res.content, encoding='utf-8')
 
                 f = open(loc + os.sep + 'calculations' + os.sep + str(calculation_id) + ".txt", 'w')
-                f.write(json.dumps(str(decoded)))
+                f.write(str(decoded))
                 f.close()
 
                 return decoded
@@ -638,3 +663,29 @@ def get_value_by_key(obj, key):
             item = get_value_by_key(v, key)
             if item is not None:
                 return item
+
+# Get the username associated with the given session
+def get_username(iam):
+    return get(iam, "/cas/session")["username"]
+
+# Get the list of apps
+def get_app_list(iam):
+    return get(iam, "/apm/apps")
+
+# Get the list of versions for an app
+def get_app_versions(iam, app_name):
+    return get(iam, "/apm/apps/" + self.config["account"] + "/" + app_name + "/versions")
+
+# Get the list of app versions installed in this realm
+def get_installed_app_versions(iam):
+    return filter(lambda v: v["status"] == "installed",
+        get(iam, "/iam/realms/" + iam['realm_name'] + "/versions"))
+
+# Get the version of a particular app that's installed in this realm
+def get_installed_app_version(iam, app_name):
+    versions = [v for v in get_installed_app_versions(iam)
+        if v["app"] == app_name]
+    try:
+        return versions[0]
+    except:
+        return None

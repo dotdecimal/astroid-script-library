@@ -6,7 +6,7 @@
             "object": {
                 "schema": {
                     "named_type": {
-                        "app": "rt_types",
+                        "app": "dosimetry",
                         "name": "aperture_creation_params"
                     }
                 },
@@ -36,7 +36,7 @@
                             }],
                             "item_schema": {
                                 "named_type": {
-                                    "app": "rt_types",
+                                    "app": "dosimetry",
                                     "name": "triangle_mesh"
                                 }
                             }
