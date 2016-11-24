@@ -11,6 +11,10 @@ from lib import decimal_logging as dl
 from lib import rt_types as rt_types
 import requests
 import json
+from multiprocessing import Pool
+
+import functools
+from joblib import Parallel, delayed
 
 dicom_filetypes = [".img", ".dcm"]
 
@@ -72,11 +76,13 @@ def read_file(filename):
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #	param filename: The name of the file to be uploaded to thinknode
 #	returns the id of the filesystem_item
-def upload_file(iam, filename):
+def upload_file(filename, iam, dicom_only=True):
 	dl.debug("upload_file")
 	dl.event('Reading file: ' + filename)
 
-	if valid_dicom_filetype(filename) == True:
+	if dicom_only and valid_dicom_filetype(filename) != True:
+		return 'bad filetype'	
+	else:
 		b = read_file(filename)		
 
 		fsic = rt_types.filesystem_item_contents()
@@ -95,34 +101,33 @@ def upload_file(iam, filename):
 		dl.debug('Filesystem item: ' + obj_id)
 		
 		return obj_id
-	else:
-		return 'bad filetype'
+		
 
 # Takes in a directory path and uploads all the files in the path to thinknode as filesystem_items
 #   param iam: connection settings (url, user token, and ids for context and realm)
-#	param dirname: The name of the directory to be uploaded to thinknode
+#	param dir_name: The name of the directory to be uploaded to thinknode
 # 	returns id of the filesystem_item that holds a directory of the files
-def upload_dir(iam, dirname):
+def upload_dir(iam, dir_name, dicom_only=True):
 	dl.debug("upload_dir")
-	dl.event('Uploading directory: ' + dirname)
+	dl.event('Uploading directory: ' + dir_name)
 	
 	tn_dir = rt_types.filesystem_item_contents()
+	upload_file_list=[]
+	for dirname, dirnames, filenames in os.walk(dir_name):
+		# print path to all subdirectories first.
+		for subdirname in dirnames:
+			print(os.path.join(dirname, subdirname))
 
-	count = 0
-	for fi in os.listdir(dirname):
-		filename = dirname + '/' + fi
-		obj_id = upload_file(iam, filename)
-		if (obj_id != 'bad filetype'):
-			tn_dir.directory.append(obj_id)
-		count += 1
-		dl.debug(" ** Upload Dir File Count = " + str(count) + " **")
+		# print path to all filenames.
+		for filename in filenames:
+			upload_file_list.append(os.path.join(dirname, filename))
 
-	# fsic = rt_types.filesystem_item_contents()
-	# fsic.type = "directory"
-	# fsic.directory = tn_dir
+	tn_dir.directory = Parallel(n_jobs=10,  backend="threading")(
+             map(delayed(functools.partial(upload_file, iam=iam, dicom_only=dicom_only)), upload_file_list))    
+
 	del tn_dir.file
 	fsi = rt_types.filesystem_item()
-	fsi.name = dirname
+	fsi.name = dir_name
 	fsi.contents = tn_dir
 
 	print(thinknode.to_json(fsi))
