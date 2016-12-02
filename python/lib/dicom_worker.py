@@ -32,9 +32,17 @@ def valid_dicom_filetype(filename):
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #	param item: The filesystem_item to be posted to thinknode
 #	returns filesystem iss id
-def post_filesystem_item(iam, item):
+def post_filesystem_item(iam, item, dicom=True):
 	dl.debug("post_filesystem_item")
-	res = thinknode.post_immutable_named(iam, 'dicom', item, 'filesystem_item')
+	if dicom:
+		res = thinknode.post_immutable_named(iam, 'dicom', item, 'filesystem_item')
+	else:
+		print("-- posting")
+		for prop in item:
+			print(prop)
+		scope = thinknode.make_named_type_scope(iam, 'launcher', 'filesystem_item')
+		res = thinknode.post_immutable(iam, 'launcher', item, scope, 'filesystem_item')
+		# res = thinknode.post_immutable_named(iam, 'launcher', item, 'filesystem_item')
 	obj = json.loads(res.text)
 	return obj['id']
 
@@ -72,18 +80,22 @@ def read_file(filename):
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #	param filename: The name of the file to be uploaded to thinknode
 #	returns the id of the filesystem_item
-def upload_file(iam, filename):
+def upload_file(filename, iam, dicom_only=True):
 	dl.debug("upload_file")
 	dl.event('Reading file: ' + filename)
+	file_basename = os.path.basename(filename)
 
-	if valid_dicom_filetype(filename) == True:
-		b = read_file(filename)		
+	if dicom_only and valid_dicom_filetype(file_basename) != True:
+		return 'bad filetype'	
+	else:
+		b = read_file(filename)
+		# b = read_file(os.path.join(file_directory, filename))		
 
 		fsic = rt_types.filesystem_item_contents()
 		# fsic.file = b
 		del fsic.directory
 		fsi = rt_types.filesystem_item()
-		fsi.name = filename
+		fsi.name = file_basename
 		fsi.contents = fsic
 
 		json_data = thinknode.to_json(fsi)
@@ -91,43 +103,45 @@ def upload_file(iam, filename):
 
 		# Used for non-msgpack uploading
 		# obj_id = post_filesystem_item(iam, thinknode.to_json(fsi))
-		obj_id = post_filesystem_item(iam, json_data)
+		obj_id = post_filesystem_item(iam, json_data, dicom_only)
 		dl.debug('Filesystem item: ' + obj_id)
 		
 		return obj_id
-	else:
-		return 'bad filetype'
 
 # Takes in a directory path and uploads all the files in the path to thinknode as filesystem_items
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #	param dirname: The name of the directory to be uploaded to thinknode
 # 	returns id of the filesystem_item that holds a directory of the files
-def upload_dir(iam, dirname):
+def upload_dir(iam, dir_name, dicom_only=True):
 	dl.debug("upload_dir")
-	dl.event('Uploading directory: ' + dirname)
+	dl.event('Uploading directory: ' + dir_name)
 	
 	tn_dir = rt_types.filesystem_item_contents()
+	upload_file_list=[]
+	for dirname, dirnames, filenames in os.walk(dir_name):
+		# print path to all subdirectories first.
+		for subdirname in dirnames:
+			print(os.path.join(dirname, subdirname))
 
-	count = 0
-	for fi in os.listdir(dirname):
-		filename = dirname + '/' + fi
-		obj_id = upload_file(iam, filename)
-		if (obj_id != 'bad filetype'):
-			tn_dir.directory.append(obj_id)
-		count += 1
-		dl.debug(" ** Upload Dir File Count = " + str(count) + " **")
+		# print path to all filenames.
+		for filename in filenames:
+			upload_file_list.append(os.path.join(dirname, filename))
+			# upload_file_list.append(filename)
 
-	# fsic = rt_types.filesystem_item_contents()
-	# fsic.type = "directory"
-	# fsic.directory = tn_dir
+	# tn_dir.directory = Parallel(n_jobs=10,  backend="threading")(
+             # map(delayed(functools.partial(upload_file, iam=iam, file_directory=dirname, dicom_only=dicom_only)), upload_file_list))    
+
+	tn_dir.directory = Parallel(n_jobs=4,  backend="threading")(
+             map(delayed(functools.partial(upload_file, iam=iam, dicom_only=dicom_only)), upload_file_list))    
+
 	del tn_dir.file
 	fsi = rt_types.filesystem_item()
-	fsi.name = dirname
+	fsi.name = dir_name
 	fsi.contents = tn_dir
 
 	print(thinknode.to_json(fsi))
 
-	obj_id = post_filesystem_item(iam, thinknode.to_json(fsi))
+	obj_id = post_filesystem_item(iam, thinknode.to_json(fsi), dicom_only)
 	dl.debug('Directory id: ' + obj_id)	
 	return obj_id
 
