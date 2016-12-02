@@ -547,7 +547,7 @@ def optional_value(v):
     return value(some(v))
 
 # Create a none type (i.e. an empty optional type)
-none = value({ "none": None }) 
+none = { "none": None }
 
 # Create a reference request.
 #   param id: immutable storage id of the object
