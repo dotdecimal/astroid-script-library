@@ -187,8 +187,7 @@ def do_calculation(config, json_data, return_data=True, return_error=False, forc
     if not os.path.exists(loc + 'calculations' + os.sep):
         os.makedirs(loc + 'calculations' + os.sep)
     
-    # if not os.path.isfile(loc + 'calculations' + os.sep + calculation_id + ".txt"):
-    if True:
+    if not os.path.isfile(loc + 'calculations' + os.sep + calculation_id + ".txt"):
         # Get calculation Status
         return wait_for_calculation(config, app_name, calculation_id, return_data, return_error)
     else:

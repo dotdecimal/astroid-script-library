@@ -41,12 +41,8 @@ def post_filesystem_item(iam, item, dicom=True):
 	if dicom:
 		res = thinknode.post_immutable_named(iam, 'dicom', item, 'filesystem_item')
 	else:
-		print("-- posting")
-		for prop in item:
-			print(prop)
 		scope = thinknode.make_named_type_scope(iam, 'launcher', 'filesystem_item')
 		res = thinknode.post_immutable(iam, 'launcher', item, scope, 'filesystem_item')
-		# res = thinknode.post_immutable_named(iam, 'launcher', item, 'filesystem_item')
 	obj = json.loads(res.text)
 	return obj['id']
 
@@ -92,11 +88,9 @@ def upload_file(filename, iam, dicom_only=True):
 	if dicom_only and valid_dicom_filetype(file_basename) != True:
 		return 'bad filetype'	
 	else:
-		b = read_file(filename)
-		# b = read_file(os.path.join(file_directory, filename))		
+		b = read_file(filename)	
 
 		fsic = rt_types.filesystem_item_contents()
-		# fsic.file = b
 		del fsic.directory
 		fsi = rt_types.filesystem_item()
 		fsi.name = file_basename
@@ -130,10 +124,6 @@ def upload_dir(iam, dir_name, dicom_only=True):
 		# print path to all filenames.
 		for filename in filenames:
 			upload_file_list.append(os.path.join(dirname, filename))
-			# upload_file_list.append(filename)
-
-	# tn_dir.directory = Parallel(n_jobs=10,  backend="threading")(
-             # map(delayed(functools.partial(upload_file, iam=iam, file_directory=dirname, dicom_only=dicom_only)), upload_file_list))    
 
 	tn_dir.directory = Parallel(n_jobs=4,  backend="threading")(
              map(delayed(functools.partial(upload_file, iam=iam, dicom_only=dicom_only)), upload_file_list))    
@@ -168,8 +158,6 @@ def make_rt_study_from_dir(iam, dir_name):
 		thinknode.function(iam["account_name"], 'dicom', "import_files_to_new_study",
 			[
 				thinknode.array_named_type('dosimetry', 'filesystem_item', file_ids)
-				# thinknode.array_referenced_named_type('dosimetry', 'filesystem_item', file_ids)
-				# file_ids
 			])
 	dl.debug(str(calc))
 
