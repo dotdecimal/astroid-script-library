@@ -12,6 +12,10 @@ from lib import rt_types as rt_types
 import requests
 import json
 
+from multiprocessing import Pool
+import functools
+from joblib import Parallel, delayed
+
 dicom_filetypes = [".img", ".dcm"]
 
 #####################################################################
