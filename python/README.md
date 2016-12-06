@@ -15,12 +15,16 @@ Packages required to run:
 - colorama
 - jsonpickle
 - msgpack
+- joblib
+- functools
 
 ```
    python -m pip install requests  
    python -m pip install colorama  
    python -m pip install jsonpickle  
    python -m pip install msgpack-python
+   python -m pip install joblib
+   python -m pip install functools
 ```
 
 ## Provided Example File Usages:
