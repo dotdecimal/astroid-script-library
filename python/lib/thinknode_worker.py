@@ -415,6 +415,15 @@ def post_immutable(config, app_name, json_data, qualified_scope, use_msgpack=Tru
     dl.event("    Immutable id: " + res.text)
     return res
 
+def id_post_immutable(config, app_name, json_data, qualified_scope, use_msgpack=True):
+    res = post_immutable(config, app_name, json_data, qualified_scope, use_msgpack)
+    obj = json.loads(res.text)
+    return obj['id']
+
+def make_named_type_scope(config, app_name, named_type):
+    scope = '/iss/named/' + config["account_name"] + '/' + app_name  + '/' + named_type
+    return scope
+
 # Post immutable named_type object to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: name of the app to use to get the context id from the iam config
@@ -481,6 +490,17 @@ def get_immutable(config, app_name, obj_id, use_msgpack=True):
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
         assert_success(res)
         return json.loads(res.text)
+
+def get_head(config, app_name, obj_id):
+    dl.event("Requesting Head Data from ISS...")
+    url = config["api_url"] + '/iss/' + obj_id + '?context=' + config['apps'][app_name]["context_id"] #+ "&ignore_upgrades=true"
+    dl.debug("iss url:" + url)
+    res = session.head(url, 
+            headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/octet-stream'})
+    assert_success(res)
+    print(res.headers)
+    # print(json.loads(str(res)))
+    return res.headers
 
 #####################################################################
 # thinknode schema type builders
