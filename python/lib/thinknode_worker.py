@@ -358,7 +358,7 @@ def do_calc_item_property(config, prop_name, schema, ref_id, wait_for_calc=False
         dl.error('Calc failed::do_calc_item_property: invalid index')
         sys.exit()
     else:    
-        dl.debug('prop: ' + prop_name + ' :: ' + prop)
+        dl.debug('prop: ' + prop_name + ' :: ' + str(prop))
         return prop
 
 # Manually post a calculation request to extract an item out of an array
@@ -436,6 +436,17 @@ def post_immutable_named(config, app_name, json_data, obj_name, use_msgpack=True
     return post_immutable(config, app_name, json_data, scope, use_msgpack)
 
 # Post immutable array of objects to ISS
+#   param config: connection settings (url, user token, and ids for context and realm)
+#   param app_name: name of the app to use to get the context id from the iam config
+#   param json_data: immutable array object in json format
+#   param data_type: type of items within the array to post (integer, float, etc)
+#   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
+#   returns: iss immutable response object
+def post_immutable_array_simple_type(config, app_name, json_data, data_type, use_msgpack=True):
+    scope = '/iss/array/' + data_type
+    return post_immutable(config, app_name, json_data, scope, use_msgpack)
+
+    # Post immutable array of std types to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: name of the app to use to get the context id from the iam config
 #   param json_data: immutable array object in json format
@@ -626,6 +637,27 @@ def array_named_type(app, item_name, a):
     return { "array": \
             { "item_schema" : \
             { "named_type": { "name": item_name, "app": app } }, "items": a } }  
+
+# Create an optional object request for a named_type
+#   param account: account name on thinknode
+#   param app: app name on thinknode
+#   param type_name: name of the named_type
+#   param data: the real object data, non-optional version (can be values or references or functions)
+def optional_named_type_object(account, app, type_name, data):
+    return {
+        "object": {
+            "schema": {
+                "optional_type": {
+                    "named_type": {
+                        "account": account,
+                        "app": app,
+                        "name": type_name
+                    }
+                }
+            },
+            "properties": data
+        }
+    }
 
 # Create an array request for a number type
 #   param app: app name on thinknode

@@ -128,6 +128,13 @@ def upload_dir(iam, dir_name, dicom_only=True):
 	tn_dir.directory = Parallel(n_jobs=4,  backend="threading")(
              map(delayed(functools.partial(upload_file, iam=iam, dicom_only=dicom_only)), upload_file_list))    
 
+	# Remove bad files
+	new_dir = []
+	for f in tn_dir.directory:
+		if f != 'bad filetype':
+			new_dir.append(f)
+	tn_dir.directory = new_dir
+
 	del tn_dir.file
 	fsi = rt_types.filesystem_item()
 	fsi.name = dir_name
@@ -169,7 +176,7 @@ def make_rt_study_from_dir(iam, dir_name):
 # Upload a directory of dicom files into a list dicom_objects
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #   param dir_name: complete directory path
-# 	returns a study iss ID
+# 	returns iss ID for dicom_object list
 def make_dicom_object_from_dir(iam, dir_name):
 	dl.debug("make_dicom_object_from_dir")
 	dir_id = upload_dir(iam, dir_name)
@@ -182,13 +189,14 @@ def make_dicom_object_from_dir(iam, dir_name):
 	for file_id in dir_obj["contents"]["directory"]:
 		file_ids.append(thinknode.reference(file_id))
 	calc = \
-		thinknode.function(iam["account_name"], 'dicom', "import_files_for_planning",
+		thinknode.function(iam["account_name"], 'dicom', "import_files_to_dicom_object",
 			[
-				thinknode.array_named_type('dosimetry', 'filesystem_item', file_ids)
+				thinknode.array_named_type('dosimetry', 'filesystem_item', file_ids),
+				thinknode.value(False)
 			])
 	dl.debug(str(calc))
 
-	res = thinknode.do_calculation(iam, calc, False, False)
+	res = thinknode.post_calculation(iam, calc)
 	dl.debug(res)
 
 	return res
