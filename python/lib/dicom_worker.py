@@ -644,3 +644,26 @@ def get_ct_image_set(iam, patient_id):
 		else:
 			dl.debug('ct_img: ' + ct_img)
 			return ct_img
+
+# Posts a DICOM SS file object as a referenced type
+def structure_geometry_refs(iam, dicom_obj_id):
+    obj = thinknode.get_immutable(iam, 'dosimetry', dicom_obj_id)
+    ss_id = thinknode.do_calc_item_property(iam, 'structure_set', thinknode.schema_named_type("rt_structure_set"), dicom_obj_id)
+    ss_list_id = thinknode.do_calc_item_property(iam, 'structures', thinknode.schema_named_type("rt_structure_list"), ss_id)
+    structure_list_id = thinknode.do_calc_item_property(iam, 'structure_list', thinknode.schema_array_named_type("rt_structure"), ss_list_id)
+    
+    list_of_refs = get_property_array_item_ids(iam, structure_list_id, "rt_structure")
+
+    list_of_ref_iss_ids = []
+    print("starting list")
+    for ref in list_of_refs:
+        print(ref)
+        ref_data = thinknode.get_immutable(iam, 'dosimetry', ref)
+        list_of_ref_iss_ids.append(json.loads(thinknode.post_immutable_named(iam, "dosimetry", ref_data, 'rt_structure').text)['id'])
+
+    obj['structure_set']['structures']['ref_structure_list'] = list_of_ref_iss_ids
+    del obj['structure_set']['structures']['structure_list']
+
+    dicom_obj_ref_id = json.loads(thinknode.post_immutable_named(iam, "dosimetry", obj, 'dicom_object', True).text)['id']
+    print('dicom_obj_ref_id: ' + dicom_obj_ref_id)
+    return dicom_obj_ref_id
