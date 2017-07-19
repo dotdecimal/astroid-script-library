@@ -10,10 +10,10 @@ import json
 
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
 
-plan_iss_id = "596cc14600c0fea194158811facc362f"
+plan_iss_id = "Paste_Example_Plan_ISS_ID_Here"
 
 # Make the meta generator request for the planning Results API
-generator_request = thinknode.function("mgh", "planning", "generate_plan_summary_request", 
+generator_request = thinknode.function(iam["account_name"], "planning", "generate_plan_summary_request", 
     [
             thinknode.reference(plan_iss_id)
     ])
@@ -22,7 +22,7 @@ generator_request = thinknode.function("mgh", "planning", "generate_plan_summary
 generator_id = thinknode.do_calculation(iam, generator_request, False)
 
 # Post the meta calculation
-result_id = thinknode.do_calculation(iam, thinknode.meta("mgh", "planning", "plan_summary", generator_id), False)
+result_id = thinknode.do_calculation(iam, thinknode.meta(iam["account_name"], "planning", "plan_summary", generator_id), False)
 
 # Get the calculation result from ISS
 plan_summary = thinknode.get_immutable(iam, "planning", result_id, False)
