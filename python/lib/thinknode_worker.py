@@ -667,6 +667,27 @@ def array_number_type(app, a):
             { "item_schema" : \
             { "number_type": {} }, "items": a } } 
 
+# Create a meta request
+#   param account: account name on thinknode
+#   param app: app name on thinknode
+#   param type_name: name of the named_type that will be returned by the meta generator
+#   param generator_ref: calculation id of the meta request generation function
+def meta(account, app, type_name, generator_ref):
+    return {
+        "meta": {
+            "schema": {
+                "named_type": {
+                    "account": account,
+                    "app": app,
+                    "name": type_name
+                }
+            },
+            "generator": {
+                "reference": generator_ref
+            }
+        }
+}
+
 #####################################################################
 # misc helpers
 #####################################################################
