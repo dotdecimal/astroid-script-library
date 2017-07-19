@@ -671,6 +671,7 @@ def array_number_type(app, a):
 #   param account: account name on thinknode
 #   param app: app name on thinknode
 #   param type_name: name of the named_type that will be returned by the meta generator
+#   param generator_ref: calculation id of the meta request generation function
 def meta(account, app, type_name, generator_ref):
     return {
         "meta": {
