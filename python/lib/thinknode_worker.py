@@ -319,7 +319,8 @@ def head_iss_object(config, app_name, obj_id):
 #   returns: calculation id
 def post_calculation(config, json_data, force=False):
     # Get app name from json request
-    app_name = get_name_from_data(json_data, 'app')
+    # app_name = get_name_from_data(json_data, 'app')
+    app_name = "planning"
      # Get calculation ID
     dl.event("Sending Calculation...")
     url = config["api_url"] + '/calc?context=' + config["apps"][app_name]["context_id"] + "&with_logs=false"    
@@ -519,11 +520,11 @@ def get_head(config, app_name, obj_id):
 
 # Create a schema for an array of named types
 #   param type_name: the named_type for the array items
-def schema_array_named_type(type_name):
+def schema_array_named_type(app_name, type_name):
     return  { "array_type": { \
                 "element_schema": { \
                     "named_type": { \
-                        "app": "dosimetry", \
+                        "app": app_name, \
                         "name": type_name } } } }
 
 # Create a schema for an array of standard types
@@ -548,9 +549,9 @@ def schema_array_array_standard_type(type_name):
 
 # Create a schema for a named type
 #   param type_name: the named_type for the schema
-def schema_named_type(type_name):
+def schema_named_type(app_name, type_name):
     return { "named_type": { \
-                "app": "dosimetry", \
+                "app": app_name, \
                 "name": type_name } }
 
 # Create a schema for a standard type
@@ -667,12 +668,12 @@ def array_number_type(app, a):
             { "item_schema" : \
             { "number_type": {} }, "items": a } } 
 
-# Create a meta request
+# Create a meta request for a named_type
 #   param account: account name on thinknode
 #   param app: app name on thinknode
 #   param type_name: name of the named_type that will be returned by the meta generator
 #   param generator_ref: calculation id of the meta request generation function
-def meta(account, app, type_name, generator_ref):
+def meta_named_type(account, app, type_name, generator_ref):
     return {
         "meta": {
             "schema": {
@@ -680,6 +681,65 @@ def meta(account, app, type_name, generator_ref):
                     "account": account,
                     "app": app,
                     "name": type_name
+                }
+            },
+            "generator": {
+                "reference": generator_ref
+            }
+        }
+}
+
+# Create a meta request for an array of named types
+#   param account: account name on thinknode
+#   param app: app name on thinknode
+#   param type_name: name of the named types that will be returned by the meta generator
+#   param generator_ref: calculation id of the meta request generation function
+def meta_array_named_type(account, app, type_name, generator_ref):
+    return {
+        "meta": {
+            "schema": {
+                "array_type": {
+                    "element_schema": {
+                        "named_type": {
+                            "account": account,
+                            "app": app,
+                            "name": type_name
+                        }
+                    }
+                }
+            },
+            "generator": {
+                "reference": generator_ref
+            }
+        }
+}
+
+# Create a meta request for a standard type
+#   param type_name: name of the standard type that will be returned by the meta generator
+#   param generator_ref: calculation id of the meta request generation function
+def meta_standard_type(type_name, generator_ref):
+    return {
+        "meta": {
+            "schema": {
+                type_name: {}
+            },
+            "generator": {
+                "reference": generator_ref
+            }
+        }
+}
+
+# Create a meta request for an array of standard types
+#   param type_name: name of the standard types that will be returned by the meta generator
+#   param generator_ref: calculation id of the meta request generation function
+def meta_array_standard_type(type_name, generator_ref):
+    return {
+        "meta": {
+            "schema": {
+                "array_type": {
+                    "element_schema": {
+                        type_name: {}
+                    }
                 }
             },
             "generator": {

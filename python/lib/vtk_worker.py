@@ -5,7 +5,7 @@
 
 # Write a VTK file for an image3
 #   param file_path: file path where VTK can be created
-#   param image: triangle_mesh object to get decoded
+#   param image: image3 object to get decoded
 def write_vtk_image3(file_path, image):
 
     # Create output stream and open
@@ -44,7 +44,7 @@ def write_vtk_image3(file_path, image):
 
 # Write a VTK file for an image2
 #   param file_path: file path where VTK can be created
-#   param image: triangle_mesh object to get decoded
+#   param image: image2 object to get decoded
 def write_vtk_image2(file_path, image):
 
     # Create output stream and open
@@ -86,6 +86,52 @@ def write_vtk_image2(file_path, image):
     # Close stream
     stream.close()
 
+# Write a VTK file for an image2
+#   param file_path: file path where VTK can be created
+#   param image: image2 object to get decoded
+def write_vtk_image2_flat(file_path, image):
+
+    # Create output stream and open
+    stream = open(file_path, 'w')
+
+    # Write header information
+    stream.write("# vtk DataFile Version 2.0\n")
+    stream.write("CRADLE IMAGE2\n")
+    stream.write("ASCII\n")
+    stream.write("DATASET RECTILINEAR_GRID\n")
+
+    coords = ["X", "Y", "Z"]
+
+    # Write rectilinear grid coordinates to stream
+    stream.write("DIMENSIONS " + str(image['size'][0] + 1) + " " + str(image['size'][1] + 1) + " " + str(2) + "\n")
+    for k in range(0, 2):
+        nn = image['size'][k] + 1;
+        origin = image['origin'][k];
+        step = image['axes'][k][k];
+        stream.write(coords[k] + "_COORDINATES " + str(nn) + " double\n")
+        for i in range(nn):
+            stream.write(str(origin + i * step) + " ")
+        stream.write("\n");
+
+    n = 2;
+    origin = -0.05;
+    step = 0.1;
+    stream.write(coords[2] + "_COORDINATES " + str(n) + " double\n")
+    for i in range(n):
+        stream.write(str(origin + i * step) + " ")
+    stream.write("\n")
+
+    # Write cell data to stream
+    pixel_count = image['size'][0] * image['size'][1];
+    stream.write("CELL_DATA " + str(pixel_count) + "\n")
+    stream.write("SCALARS pixels double\n")
+    stream.write("LOOKUP_TABLE default\n")
+
+    for i in range(pixel_count):
+        stream.write(str(image['pixels'][i]) + "\n")
+
+    # Close stream
+    stream.close()
 
 # Write a VTK file for a triangle mesh
 #   param file_path: file path where VTK can be created
