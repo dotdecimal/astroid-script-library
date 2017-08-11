@@ -319,8 +319,9 @@ def head_iss_object(config, app_name, obj_id):
 #   returns: calculation id
 def post_calculation(config, json_data, force=False):
     # Get app name from json request
-    # app_name = get_name_from_data(json_data, 'app')
-    app_name = "planning"
+    app_name = get_name_from_data(json_data, 'app')
+    # For meta calcs to work on the planning results API the below line needs to be commented in.
+    #app_name = "planning"
      # Get calculation ID
     dl.event("Sending Calculation...")
     url = config["api_url"] + '/calc?context=' + config["apps"][app_name]["context_id"] + "&with_logs=false"    
