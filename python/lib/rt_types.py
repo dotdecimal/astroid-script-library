@@ -2268,6 +2268,108 @@ class image_3d(object):
 				else:
 					setattr(self, k, v)
 
+class image_1f(object):
+
+	#Initialize
+	def __init__(self):
+		self.size = [] 
+		self.type_info = variant_type_info()
+		blob = blob_type()
+		self.pixels = blob.toStr()
+		self.value_mapping = linear_function()
+		self.origin = [] 
+		self.axes = [] 
+		self.units = "" 
+
+	def expand_data(self):
+		data = {}
+		data['size'] = self.size
+		data['type_info'] = self.type_info.expand_data()
+		data['pixels'] = parse_bytes_f(base64.b64decode(self.pixels['blob']))
+		data['value_mapping'] = self.value_mapping.expand_data()
+		data['origin'] = self.origin
+		data['axes'] = self.axes
+		data['units'] = self.units
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'type_info':
+					self.type_info.from_json(v)
+				elif k == 'value_mapping':
+					self.value_mapping.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class image_2f(object):
+
+	#Initialize
+	def __init__(self):
+		self.size = [] 
+		self.type_info = variant_type_info()
+		blob = blob_type()
+		self.pixels = blob.toStr()
+		self.value_mapping = linear_function()
+		self.origin = [] 
+		self.axes = [] 
+		self.units = "" 
+
+	def expand_data(self):
+		data = {}
+		data['size'] = self.size
+		data['type_info'] = self.type_info.expand_data()
+		data['pixels'] = parse_bytes_f(base64.b64decode(self.pixels['blob']))
+		data['value_mapping'] = self.value_mapping.expand_data()
+		data['origin'] = self.origin
+		data['axes'] = self.axes
+		data['units'] = self.units
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'type_info':
+					self.type_info.from_json(v)
+				elif k == 'value_mapping':
+					self.value_mapping.from_json(v)
+				else:
+					setattr(self, k, v)
+
+class image_3f(object):
+
+	#Initialize
+	def __init__(self):
+		self.size = [] 
+		self.type_info = variant_type_info()
+		blob = blob_type()
+		self.pixels = blob.toStr()
+		self.value_mapping = linear_function()
+		self.origin = [] 
+		self.axes = [] 
+		self.units = "" 
+
+	def expand_data(self):
+		data = {}
+		data['size'] = self.size
+		data['type_info'] = self.type_info.expand_data()
+		data['pixels'] = parse_bytes_f(base64.b64decode(self.pixels['blob']))
+		data['value_mapping'] = self.value_mapping.expand_data()
+		data['origin'] = self.origin
+		data['axes'] = self.axes
+		data['units'] = self.units
+		return data
+
+	def from_json(self, jdict):
+		for k, v in jdict.items():
+			if hasattr(self,k):
+				if k == 'type_info':
+					self.type_info.from_json(v)
+				elif k == 'value_mapping':
+					self.value_mapping.from_json(v)
+				else:
+					setattr(self, k, v)
+
 class image_geometry_1d(object):
 
 	#Initialize
