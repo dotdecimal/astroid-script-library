@@ -171,15 +171,17 @@ def authenticate(config):
 #   param return_error: When False the script will exit when error is found, when True the sciprt will return the error
 #   param force: boolean flag indicating if the calculation should be forced to rerun if it already exists
 #   returns: either calculation data or id, based on return_flag. Default is ID.
-def do_calculation(config, json_data, return_data=True, return_error=False, force=False):
+def do_calculation(config, json_data, return_data=True, return_error=False, force=False, override_app_name=None):
     # Output function name for debugging
     if 'function' in json_data:
         dl.debug('do_calculation function name: ' + json_data["function"]["name"])
     # Get app name from json request
     app_name = get_name_from_data(json_data, 'app')
+    if override_app_name != None:
+        app_name = override_app_name
     dl.debug('do_calculation app name: ' + app_name)
     # Get calculation ID
-    calculation_id = post_calculation(config, json_data, force)
+    calculation_id = post_calculation(config, json_data, force, override_app_name)
     # Make sure calculation folder exists
     loc = sys.path[0]
     if loc[len(loc)-1] != '/':
@@ -317,11 +319,11 @@ def head_iss_object(config, app_name, obj_id):
 #   param json_data: calculation request in json format
 #   param force: boolean flag indicating if the calculation should be forced to rerun if it already exists
 #   returns: calculation id
-def post_calculation(config, json_data, force=False):
+def post_calculation(config, json_data, force=False, override_app_name=None):
     # Get app name from json request
     app_name = get_name_from_data(json_data, 'app')
-    # For meta calcs to work on the planning results API the below line needs to be commented in.
-    #app_name = "planning"
+    if override_app_name != None:
+        app_name = override_app_name
      # Get calculation ID
     dl.event("Sending Calculation...")
     url = config["api_url"] + '/calc?context=' + config["apps"][app_name]["context_id"] + "&with_logs=false"    
