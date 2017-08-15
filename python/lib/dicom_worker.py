@@ -231,7 +231,7 @@ def get_dicom_object_ids(iam, list_id):
 	not_end = True
 
 	while not_end:
-		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dicom_object"), list_id, True, False, True)
+		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dosimetry", "dicom_object"), list_id, True, False, True)
 		dl.debug('dd: ' + dd)
 		if 'failed' in dd:
 			not_end = False
@@ -252,7 +252,7 @@ def get_property_array_item_ids(iam, list_id, type_name):
 	dd_index = 0
 	not_end = True
 	while not_end:
-		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type(type_name), list_id, True, False, True)
+		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dosimetry", type_name), list_id, True, False, True)
 		dl.debug('dd: ' + dd)
 		if 'failed' in dd:
 			not_end = False
@@ -268,20 +268,20 @@ def get_property_array_item_ids(iam, list_id, type_name):
 #	returns the id of the rt_plan from the patient
 def get_plan(iam, patient_id):
 	dl.debug("get_plan")
-	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dicom_data"), patient_id)
+	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dosimetry", "dicom_data"), patient_id)
 	dl.debug('dd_array: ' + dd_array)
 
 	dd_index = 0
 	not_found = True
 
 	while not_found:
-		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dicom_data"), dd_array)
+		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dosimetry", "dicom_data"), dd_array)
 		dl.debug('dd: ' + dd)
 
-		dd_obj = thinknode.do_calc_item_property(iam, 'dicom_obj', thinknode.schema_named_type("dicom_object"), dd)
+		dd_obj = thinknode.do_calc_item_property(iam, 'dicom_obj', thinknode.schema_named_type("dosimetry", "dicom_object"), dd)
 		dl.debug('dd_obj: ' + dd_obj)
 
-		plan = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), dd_obj)
+		plan = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("dosimetry", "rt_plan"), dd_obj)
 		if not plan:
 			dl.debug('dd object was not a plan object!!')
 			dd_index = dd_index + 1
@@ -306,10 +306,10 @@ def get_beam_geometry(iam, study_id, beam_index):
 
 	# patient_position = thinknode.do_calc_item_property(iam, 'dicom', 'patient_position', thinknode.schema_standard_type("string"), control_pt_id)
 	plan_id = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
-	setups_array = thinknode.do_calc_item_property(iam, 'patient_setups', thinknode.schema_array_named_type('rt_patient_setup'), plan_id)
-	setup = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type('rt_patient_setup'), setups_array)
+	setups_array = thinknode.do_calc_item_property(iam, 'patient_setups', thinknode.schema_array_named_type("dosimetry", 'rt_patient_setup'), plan_id)
+	setup = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type("dosimetry", 'rt_patient_setup'), setups_array)
 
-	patient_position = thinknode.do_calc_item_property(iam, 'position', thinknode.schema_named_type('patient_position_type'), setup)
+	patient_position = thinknode.do_calc_item_property(iam, 'position', thinknode.schema_named_type("dosimetry", 'patient_position_type'), setup)
 
 	calc = \
 		thinknode.function(iam["account_name"], "dosimetry", "construct_beam_geometry",
@@ -334,9 +334,9 @@ def get_beam_geometry(iam, study_id, beam_index):
 def get_beam_by_index(iam, study_id, beam_index):
 	dl.debug("get_beam_by_index")
 
-	plan = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
-	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan)
-	beam = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beam_array)
+	plan = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("dosimetry", "rt_plan"), study_id)
+	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("dosimetry", "rt_ion_beam"), plan)
+	beam = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("dosimetry", "rt_ion_beam"), beam_array)
 	return beam
 
 # Takes in a thinknode id for a rt_plan and the index of the beam returns id for the aperture associated  with that beam
@@ -348,8 +348,8 @@ def get_aperture_from_beam(iam, study_id, beam_index):
 	dl.debug("get_aperture_from_beam")
 
 	beam_id = get_beam_by_index(iam, study_id, beam_index)
-	rt_ap = thinknode.do_calc_item_property(iam, 'block', thinknode.schema_named_type('rt_ion_block'), beam_id)
-	ap_poly = thinknode.do_calc_item_property(iam, 'data', thinknode.schema_named_type('polyset'), rt_ap)
+	rt_ap = thinknode.do_calc_item_property(iam, 'block', thinknode.schema_named_type("dosimetry", 'rt_ion_block'), beam_id)
+	ap_poly = thinknode.do_calc_item_property(iam, 'data', thinknode.schema_named_type("dosimetry", 'polyset'), rt_ap)
 	ap_ds_edge = thinknode.do_calc_item_property(iam, 'downstream_edge', thinknode.schema_standard_type('float_type'), rt_ap)
 
 	struct_calc = \
@@ -456,7 +456,7 @@ def get_pbs_layers(iam, pbs_machine, spots, beam_id):
     dl.debug("get_pbs_layers")
     control_pt_id = get_first_control_point_from_beam(iam, beam_id)
 
-    gantry_angle = thinknode.do_calc_item_property(iam, 'gantry_angle', thinknode.schema_standard_type("float_type"), control_pt_id)
+    gantry_angle = thinknode.do_calc_item_property(iam, 'gantry_angle', thinknode.schema_standard_type("dosimetry", "float_type"), control_pt_id)
 
     layers_calc = thinknode.function(iam["account_name"], "dosimetry", "create_pbs_layers_from_spots",
             [
@@ -474,11 +474,11 @@ def get_pbs_layers(iam, pbs_machine, spots, beam_id):
 #	returns: specified beam number's iss id
 def get_beam_from_study(iam, study_id, beam_index):
 	dl.debug("get_beam_from_study")
-	plan_id = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("rt_plan"), study_id)
+	plan_id = thinknode.do_calc_item_property(iam, 'plan', thinknode.schema_named_type("dosimetry", "rt_plan"), study_id)
 
-	beams = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan_id)
+	beams = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("dosimetry", "rt_ion_beam"), plan_id)
 
-	beam_id = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beams)
+	beam_id = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("dosimetry", "rt_ion_beam"), beams)
 	return beam_id
 
 # Get the first control point iss id of the specified beam
@@ -487,9 +487,9 @@ def get_beam_from_study(iam, study_id, beam_index):
 #	returns: first control point's iss id of specified beam
 def get_first_control_point_from_beam(iam, beam_id):
 	dl.debug("get_first_control_point_from_beam")
-	control_pts = thinknode.do_calc_item_property(iam, 'control_points', thinknode.schema_array_named_type("rt_control_point"), beam_id)	
+	control_pts = thinknode.do_calc_item_property(iam, 'control_points', thinknode.schema_array_named_type("dosimetry", "rt_control_point"), beam_id)	
 
-	control_pt_id = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type("rt_control_point"), control_pts)
+	control_pt_id = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type("dosimetry", "rt_control_point"), control_pts)
 	dl.debug('control point id: ' + control_pt_id)
 	return control_pt_id
 
@@ -500,12 +500,12 @@ def get_first_control_point_from_beam(iam, beam_id):
 #	returns the id of the range compensator from the specified rt_ion_beam
 def get_range_compensator_from_beam(iam, plan_id, beam_index):
 	dl.debug("get_range_compensator_from_beam")
-	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("rt_ion_beam"), plan_id)
+	beam_array = thinknode.do_calc_item_property(iam, 'beams', thinknode.schema_array_named_type("dosimetry", "rt_ion_beam"), plan_id)
 
-	beam_id = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("rt_ion_beam"), beam_array)
+	beam_id = thinknode.do_calc_array_item(iam, beam_index, thinknode.schema_named_type("dosimetry", "rt_ion_beam"), beam_array)
 
-	rt_rcs = thinknode.do_calc_item_property(iam, 'degraders', thinknode.schema_array_named_type('rt_ion_rangecompensator'), beam_id)
-	rt_rc = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type('rt_ion_rangecompensator'), rt_rcs)
+	rt_rcs = thinknode.do_calc_item_property(iam, 'degraders', thinknode.schema_array_named_type("dosimetry", 'rt_ion_rangecompensator'), beam_id)
+	rt_rc = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type("dosimetry", 'rt_ion_rangecompensator'), rt_rcs)
 	return rt_rc
 
 # Takes in a thinknode id for a rt_plan and returns id for the patient_position_type for the first patient setup sequence
@@ -514,10 +514,10 @@ def get_range_compensator_from_beam(iam, plan_id, beam_index):
 #	returns the id of the patient_position_type from the first patient setup sequence
 def get_patient_position(iam, plan_id):
 	dl.debug("get_patient_position")
-	setups_array = thinknode.do_calc_item_property(iam, 'patient_setups', thinknode.schema_array_named_type('rt_patient_setup'), plan_id)
-	setup = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type('rt_patient_setup'), setups_array)
+	setups_array = thinknode.do_calc_item_property(iam, 'patient_setups', thinknode.schema_array_named_type("dosimetry", 'rt_patient_setup'), plan_id)
+	setup = thinknode.do_calc_array_item(iam, 0, thinknode.schema_named_type("dosimetry", 'rt_patient_setup'), setups_array)
 
-	position = thinknode.do_calc_item_property(iam, 'position', thinknode.schema_named_type('patient_position_type'), setup)
+	position = thinknode.do_calc_item_property(iam, 'position', thinknode.schema_named_type("dosimetry", 'patient_position_type'), setup)
 	dl.debug('Patient Position: ' + str(position))
 	return position
 
@@ -527,20 +527,20 @@ def get_patient_position(iam, plan_id):
 #	returns the id of the rt_structure_set from the patient
 def get_structure_set(iam, patient_id):
 	dl.debug("get_structure_set")
-	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dicom_data"), patient_id)
+	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dosimetry", "dicom_data"), patient_id)
 	dl.debug('dd_array: ' + dd_array)
 
 	dd_index = 0
 	not_found = True
 
 	while not_found:
-		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dicom_data"), dd_array)
+		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dosimetry", "dicom_data"), dd_array)
 		dl.debug('dd: ' + dd)
 
-		dd_obj = thinknode.do_calc_item_property(iam, 'dicom_obj', thinknode.schema_named_type("dicom_object"), dd)
+		dd_obj = thinknode.do_calc_item_property(iam, 'dicom_obj', thinknode.schema_named_type("dosimetry", "dicom_object"), dd)
 		dl.debug('dd_obj: ' + dd_obj)
 
-		ss = thinknode.do_calc_item_property(iam, 'structure_set', thinknode.schema_named_type("rt_structure_set"), dd_obj)
+		ss = thinknode.do_calc_item_property(iam, 'structure_set', thinknode.schema_named_type("dosimetry", "rt_structure_set"), dd_obj)
 		if not ss:
 			dl.debug('dd object was not a structure_set object!!')
 			dd_index = dd_index + 1
@@ -555,8 +555,8 @@ def get_structure_set(iam, patient_id):
 #	returns the id of the rt_structure 
 def get_structure_by_index(iam, ss_id, index):
 	dl.debug("get_structure_by_index")
-	structures = thinknode.do_calc_item_property(iam, 'structures', thinknode.schema_array_named_type("rt_structure"), ss_id)
-	structure = thinknode.do_calc_array_item(iam, index, thinknode.schema_named_type("rt_structure"), structures)
+	structures = thinknode.do_calc_item_property(iam, 'structures', thinknode.schema_array_named_type("dosimetry", "rt_structure"), ss_id)
+	structure = thinknode.do_calc_array_item(iam, index, thinknode.schema_named_type("dosimetry", "rt_structure"), structures)
 
 	return structure
 
@@ -580,20 +580,20 @@ def get_structure_geometry_from_structure(iam, s_id):
 #	returns the id of the rt_dose from the patient
 def get_dose(iam, patient_id):
 	dl.debug("get_dose")
-	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dicom_data"), patient_id)
+	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dosimetry", "dicom_data"), patient_id)
 	dl.debug('dd_array: ' + dd_array)
 
 	dd_index = 0
 	not_found = True
 
 	while not_found:
-		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dicom_data"), dd_array)
+		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dosimetry", "dicom_data"), dd_array)
 		dl.debug('dd: ' + dd)
 
-		dd_obj = thinknode.do_calc_item_property(iam, 'dicom_obj', thinknode.schema_named_type("dicom_object"), dd)
+		dd_obj = thinknode.do_calc_item_property(iam, 'dicom_obj', thinknode.schema_named_type("dosimetry", "dicom_object"), dd)
 		dl.debug('dd_obj: ' + dd_obj)
 
-		dose = thinknode.do_calc_item_property(iam, 'dose', thinknode.schema_named_type("rt_dose"), dd_obj)
+		dose = thinknode.do_calc_item_property(iam, 'dose', thinknode.schema_named_type("dosimetry", "rt_dose"), dd_obj)
 		if not dose:
 			dl.debug('dd object was not a dose object!!')
 			dd_index = dd_index + 1
@@ -606,9 +606,9 @@ def get_dose(iam, patient_id):
 #	param study_id: rt_study iss id
 def get_stopping_power_img(iam, study_id):
 	dl.debug("get_stopping_power_img")
-	ct_img_data = thinknode.do_calc_item_property(iam, 'ct', thinknode.schema_named_type("ct_image"), study_id)
-	ct_img = thinknode.do_calc_item_property(iam, 'image_set', thinknode.schema_named_type("ct_image_set"), ct_img_data)
-	img = thinknode.do_calc_item_property(iam, 'image', thinknode.schema_named_type("image_3d"), ct_img)
+	ct_img_data = thinknode.do_calc_item_property(iam, 'ct', thinknode.schema_named_type("dosimetry", "ct_image"), study_id)
+	ct_img = thinknode.do_calc_item_property(iam, 'image_set', thinknode.schema_named_type("dosimetry", "ct_image_set"), ct_img_data)
+	img = thinknode.do_calc_item_property(iam, 'image', thinknode.schema_named_type("dosimetry", "image_3d"), ct_img)
 
 	calc = \
 		thinknode.function(iam["account_name"], "dosimetry", "hu_to_stopping_power",
@@ -624,20 +624,20 @@ def get_stopping_power_img(iam, study_id):
 #	returns the id of the ct_image_set from the patient
 def get_ct_image_set(iam, patient_id):
 	dl.debug("get_ct_image_set")
-	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dicom_data"), patient_id)
+	dd_array = thinknode.do_calc_item_property(iam, 'patient', thinknode.schema_array_named_type("dosimetry", "dicom_data"), patient_id)
 	dl.debug('dd_array: ' + dd_array)
 
 	dd_index = 0
 	not_found = True
 
 	while not_found:
-		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dicom_data"), dd_array)
+		dd = thinknode.do_calc_array_item(iam, dd_index, thinknode.schema_named_type("dosimetry", "dicom_data"), dd_array)
 		dl.debug('dd: ' + dd)
 
-		dd_obj = thinknode.do_calc_item_property(iam, 'dicom_obj', thinknode.schema_named_type("dicom_object"), dd)
+		dd_obj = thinknode.do_calc_item_property(iam, 'dicom_obj', thinknode.schema_named_type("dosimetry", "dicom_object"), dd)
 		dl.debug('dd_obj: ' + dd_obj)
 
-		ct_img = thinknode.do_calc_item_property(iam, 'ct_image_set', thinknode.schema_named_type("ct_image_set"), dd_obj)
+		ct_img = thinknode.do_calc_item_property(iam, 'ct_image_set', thinknode.schema_named_type("dosimetry", "ct_image_set"), dd_obj)
 		if not ct_img:
 			dl.debug('dd object was not a ct_img object!!')
 			dd_index = dd_index + 1
@@ -648,9 +648,9 @@ def get_ct_image_set(iam, patient_id):
 # Posts a DICOM SS file object as a referenced type
 def structure_geometry_refs(iam, dicom_obj_id):
     obj = thinknode.get_immutable(iam, 'dosimetry', dicom_obj_id)
-    ss_id = thinknode.do_calc_item_property(iam, 'structure_set', thinknode.schema_named_type("rt_structure_set"), dicom_obj_id)
-    ss_list_id = thinknode.do_calc_item_property(iam, 'structures', thinknode.schema_named_type("rt_structure_list"), ss_id)
-    structure_list_id = thinknode.do_calc_item_property(iam, 'structure_list', thinknode.schema_array_named_type("rt_structure"), ss_list_id)
+    ss_id = thinknode.do_calc_item_property(iam, 'structure_set', thinknode.schema_named_type("dosimetry", "rt_structure_set"), dicom_obj_id)
+    ss_list_id = thinknode.do_calc_item_property(iam, 'structures', thinknode.schema_named_type("dosimetry", "rt_structure_list"), ss_id)
+    structure_list_id = thinknode.do_calc_item_property(iam, 'structure_list', thinknode.schema_array_named_type("dosimetry", "rt_structure"), ss_list_id)
     
     list_of_refs = get_property_array_item_ids(iam, structure_list_id, "rt_structure")
 
