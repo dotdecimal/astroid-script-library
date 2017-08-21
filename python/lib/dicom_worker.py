@@ -140,7 +140,7 @@ def upload_dir(iam, dir_name, dicom_only=True):
 	dl.event('Uploading directory: ' + dir_name)
 	
 	tn_dir = rt_types.filesystem_item_contents()
-	upload_file_list=[]
+	upload_files=[]
 	for dirname, dirnames, filenames in os.walk(dir_name):
 		# print path to all subdirectories first.
 		for subdirname in dirnames:
@@ -148,9 +148,9 @@ def upload_dir(iam, dir_name, dicom_only=True):
 
 		# print path to all filenames.
 		for filename in filenames:
-			upload_file_list.append(os.path.join(dirname, filename))
+			upload_files.append(os.path.join(dirname, filename))
 
-	return upload_file_list(iam, dir_name, upload_file_list)
+	return upload_file_list(iam, dir_name, upload_files)
 
 # Upload a directory of dicom files into new rt_study
 #   param iam: connection settings (url, user token, and ids for context and realm)
