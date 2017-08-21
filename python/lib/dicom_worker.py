@@ -25,11 +25,11 @@ dicom_filetypes = [".img", ".dcm"]
 # Takes in a file name and returns true if its extension is valid, otherwise returns false
 # 	param filename: The name of the file to check
 def valid_dicom_filetype(filename):
-	dl.debug("valid_dicom_filetype")
+	# dl.debug("valid_dicom_filetype")
 	for ext in dicom_filetypes:
 		if filename[len(filename)-len(ext):] == ext:
 			return True;
-	dl.error('Invalid filetype found: ' + filename)
+	# dl.error('Invalid filetype found: ' + filename)
 	return False
 
 # Posts a filesystem_item to iss in thinknode and returns the id of the item
@@ -106,26 +106,11 @@ def upload_file(filename, iam, dicom_only=True):
 		
 		return obj_id
 
-# Takes in a directory path and uploads all the files in the path to thinknode as filesystem_items
-#   param iam: connection settings (url, user token, and ids for context and realm)
-#	param dirname: The name of the directory to be uploaded to thinknode
-# 	returns id of the filesystem_item that holds a directory of the files
-def upload_dir(iam, dir_name, dicom_only=True):
-	dl.debug("upload_dir")
-	dl.event('Uploading directory: ' + dir_name)
-	
+def upload_file_list(iam, dir_name, upload_file_list, dicom_only=True):
+	dl.debug("upload_file_list")
 	tn_dir = rt_types.filesystem_item_contents()
-	upload_file_list=[]
-	for dirname, dirnames, filenames in os.walk(dir_name):
-		# print path to all subdirectories first.
-		for subdirname in dirnames:
-			print(os.path.join(dirname, subdirname))
 
-		# print path to all filenames.
-		for filename in filenames:
-			upload_file_list.append(os.path.join(dirname, filename))
-
-	tn_dir.directory = Parallel(n_jobs=4,  backend="threading")(
+	tn_dir.directory = Parallel(n_jobs=8,  backend="threading")(
              map(delayed(functools.partial(upload_file, iam=iam, dicom_only=dicom_only)), upload_file_list))    
 
 	# Remove bad files
@@ -145,6 +130,27 @@ def upload_dir(iam, dir_name, dicom_only=True):
 	obj_id = post_filesystem_item(iam, thinknode.to_json(fsi), dicom_only)
 	dl.debug('Directory id: ' + obj_id)	
 	return obj_id
+
+# Takes in a directory path and uploads all the files in the path to thinknode as filesystem_items
+#   param iam: connection settings (url, user token, and ids for context and realm)
+#	param dirname: The name of the directory to be uploaded to thinknode
+# 	returns id of the filesystem_item that holds a directory of the files
+def upload_dir(iam, dir_name, dicom_only=True):
+	dl.debug("upload_dir")
+	dl.event('Uploading directory: ' + dir_name)
+	
+	tn_dir = rt_types.filesystem_item_contents()
+	upload_files=[]
+	for dirname, dirnames, filenames in os.walk(dir_name):
+		# print path to all subdirectories first.
+		for subdirname in dirnames:
+			print(os.path.join(dirname, subdirname))
+
+		# print path to all filenames.
+		for filename in filenames:
+			upload_files.append(os.path.join(dirname, filename))
+
+	return upload_file_list(iam, dir_name, upload_files)
 
 # Upload a directory of dicom files into new rt_study
 #   param iam: connection settings (url, user token, and ids for context and realm)
@@ -175,11 +181,11 @@ def make_rt_study_from_dir(iam, dir_name):
 
 # Upload a directory of dicom files into a list dicom_objects
 #   param iam: connection settings (url, user token, and ids for context and realm)
-#   param dir_name: complete directory path
+#   param filtered_upload_file_list: complete list of files to upload
 # 	returns iss ID for dicom_object list
-def make_dicom_object_from_dir(iam, dir_name):
+def make_dicom_object_from_dir(iam, dir_name, filtered_upload_file_list):
 	dl.debug("make_dicom_object_from_dir")
-	dir_id = upload_dir(iam, dir_name)
+	dir_id = upload_file_list(iam, dir_name, filtered_upload_file_list)
 	dl.debug('dir_id')
 	dl.debug(dir_id)
 	res = thinknode.get_immutable(iam, 'dicom', dir_id)
