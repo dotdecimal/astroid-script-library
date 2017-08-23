@@ -181,11 +181,17 @@ def make_rt_study_from_dir(iam, dir_name):
 
 # Upload a directory of dicom files into a list dicom_objects
 #   param iam: connection settings (url, user token, and ids for context and realm)
-#   param filtered_upload_file_list: complete list of files to upload
+# 	param dir_name: directory of the files to import
+#   param filtered_upload_file_list: complete list of files to upload. Only these files in the directory
+#			will be uploaded. If not specified, then every file in the directory will be processes.
 # 	returns iss ID for dicom_object list
-def make_dicom_object_from_dir(iam, dir_name, filtered_upload_file_list):
+def make_dicom_object_from_dir(iam, dir_name, filtered_upload_file_list=None):
 	dl.debug("make_dicom_object_from_dir")
-	dir_id = upload_file_list(iam, dir_name, filtered_upload_file_list)
+	dir_id = ""
+	if filtered_upload_file_list == None:
+		dir_id = upload_dir(iam, dir_name)
+	else:
+		dir_id = upload_file_list(iam, dir_name, filtered_upload_file_list)
 	dl.debug('dir_id')
 	dl.debug(dir_id)
 	res = thinknode.get_immutable(iam, 'dicom', dir_id)
