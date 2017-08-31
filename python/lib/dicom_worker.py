@@ -678,9 +678,9 @@ def structure_geometry_refs(iam, dicom_obj_id):
     obj['structure_set']['structures']['ref_structure_list'] = list_of_ref_iss_ids
     del obj['structure_set']['structures']['structure_list']
 
-    dicom_obj_ref_id = json.loads(thinknode.post_immutable_named(iam, "dosimetry", obj, 'dicom_object', True).text)['id']
-    print('dicom_obj_ref_id: ' + dicom_obj_ref_id)
-    return dicom_obj_ref_id
+    ss_dicom_obj_ref_id = json.loads(thinknode.post_immutable_named(iam, "dosimetry", obj, 'dicom_object', True).text)['id']
+    print('ss_dicom_obj_ref_id: ' + ss_dicom_obj_ref_id)
+    return ss_dicom_obj_ref_id
 
 
 def calc_image_slice_item(index, ct_img, iam, image_slices_array_id):
