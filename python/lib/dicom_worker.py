@@ -9,12 +9,14 @@ from lib import thinknode_worker as thinknode
 from lib import dosimetry_worker as dosimetry
 from lib import decimal_logging as dl
 from lib import rt_types as rt_types
+from lib import rks_worker as rks
 import requests
 import json
 
 from multiprocessing import Pool
 import functools
 from joblib import Parallel, delayed
+import datetime, time
 
 dicom_filetypes = [".img", ".dcm"]
 
@@ -679,3 +681,112 @@ def structure_geometry_refs(iam, dicom_obj_id):
     ss_dicom_obj_ref_id = json.loads(thinknode.post_immutable_named(iam, "dosimetry", obj, 'dicom_object', True).text)['id']
     print('ss_dicom_obj_ref_id: ' + ss_dicom_obj_ref_id)
     return ss_dicom_obj_ref_id
+
+
+def calc_image_slice_item(index, ct_img, iam, image_slices_array_id):
+    ct_image_slice = thinknode.do_calc_array_item(iam, index, thinknode.schema_named_type("dosimetry", "ct_image_slice"), image_slices_array_id)
+    ct_slice = thinknode.do_calc_item_property(iam, 'slice', thinknode.schema_named_type("dosimetry", "ct_image_slice_content"), ct_image_slice)
+    content = thinknode.do_calc_item_property(iam, 'content', thinknode.schema_named_type("dosimetry", "ct_image_slice_data"), ct_slice)
+    img = thinknode.do_calc_item_property(iam, 'img', thinknode.schema_named_type("dosimetry", "ct_image_data"), content)
+    pixel = thinknode.do_calc_item_property(iam, 'pixel', thinknode.schema_named_type("dosimetry", "pixel_blob"), img)
+
+    image_slice = ct_img['ct_image']['image_slices'][index]
+    image_slice['slice']['content']['img']['pixel_ref'] = pixel
+    del image_slice['slice']['content']['img']['pixel']
+    return image_slice
+
+def ct_slices_with_ref_data(dicom_obj_id, iam):
+    dl.debug('ct_slices_with_ref_data: ' + dicom_obj_id)
+
+    obj = thinknode.get_immutable(iam, 'dosimetry', dicom_obj_id)
+
+    obj_id = thinknode.do_calc_item_property(iam, 'ct_image', thinknode.schema_named_type("dosimetry", "ct_image"), dicom_obj_id)
+    print('obj_id: ' + obj_id)
+    image_slices_array = thinknode.do_calc_item_property(iam, 'image_slices', thinknode.schema_array_named_type("dosimetry", "ct_image_slice"), obj_id)
+    print(image_slices_array)
+
+    image_slices = Parallel(n_jobs=10, backend="threading")(
+             map(delayed(functools.partial(calc_image_slice_item, iam=iam, image_slices_array_id=image_slices_array, ct_img=obj)), range(len(obj['ct_image']['image_slices']))))
+
+    obj['ct_image']['image_slices'] = image_slices
+
+    # print(str(obj))
+    dicom_obj_ref_id = json.loads(thinknode.post_immutable_named(iam, "dosimetry", obj, 'dicom_object', True).text)['id']
+    print('dicom_obj_ref_id: ' + dicom_obj_ref_id)
+    return dicom_obj_ref_id
+
+def calc_dicom_rks_list_item(dicom_id, iam):
+    calc = \
+    thinknode.function(iam["account_name"], 'dicom', "get_dicom_metadata",
+        [
+            thinknode.reference(dicom_id)
+        ])
+    dicom_metadata = thinknode.do_calculation(iam, calc, True)
+
+    time_str =  datetime.datetime.now().strftime("%H:%M:%S.") + "%03dZ" % (datetime.datetime.now().microsecond/1000)
+    create_time = str(datetime.date.today()) + 'T' + time_str
+
+    dicom_data = {}
+    if dicom_metadata['modality'] == 'ct':
+        print('ct: ' + dicom_id)
+
+        dicom_obj_ref_id = ct_slices_with_ref_data(dicom_id, iam)
+        dicom_metadata['creation_time'] = create_time
+        dicom_data = { 
+            "dicom_obj": thinknode.some(dicom_obj_ref_id),
+            "meta_data": dicom_metadata
+            }
+        rks_id = rks.write_rks_entry(iam, "imported_dicom_file", "dicom_data", dicom_metadata['series_uid'], dicom_data, None, 'planning')
+        print('rks_id: ' + rks_id)
+
+    elif dicom_metadata['modality'] == 'rtstruct':
+        print('struct: ' + dicom_id)
+        dicom_metadata['creation_time'] = create_time
+        dicom_obj_ref_id = structure_geometry_refs(iam, dicom_id)
+
+        # Write final rks entry
+        dicom_data = { 
+            "dicom_obj": thinknode.some(dicom_obj_ref_id), 
+            "meta_data": dicom_metadata
+            }
+        ss_id = thinknode.do_calc_item_property(iam, 'structure_set', thinknode.schema_named_type("dosimetry", "rt_structure_set"), dicom_id)
+        sop_id = thinknode.do_calc_item_property(iam, 'sop_data', thinknode.schema_named_type("dosimetry", "dicom_sop_common"), ss_id)
+        instance_uid = thinknode.do_calc_item_property(iam, 'instance_uid', thinknode.schema_standard_type("string_type"), sop_id, True, False, True)
+        rks_id = rks.write_rks_entry(iam, "imported_dicom_file", "dicom_data", instance_uid, dicom_data, None, 'planning')
+        print('rks_id: ' + rks_id)
+    else:
+        # Handle plans and others
+        print("Only CT and SS files are supported at this time.")
+
+def make_dicom_meta_data(modality, series_uid, mrn, patient_name, patient_sex, patient_dob):
+    time_str =  datetime.datetime.now().strftime("%H:%M:%S.") + "%03dZ" % (datetime.datetime.now().microsecond/1000)
+    create_time = str(datetime.date.today()) + 'T' + time_str
+    # if patient_dob == "":
+    patient_dob = "1800-01-01"
+    if patient_sex == "":
+        patient_sex = "o"
+
+    meta_data = {
+        "modality": modality.lower(),
+        "series_uid": series_uid,
+        "creation_date": str(datetime.date.today()),
+        "creation_time": create_time,
+        "patient_data": {
+            "comments": "",
+            "birth_date": {
+                "some": patient_dob
+            },
+            "sex": patient_sex.lower(),
+            "ethnic_group": "",
+            "name": {
+                "suffix": "",
+                "family_name": patient_name.family_name,
+                "prefix": "",
+                "middle_name": "",
+                "given_name": patient_name.given_name
+            },
+            "id": mrn
+        }
+    }
+
+    return meta_data
