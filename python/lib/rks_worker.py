@@ -192,3 +192,37 @@ def write_rks_entry(iam, record, iss_type, name, data, parent = None, data_app_n
             scope = '/rks/' + iam["account_name"] + '/planning' + '/' + record
             res = thinknode.post_immutable(iam, "planning", new_entry, scope, False)
             return res.text
+
+# Lock an RKS entry
+#   param iam: conection settings (url and unique basic user authentication)
+#   param rks_id: The RKS entry id
+#   param revision_id: The RKS entry revision id
+#   param app: The app name the RKS entry belongs to
+#   param deep: Whether to perform a shallow or deep lock. Defaults to shallow.
+def lock_rks_entry(iam, rks_id, revision_id, app, deep = 'false'):
+    dl.debug("lock_rks_entry")
+
+    dl.debug(iam["apps"][app]["context_id"])
+    revision = \
+        {
+            "revision": revision_id
+        }
+    thinknode.put(iam, "/rks/" + rks_id + "/lock?context=" + iam["apps"][app]["context_id"] + 
+        "&deep=" + deep, json.dumps(revision))
+
+# Unlock an RKS entry
+#   param iam: conection settings (url and unique basic user authentication)
+#   param rks_id: The RKS entry id
+#   param revision_id: The RKS entry record as a dictionary
+#   param app: The app name the RKS entry belongs to
+#   param deep: Whether to perform a shallow or deep lock. Defaults to shallow.
+def unlock_rks_entry(iam, rks_id, revision_id, app, deep = 'false'):
+    dl.debug("lock_rks_entry")
+
+    dl.debug(iam["apps"][app]["context_id"])
+    revision = \
+        {
+            "revision": revision_id
+        }
+    thinknode.put(iam, "/rks/" + rks_id + "/unlock?context=" + iam["apps"][app]["context_id"] + 
+        "&deep=" + deep, json.dumps(revision))
