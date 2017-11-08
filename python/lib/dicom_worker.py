@@ -152,7 +152,7 @@ def upload_dir(iam, dir_name, dicom_only=True):
 		for filename in filenames:
 			upload_files.append(os.path.join(dirname, filename))
 
-	return upload_file_list(iam, dir_name, upload_files)
+	return upload_file_list(iam, dir_name, upload_files, dicom_only)
 
 # Upload a directory of dicom files into new rt_study
 #   param iam: connection settings (url, user token, and ids for context and realm)
