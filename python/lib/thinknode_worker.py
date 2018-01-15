@@ -325,7 +325,6 @@ def head_iss_object(config, app_name, obj_id):
 #   param force: boolean flag indicating if the calculation should be forced to rerun if it already exists
 #   returns: calculation id
 def post_calculation(config, json_data, force=False, override_app_name=None):
-    # dl.debug("P O S T C A L C U L A T I O N")
     # Get app name from json request
     app_name = get_name_from_data(json_data, 'app')
     if override_app_name != None:
@@ -338,16 +337,15 @@ def post_calculation(config, json_data, force=False, override_app_name=None):
     dl.debug(url + ' :: ' )
 
     print(str(json_data))
-    # attempt to submit the calculation and keep trying if there's a itermitent failure
+    # attempt to submit the calculation and keep trying if there's a intermittent failure
     success = False
     tries = 0
     while success != True and tries < 100:
-        #dl.event("Adam's loop")
         tries = tries + 1
         res = session.post(url, 
             data = json.dumps(json_data), 
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
-        success = calc_attempt(res)
+        success = is_thinknode_calc_resolved(res)
         if (success != True):
            time.sleep(2)
 
@@ -513,30 +511,29 @@ def get_immutable(config, app_name, obj_id, use_msgpack=True):
     url = config["api_url"] + '/iss/' + obj_id + '?context=' + config['apps'][app_name]["context_id"] #+ "&ignore_upgrades=true"
     dl.debug("iss url:" + url)
     if use_msgpack:
-        #dl.debug("Using msgpack to get immutable")        
+        dl.debug("Using msgpack to get immutable")        
+        # attempt to get the calculation results and keep trying if there's a intermittent failure
         success = False
         tries = 0
         while success != True and tries < 100:
-            #dl.event("Adam's loop")
             tries = tries + 1
             res = session.get(url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/octet-stream'})
-            success = calc_attempt(res)
+            success = is_thinknode_calc_resolved(res)
             if (success != True):
                 time.sleep(2)
         decoded = msgpack.unpackb(res.content, encoding='utf-8')
         return decoded
     else:
-        #dl.debug("Using json to get immutable")        
+        dl.debug("Using json to get immutable") 
+        # attempt to get the calculation results and keep trying if there's a intermittent failure       
         success = False
         tries = 0
-        #dl.event("Adam's loop")
         while success != True and tries < 100:
-            #dl.event(str(tries))
             tries = tries + 1
             res = session.get(url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
-            success = calc_attempt(res)
+            success = is_thinknode_calc_resolved(res)
             if (success != True):
                 time.sleep(2)
         return json.loads(res.text)
@@ -797,11 +794,13 @@ def assert_success(res):
         dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
         # sys.exit()
 
-# Check that the response returned a successful code
+# Check if the Thinknode calculation has been resolved correctly. Returns false if 
+# the status code is 202 (resolving) or 5XX (internal thinknode error) so that the 
+# calculation may be optionally tried again
 #   param res: http response
-def calc_attempt(res):
+def is_thinknode_calc_resolved(res):
     dl.debug("Attempting...")
-    if res.status_code == 202 or res.status_code == 404 or res.status_code >= 500:
+    if res.status_code == 202 or res.status_code >= 500:
         dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
         return False
     if res.status_code != 200:
