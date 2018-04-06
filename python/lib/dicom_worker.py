@@ -158,9 +158,13 @@ def upload_dir(iam, dir_name, dicom_only=True):
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #   param dir_name: complete directory path
 # 	returns a study iss ID
-def make_rt_study_from_dir(iam, dir_name):
+def make_rt_study_from_dir(iam, dir_name, filtered_upload_file_list=None):
 	dl.debug("make_rt_study_from_dir")
-	dir_id = upload_dir(iam, dir_name)
+	dir_id = ""
+	if filtered_upload_file_list == None:
+		dir_id = upload_dir(iam, dir_name)
+	else:
+		dir_id = upload_file_list(iam, dir_name, filtered_upload_file_list)
 	dl.debug('dir_id')
 	dl.debug(dir_id)
 	res = thinknode.get_immutable(iam, 'dicom', dir_id)

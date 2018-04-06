@@ -290,7 +290,7 @@ def get_calculation_status(config, app_name, calculation_id, status="completed",
 
 def get_calc_status(config, app_name, calculation_id):
     dl.debug("get_calculation_status: " + calculation_id)
-    url = config["api_url"] + '/calc/' + calculation_id + '/status'+ '&context=' + config["apps"][app_name]["context_id"]
+    url = config["api_url"] + '/calc/' + calculation_id + '/status'+ '?context=' + config["apps"][app_name]["context_id"]
     print('URL: ' + url)
     res = session.get(url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"]})
@@ -336,7 +336,7 @@ def post_calculation(config, json_data, force=False, override_app_name=None):
         url += '&force_run=true'
     dl.debug(url + ' :: ' )
 
-    print(str(json_data))
+    #print(str(json_data))
     # attempt to submit the calculation and keep trying if there's a intermittent failure
     success = False
     tries = 0
@@ -345,7 +345,7 @@ def post_calculation(config, json_data, force=False, override_app_name=None):
         res = session.post(url, 
             data = json.dumps(json_data), 
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
-        success = is_thinknode_calc_resolved(res)
+        success = is_thinknode_calc_resolved(config, app_name, res, None)
         if (success != True):
            time.sleep(2)
 
@@ -519,7 +519,7 @@ def get_immutable(config, app_name, obj_id, use_msgpack=True):
             tries = tries + 1
             res = session.get(url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/octet-stream'})
-            success = is_thinknode_calc_resolved(res)
+            success = is_thinknode_calc_resolved(config, app_name, res, obj_id)
             if (success != True):
                 time.sleep(2)
         decoded = msgpack.unpackb(res.content, encoding='utf-8')
@@ -533,7 +533,7 @@ def get_immutable(config, app_name, obj_id, use_msgpack=True):
             tries = tries + 1
             res = session.get(url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
-            success = is_thinknode_calc_resolved(res)
+            success = is_thinknode_calc_resolved(config, app_name, res, obj_id)
             if (success != True):
                 time.sleep(2)
         return json.loads(res.text)
@@ -798,13 +798,15 @@ def assert_success(res):
 # the status code is 202 (resolving) or 5XX (internal thinknode error) so that the 
 # calculation may be optionally tried again
 #   param res: http response
-def is_thinknode_calc_resolved(res):
+def is_thinknode_calc_resolved(config, app_name, res, calc_id = None):
     dl.debug("Attempting...")
     if res.status_code == 202 or res.status_code >= 500:
         dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
         return False
     if res.status_code != 200:
         dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
+        if (calc_id != None):
+            dl.error(get_calc_status(config, app_name, calc_id).text)
         sys.exit()
     else:
         return True
