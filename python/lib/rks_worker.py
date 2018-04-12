@@ -44,6 +44,22 @@ def find_entry(iam, record, name, parent = None):
 # Check if an entry exists in the planning RKS inactive records
 #   param iam: connection settings (url and unique basic user authentication)
 #   param record: RKS record type
+#   param content: search record body
+#   returns: matching entry if one exists, or None otherwise
+def search_for_record_entries(iam, content):
+    dl.debug("search_for_record_entries")
+    print(content)
+    url = "/rks/search?context=" + iam["apps"]["planning"]["context_id"]
+    entries = thinknode.post(iam, url, content)
+    print(entries)
+    if len(entries) != 0:
+        return entries
+    else:
+        return None
+
+# Check if an entry exists in the planning RKS inactive records
+#   param iam: connection settings (url and unique basic user authentication)
+#   param record: RKS record type
 #   param name: unique RKS record name
 #   param parent: RKS parent
 #   returns: matching entry if one exists, or None otherwise
@@ -116,9 +132,9 @@ def delete_rks_entry(iam, record_id):
     print(url)
     res = thinknode.delete(iam, url)
     if str(res) != '200':
-        dl.error('Deleting record ' + record_id + ' failed')
+        dl.error('Deleting record ' + record_id + ' failed' + res)
     else:
-        dl.debug('Deleting record ' + record_id + ' failed')
+        dl.debug('Deleting record ' + record_id + ' successful')
 
 
 def mark_rks_entry_active(iam, record, name, parent = None):
@@ -217,7 +233,7 @@ def lock_rks_entry(iam, rks_id, revision_id, app, deep = 'false'):
 #   param app: The app name the RKS entry belongs to
 #   param deep: Whether to perform a shallow or deep lock. Defaults to shallow.
 def unlock_rks_entry(iam, rks_id, revision_id, app, deep = 'false'):
-    dl.debug("lock_rks_entry")
+    dl.debug("unlock_rks_entry")
 
     dl.debug(iam["apps"][app]["context_id"])
     revision = \

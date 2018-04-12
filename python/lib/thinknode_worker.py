@@ -861,6 +861,10 @@ def get_app_list(iam):
 def get_app_versions(iam, app_name):
     return get(iam, "/apm/apps/" + self.config["account"] + "/" + app_name + "/versions")
 
+# Get the details for the provided realm
+def get_realm(iam):
+    return get(iam, "/iam/realms/" + iam['realm_name'])
+
 # Get the list of app versions installed in this realm
 def get_installed_app_versions(iam):
     return filter(lambda v: v["status"] == "installed",
