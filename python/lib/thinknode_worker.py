@@ -27,6 +27,8 @@ import requests
 session = requests.Session()
 session.mount('https://', MyAdapter())
 
+import time
+
 #####################################################################
 # thinknode get/post functions
 #####################################################################
@@ -236,7 +238,10 @@ def wait_for_calculation(config, app_name, calculation_id, return_data=True, ret
         elif "uploading" in res.json():
             dl.event("Request is uploading...")
             dl.data("response: ", res.text)
-        else:
+        elif "generating" in res.json():
+            dl.event("Request is generating...")
+            dl.data("response: ", res.text)
+        else:         
             calculating = False
             if return_data:
                 # Get calculation Result
@@ -285,7 +290,7 @@ def get_calculation_status(config, app_name, calculation_id, status="completed",
 
 def get_calc_status(config, app_name, calculation_id):
     dl.debug("get_calculation_status: " + calculation_id)
-    url = config["api_url"] + '/calc/' + calculation_id + '/status'+ '&context=' + config["apps"][app_name]["context_id"]
+    url = config["api_url"] + '/calc/' + calculation_id + '/status'+ '?context=' + config["apps"][app_name]["context_id"]
     print('URL: ' + url)
     res = session.get(url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"]})
@@ -330,7 +335,20 @@ def post_calculation(config, json_data, force=False, override_app_name=None):
     if force:
         url += '&force_run=true'
     dl.debug(url + ' :: ' )
-    # print(str(json_data))
+
+    #print(str(json_data))
+    # attempt to submit the calculation and keep trying if there's a intermittent failure
+    success = False
+    tries = 0
+    while success != True and tries < 100:
+        tries = tries + 1
+        res = session.post(url, 
+            data = json.dumps(json_data), 
+            headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
+        success = is_thinknode_calc_resolved(config, app_name, res, None)
+        if (success != True):
+           time.sleep(2)
+
     res = session.post(url, 
         data = json.dumps(json_data), 
         headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
@@ -493,17 +511,31 @@ def get_immutable(config, app_name, obj_id, use_msgpack=True):
     url = config["api_url"] + '/iss/' + obj_id + '?context=' + config['apps'][app_name]["context_id"] #+ "&ignore_upgrades=true"
     dl.debug("iss url:" + url)
     if use_msgpack:
-        dl.debug("Using msgpack to get immutable")
-        res = session.get(url, 
+        dl.debug("Using msgpack to get immutable")        
+        # attempt to get the calculation results and keep trying if there's a intermittent failure
+        success = False
+        tries = 0
+        while success != True and tries < 100:
+            tries = tries + 1
+            res = session.get(url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/octet-stream'})
-        assert_success(res)
+            success = is_thinknode_calc_resolved(config, app_name, res, obj_id)
+            if (success != True):
+                time.sleep(2)
         decoded = msgpack.unpackb(res.content, encoding='utf-8')
         return decoded
     else:
-        dl.debug("Using json to get immutable")
-        res = session.get(url, 
+        dl.debug("Using json to get immutable") 
+        # attempt to get the calculation results and keep trying if there's a intermittent failure       
+        success = False
+        tries = 0
+        while success != True and tries < 100:
+            tries = tries + 1
+            res = session.get(url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
-        assert_success(res)
+            success = is_thinknode_calc_resolved(config, app_name, res, obj_id)
+            if (success != True):
+                time.sleep(2)
         return json.loads(res.text)
 
 def get_head(config, app_name, obj_id):
@@ -760,7 +792,24 @@ def meta_array_standard_type(type_name, generator_ref):
 def assert_success(res):
     if res.status_code != 200:
         dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
+        # sys.exit()
+
+# Check if the Thinknode calculation has been resolved correctly. Returns false if 
+# the status code is 202 (resolving) or 5XX (internal thinknode error) so that the 
+# calculation may be optionally tried again
+#   param res: http response
+def is_thinknode_calc_resolved(config, app_name, res, calc_id = None):
+    dl.debug("Attempting...")
+    if res.status_code == 202 or res.status_code >= 500:
+        dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
+        return False
+    if res.status_code != 200:
+        dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
+        if (calc_id != None):
+            dl.error(get_calc_status(config, app_name, calc_id).text)
         sys.exit()
+    else:
+        return True
 
 # Read the thinknode config file
 #   param path: relative location of config file
@@ -811,6 +860,10 @@ def get_app_list(iam):
 # Get the list of versions for an app
 def get_app_versions(iam, app_name):
     return get(iam, "/apm/apps/" + self.config["account"] + "/" + app_name + "/versions")
+
+# Get the details for the provided realm
+def get_realm(iam):
+    return get(iam, "/iam/realms/" + iam['realm_name'])
 
 # Get the list of app versions installed in this realm
 def get_installed_app_versions(iam):
