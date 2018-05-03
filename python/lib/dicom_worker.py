@@ -169,10 +169,12 @@ def make_rt_study_from_dir(iam, dir_name):
 	file_ids = []
 	for file_id in dir_obj["contents"]["directory"]:
 		file_ids.append(thinknode.reference(file_id))
+	
 	calc = \
-		thinknode.function(iam["account_name"], 'dicom', "import_files_to_new_study",
+		thinknode.function(iam["account_name"], 'dicom', "add_files_to_study",
 			[
-				thinknode.array_named_type('dosimetry', 'filesystem_item', file_ids)
+				thinknode.array_named_type('dosimetry', 'filesystem_item', file_ids),
+				thinknode.function(iam["account_name"], 'dicom', "make_study",[])
 			])
 	dl.debug(str(calc))
 
