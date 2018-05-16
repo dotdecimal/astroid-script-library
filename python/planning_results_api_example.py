@@ -3,10 +3,11 @@
 # Date:     07/18/2017
 # Desc:     Example script for calling a Planning Results API meta function
 
-from lib import thinknode_worker as thinknode
-from lib import decimal_logging as dl
-import requests
-import json
+import sys
+sys.path.append("lib")
+import thinknode_worker as thinknode
+import decimal_logging as dl
+
 
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
 

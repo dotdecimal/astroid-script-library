@@ -3,10 +3,12 @@
 # Date:     09/25/2015
 # Desc:     Post folder to thinknode and get back a dicom_patient
 
-import os.path
-from lib import thinknode_worker as thinknode
-from lib import dicom_worker as dicom
-from lib import decimal_logging as dl
+
+import sys
+sys.path.append("lib")
+import thinknode_worker as thinknode
+import dicom_worker as dicom
+import decimal_logging as dl
 
 # Get IAM ids
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))

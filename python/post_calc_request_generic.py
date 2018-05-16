@@ -3,9 +3,10 @@
 # Date:     01/09/2015
 # Desc:     Post a json calculation request to the thinknode framework
 
-from lib import thinknode_worker as thinknode
-from lib import decimal_logging as dl
-import requests
+import sys
+sys.path.append("lib")
+import thinknode_worker as thinknode
+import decimal_logging as dl
 import json
 
 request_dir = "request_files"

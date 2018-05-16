@@ -3,16 +3,17 @@
 # Date:     09/28/2015
 # Desc:     Using an existing DICOM pbs plan, run a dose calculation
 
-import os.path
+
 import sys
-from lib import thinknode_worker as thinknode
-from lib import dosimetry_worker as dosimetry
-from lib import dicom_worker as dicom
-from lib import decimal_logging as dl
-from lib import rt_types as rt_types
-from lib import vtk_worker as vtk
-from lib import thinknode_id as tn_id
-import json
+sys.path.append("lib")
+import thinknode_worker as thinknode
+import dosimetry_worker as dosimetry
+import dicom_worker as dicom
+import decimal_logging as dl
+import rt_types as rt_types
+import vtk_worker as vtk
+import thinknode_id as tn_id
+
 
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
 

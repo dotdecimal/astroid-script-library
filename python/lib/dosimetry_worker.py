@@ -4,12 +4,11 @@
 # Modified: 09/25/2015
 # Desc:     Worker to perform common dosimetry calculations
 
-import os.path
-import binascii
-import lib.thinknode_worker as thinknode
-import lib.decimal_logging as dl
-import lib.rt_types as rt_types
-from lib import thinknode_id as tn_id
+import sys
+sys.path.append("lib")
+import thinknode_worker as thinknode
+import decimal_logging as dl
+import rt_types as rt_types
 import json, copy, math
 
 #####################################################################

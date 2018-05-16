@@ -3,8 +3,10 @@
 # Date:     01/09/2015
 # Desc:     Post an immutable json object to the thinknode framework
 
-from lib import thinknode_worker as thinknode
-import requests
+
+import sys
+sys.path.append("lib")
+import thinknode_worker as thinknode
 import json
 
 iss_dir = "iss_files"
