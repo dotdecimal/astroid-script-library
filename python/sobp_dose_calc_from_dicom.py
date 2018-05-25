@@ -3,16 +3,15 @@
 # Date:     09/28/2015
 # Desc:     Post folder to thinknode, get dicom_patient and compute dose
 
-import os.path
-import binascii
+
 import sys
-from lib import thinknode_worker as thinknode
-from lib import dosimetry_worker as dosimetry
-from lib import decimal_logging as dl
-from lib import dicom_worker as dicom
-from lib import rt_types as rt_types
-from lib import vtk_worker as vtk
-from lib import thinknode_id as tn_id
+sys.path.append("lib")
+import thinknode_worker as thinknode
+import dosimetry_worker as dosimetry
+import decimal_logging as dl
+import dicom_worker as dicom
+import rt_types as rt_types
+import vtk_worker as vtk
 import json
 
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))

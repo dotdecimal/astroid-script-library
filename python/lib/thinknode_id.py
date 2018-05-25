@@ -3,7 +3,6 @@
 # Date:     06/09/2015
 # Desc:     A place to store commonly used ids for objects you have posted to thinknode
 
-import json
 
 
 def sobp_machine():

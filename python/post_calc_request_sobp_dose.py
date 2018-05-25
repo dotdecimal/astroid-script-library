@@ -3,11 +3,13 @@
 # Date:     06/09/2015
 # Desc:     Post a sobp calculation request to the .decimal Dosimetry App on the thinknode framework
 
-import json
-from lib import thinknode_worker as thinknode
-from lib import dosimetry_worker as dosimetry
-from lib import decimal_logging as dl
-from lib import thinknode_id as tn_id
+
+import sys
+sys.path.append("lib")
+import thinknode_worker as thinknode
+import dosimetry_worker as dosimetry
+import decimal_logging as dl
+
 
 # Get IAM ids
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))

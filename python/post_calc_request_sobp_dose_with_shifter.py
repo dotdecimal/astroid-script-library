@@ -3,7 +3,9 @@
 # Date:     06/09/2015
 # Desc:     Post a sobp calculation request with a degrader to the .decimal Dosimetry App on the thinknode framework
 
-import json
+
+import sys
+sys.path.append("lib")
 from lib import thinknode_worker as thinknode
 from lib import dosimetry_worker as dosimetry
 from lib import decimal_logging as dl
@@ -75,3 +77,5 @@ dose_calc = \
 # Perform calculation
 res = thinknode.do_calculation(iam, dose_calc)
 dl.data("Calculation Result: ", res)
+
+

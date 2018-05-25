@@ -3,14 +3,14 @@
 # Date:     07/10/2015
 # Desc:     Worker to perform common dicom calculations and pull common dicom objects
 
+import sys
+sys.path.append("lib")
 import os.path
-import binascii
-from lib import thinknode_worker as thinknode
-from lib import dosimetry_worker as dosimetry
-from lib import decimal_logging as dl
-from lib import rt_types as rt_types
-from lib import rks_worker as rks
-import requests
+import thinknode_worker as thinknode
+import dosimetry_worker as dosimetry
+import decimal_logging as dl
+import rt_types as rt_types
+import rks_worker as rks
 import json
 
 from multiprocessing import Pool

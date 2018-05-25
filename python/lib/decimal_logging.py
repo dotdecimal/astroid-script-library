@@ -4,10 +4,8 @@
 # Desc:     prints and formats log messages
 
 import sys
-import logging
+sys.path.append("lib")
 from datetime import datetime
-import os.path
-import json
 from colorama import init, Fore, Back, Style
 init(autoreset=True)
 

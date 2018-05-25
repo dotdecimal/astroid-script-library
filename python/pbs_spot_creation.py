@@ -5,9 +5,10 @@
 
 import sys, base64, json
 sys.path.append(sys.path[0][0:len(sys.path[0])-13])
-from lib import thinknode_worker as thinknode
-from lib import dosimetry_worker as dosimetry
-from lib import dicom_worker as dicom
+sys.path.append("lib") # Include decimal library 'lib' folder to sources path
+import thinknode_worker as thinknode
+import dosimetry_worker as dosimetry
+import dicom_worker as dicom
 
 # Login/authenticate with thinknode servers
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))

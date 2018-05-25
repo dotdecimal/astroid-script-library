@@ -4,10 +4,10 @@
 # Modified: 
 # Desc:     Worker for general RKS functions
 
-import os.path
 import sys
-from lib import thinknode_worker as thinknode
-from lib import decimal_logging as dl
+sys.path.append("lib")
+import thinknode_worker as thinknode
+import decimal_logging as dl
 import json
 
 # Return the RKS entry

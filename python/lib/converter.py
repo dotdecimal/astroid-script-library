@@ -3,10 +3,12 @@
 # Date:		12/15/2015
 # Desc:		Provides conversions to images other than doubles
 
-from collections import OrderedDict
-from lib import rt_types as rt_types
+
+import sys
+sys.path.append("lib")
+import rt_types as rt_types
 import base64
-import struct as struct
+
 
 class image_2i(object):
 	#Initialize
