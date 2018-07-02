@@ -169,6 +169,38 @@ def write_vtk_triangle_mesh(file_path, mesh):
 
 # Write a VTK file for a list of coordinates
 #   param file_path: file path where VTK can be created
+#   param points: list of x, y points to get decoded
+def write_vtk_vector2d(file_path, points):
+
+    # Create output stream and open
+    stream = open(file_path, 'w')
+
+    # Write header information
+    stream.write("# vtk DataFile Version 2.0\n")
+    stream.write("CRADLE TRIANGLE MESH\n")
+    stream.write("ASCII\n")
+    stream.write("DATASET UNSTRUCTURED_GRID\n")
+
+    # Write vertices to stream
+    stream.write("POINTS " + str(len(points)) + " double\n")
+    for i in range(len(points)):
+        stream.write(str(points[i][0]) + " " + str(points[i][1]) + " 0" + "\n")
+
+    # Write cells to stream
+    stream.write("CELLS " + str(len(points)) + " " + str(len(points) * 2) + "\n")
+    for i in range(len(points)):
+        stream.write("1 " + str(i) + "\n")
+
+    # Write cell types to stream
+    stream.write("CELL_TYPES " + str(len(points)) + "\n")
+    for i in range(len(points)):
+        stream.write("1\n")
+
+    # Close stream
+    stream.close()
+
+# Write a VTK file for a list of coordinates
+#   param file_path: file path where VTK can be created
 #   param points: list of x, y, z points to get decoded
 def write_vtk_vector3d(file_path, points):
 
