@@ -506,10 +506,13 @@ def post_blob(config, app_name, json_data, use_msgpack=True):
 #   param app_name: name of the app to use to get the context id from the iam config
 #   param obj_id: thinknode iss reference id for object to get
 #   param use_msgpack: flag on whether or not to use thinknode msgpack or json data in the iss request. Default is msgpack
+#   param ignore_upgrades: flag on whether or not to use thinknode upgrades. Default is false
 #   returns: iss immutable response object
-def get_immutable(config, app_name, obj_id, use_msgpack=True):
+def get_immutable(config, app_name, obj_id, use_msgpack=True, ignore_upgrades=False):
     dl.event("Requesting Data from ISS...")
-    url = config["api_url"] + '/iss/' + obj_id + '?context=' + config['apps'][app_name]["context_id"] #+ "&ignore_upgrades=true"
+    url = config["api_url"] + '/iss/' + obj_id + '?context=' + config['apps'][app_name]["context_id"]
+    if ignore_upgrades:
+        url += '&ignore_upgrades=true'
     dl.debug("iss url:" + url)
     if use_msgpack:
         dl.debug("Using msgpack to get immutable")        
