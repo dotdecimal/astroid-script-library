@@ -341,6 +341,7 @@ def post_calculation(config, json_data, force=False, override_app_name=None):
     # attempt to submit the calculation and keep trying if there's a intermittent failure
     success = False
     tries = 0
+    res = ""
     while success != True and tries < 100:
         tries = tries + 1
         res = session.post(url, 
@@ -350,9 +351,6 @@ def post_calculation(config, json_data, force=False, override_app_name=None):
         if (success != True):
            time.sleep(2)
 
-    res = session.post(url, 
-        data = json.dumps(json_data), 
-        headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
     assert_success(res)
     calculation_id = res.json()["id"]
     dl.data("Calculation ID: ", calculation_id)
@@ -524,10 +522,10 @@ def get_immutable(config, app_name, obj_id, use_msgpack=True, ignore_upgrades=Fa
             res = session.get(url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/octet-stream'})
             success = is_thinknode_calc_resolved(config, app_name, res, obj_id)
-            if (success != True):
-                time.sleep(2)
-        decoded = msgpack.unpackb(res.content, encoding='utf-8')
-        return decoded
+            if (success == True):
+                decoded = msgpack.unpackb(res.content, encoding='utf-8')
+                return decoded
+            time.sleep(3)
     else:
         dl.debug("Using json to get immutable") 
         # attempt to get the calculation results and keep trying if there's a intermittent failure       
@@ -538,9 +536,11 @@ def get_immutable(config, app_name, obj_id, use_msgpack=True, ignore_upgrades=Fa
             res = session.get(url, 
             headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
             success = is_thinknode_calc_resolved(config, app_name, res, obj_id)
-            if (success != True):
-                time.sleep(2)
-        return json.loads(res.text)
+            if (success == True):
+                return json.loads(res.text)
+            time.sleep(3)
+            
+    return None
 
 def get_head(config, app_name, obj_id):
     dl.event("Requesting Head Data from ISS...")
