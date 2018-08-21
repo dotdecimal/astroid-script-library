@@ -11,7 +11,7 @@ import decimal_logging as dl
 # Login, authenticate, and capture the Apps and Context IDs in the current realm.
 iam = thinknode.authenticate(thinknode.read_config('thinknode.cfg'))
 
-plan_iss_id = "5b6b44f500c0cd250198c7b2d4fbce56"
+plan_iss_id = "Paste_Example_Plan_ISS_ID_Here"
 
 # Capture the Thinknode context ID for the currently installed Planning App
 current_planning_context_id = iam["apps"]["planning"]["context_id"]
