@@ -29,10 +29,10 @@ def get_rks_entry(iam, rks_id):
 #   param name: unique RKS record name
 #   param parent: RKS parent
 #   returns: matching entry if one exists, or None otherwise
-def find_entry(iam, record, name, parent = None):
+def find_entry(iam, record, name, parent = None, rks_record_app = 'planning'):
     dl.debug("find_entry")
-    url = "/rks?context=" + iam["apps"]["planning"]["context_id"] + \
-        "&record=" + iam["account_name"] + "/planning/" + record + "&name=" + name
+    url = "/rks?context=" + iam["apps"][rks_record_app]["context_id"] + \
+        "&record=" + iam["account_name"] + "/" + rks_record_app + "/" + record + "&name=" + name
     if (parent):
         url += "&parent=" + parent
     entries = thinknode.get(iam, url)
@@ -63,10 +63,10 @@ def search_for_record_entries(iam, content):
 #   param name: unique RKS record name
 #   param parent: RKS parent
 #   returns: matching entry if one exists, or None otherwise
-def find_entry_inactive(iam, record, name, parent = None):
+def find_entry_inactive(iam, record, name, parent = None, rks_record_app = 'planning'):
     dl.debug("find_entry_inactive")
-    url = "/rks?context=" + iam["apps"]["planning"]["context_id"] + \
-        "&record=" + iam["account_name"] + "/planning/" + record + "&name=" + name + "&inactive=true"
+    url = "/rks?context=" + iam["apps"][rks_record_app]["context_id"] + \
+        "&record=" + iam["account_name"] + "/" + rks_record_app + "/" + record + "&name=" + name + "&inactive=true"
     if (parent):
         url += "&parent=" + parent
     entries = thinknode.get(iam, url)
@@ -75,9 +75,9 @@ def find_entry_inactive(iam, record, name, parent = None):
     else:
         return None
 
-def find_entry_by_record_type(iam, record, parent = None):
-    url = "/rks?context=" + iam["apps"]["planning"]["context_id"] + \
-        "&record=" + iam["account_name"] + "/planning/" + record + "&inactive=false&recursive=true"
+def find_entry_by_record_type(iam, record, parent = None, rks_record_app = 'planning'):
+    url = "/rks?context=" + iam["apps"][rks_record_app]["context_id"] + \
+        "&record=" + iam["account_name"] + "/" + rks_record_app + "/" + record + "&inactive=false&recursive=true"
     if (parent):
         url += "&parent=" + parent
     entries = thinknode.get(iam, url)
@@ -86,9 +86,9 @@ def find_entry_by_record_type(iam, record, parent = None):
     else:
         return None
 
-def find_inactive_entry_by_record_type(iam, record, parent = None):
-    url = "/rks?context=" + iam["apps"]["planning"]["context_id"] + \
-        "&record=" + iam["account_name"] + "/planning/" + record + "&inactive=true"
+def find_inactive_entry_by_record_type(iam, record, parent = None, rks_record_app = 'planning'):
+    url = "/rks?context=" + iam["apps"][rks_record_app]["context_id"] + \
+        "&record=" + iam["account_name"] + "/" + rks_record_app + "/" + record + "&inactive=true"
     if (parent):
         url += "&parent=" + parent
     entries = json.loads(thinknode.get(iam, url))
@@ -97,9 +97,9 @@ def find_inactive_entry_by_record_type(iam, record, parent = None):
     else:
         return None
 
-def get_rks_entry_children(iam, record_id):
+def get_rks_entry_children(iam, record_id, rks_record_app = 'planning'):
     dl.debug("get_rks_entry_children")
-    url = "/rks?context=" + iam["apps"]["planning"]["context_id"] + "&parent=" + record_id + '&recursive=true'
+    url = "/rks?context=" + iam["apps"][rks_record_app]["context_id"] + "&parent=" + record_id + '&recursive=true'
     
     entries = thinknode.get(iam, url)
     return entries
@@ -137,7 +137,7 @@ def delete_rks_entry(iam, record_id):
         dl.debug('Deleting record ' + record_id + ' successful')
 
 
-def mark_rks_entry_active(iam, record, name, parent = None):
+def mark_rks_entry_active(iam, record, name, parent = None, rks_record_app = 'planning'):
     entry = find_entry(iam, record, name, parent)
     if entry:
         updated_entry = {
@@ -148,7 +148,7 @@ def mark_rks_entry_active(iam, record, name, parent = None):
         }
         if (parent):
             updated_entry["parent"] = parent
-        thinknode.put(iam, "/rks/" + entry["id"] + "?context=" + iam["apps"]["planning"]["context_id"],
+        thinknode.put(iam, "/rks/" + entry["id"] + "?context=" + iam["apps"][rks_record_app]["context_id"],
             updated_entry)
         return entry["id"]
 
@@ -160,7 +160,7 @@ def mark_rks_entry_active(iam, record, name, parent = None):
 #   param data: data to post to ISS
 #   param parent: RKS parent
 #   returns: RKS ID
-def write_rks_entry(iam, record, iss_type, name, data, parent = None, data_app_name = 'dosimetry'):
+def write_rks_entry(iam, record, iss_type, name, data, parent = None, data_app_name = 'dosimetry', rks_record_app = 'planning'):
     dl.debug("write_rks_entry")
     print(str(data))
     # Post to ISS
@@ -168,7 +168,7 @@ def write_rks_entry(iam, record, iss_type, name, data, parent = None, data_app_n
     res = thinknode.post_immutable(iam, data_app_name, data, scope, False)
     iss_id = json.loads(res.text)["id"]
 
-    entry = find_entry(iam, record, name, parent)
+    entry = find_entry(iam, record, name, parent, rks_record_app)
     # If the entry exists, update it.
     if entry:
         updated_entry = {
@@ -179,15 +179,15 @@ def write_rks_entry(iam, record, iss_type, name, data, parent = None, data_app_n
         }
         if (parent):
             updated_entry["parent"] = parent
-        thinknode.put(iam, "/rks/" + entry["id"] + "?context=" + iam["apps"]["planning"]["context_id"],
+        thinknode.put(iam, "/rks/" + entry["id"] + "?context=" + iam["apps"][rks_record_app]["context_id"],
             json.dumps(updated_entry))
         return entry["id"]
     # Otherwise, create it.
     else:
         # Check for archived result first
-        a_entry = find_entry_inactive(iam, record, name, parent)
+        a_entry = find_entry_inactive(iam, record, name, parent, rks_record_app)
         if a_entry:
-            mark_rks_entry_active(iam, record, name, parent)
+            mark_rks_entry_active(iam, record, name, parent, rks_record_app)
             updated_entry = {
                 "name": name,
                 "immutable": iss_id,
@@ -196,7 +196,7 @@ def write_rks_entry(iam, record, iss_type, name, data, parent = None, data_app_n
             }
             if (parent):
                 updated_entry["parent"] = parent
-            thinknode.put(iam, "/rks/" + a_entry["id"] + "?context=" + iam["apps"]["planning"]["context_id"],
+            thinknode.put(iam, "/rks/" + a_entry["id"] + "?context=" + iam["apps"][rks_record_app]["context_id"],
                 json.dumps(updated_entry))
             return a_entry["id"]
         else:
@@ -205,9 +205,11 @@ def write_rks_entry(iam, record, iss_type, name, data, parent = None, data_app_n
                 "immutable": iss_id,
                 "active": True
             }
-            scope = '/rks/' + iam["account_name"] + '/planning' + '/' + record
-            res = thinknode.post_immutable(iam, "planning", new_entry, scope, False)
-            return res.text
+            if (parent):
+                new_entry["parent"] = parent
+            scope = '/rks/' + iam["account_name"] + '/' + rks_record_app + '/' + record
+            res = thinknode.post_immutable(iam, rks_record_app, new_entry, scope, False)
+            return json.loads(res.text)["id"]
 
 # Lock an RKS entry
 #   param iam: conection settings (url and unique basic user authentication)
