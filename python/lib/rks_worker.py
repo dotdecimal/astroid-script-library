@@ -13,9 +13,9 @@ import json
 # Return the RKS entry
 #   param iam: connection settings (url and unique basic user authentication)
 #   param rks_id: RKS entry id
-def get_rks_entry(iam, rks_id):
+def get_rks_entry(iam, rks_id, rks_record_app = 'planning'):
     dl.debug("get_rks_entry")
-    url = "/rks/" + rks_id + "?context=" + iam["apps"]["planning"]["context_id"]
+    url = "/rks/" + rks_id + "?context=" + iam["apps"][rks_record_app]["context_id"]
     entry = thinknode.get(iam, url)
     if entry != None:
         return entry
@@ -97,9 +97,11 @@ def find_inactive_entry_by_record_type(iam, record, parent = None, rks_record_ap
     else:
         return None
 
-def get_rks_entry_children(iam, record_id, rks_record_app = 'planning'):
+def get_rks_entry_children(iam, record_id, rks_record_app = 'planning', recursive = 'true', record = None):
     dl.debug("get_rks_entry_children")
-    url = "/rks?context=" + iam["apps"][rks_record_app]["context_id"] + "&parent=" + record_id + '&recursive=true'
+    url = "/rks?context=" + iam["apps"][rks_record_app]["context_id"] + "&parent=" + record_id + '&recursive=' + recursive
+    if (record):
+        url += '&record=' + iam["account_name"] + "/" + rks_record_app + "/" + record
     
     entries = thinknode.get(iam, url)
     return entries
