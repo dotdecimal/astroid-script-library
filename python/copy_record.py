@@ -22,10 +22,12 @@ def authenticate(config):
             'Accept': 'application/json'}
     return res
 
-
-#if len(sys.argv) < 4 :
-#    print('too few args. Requires record id, source bucket, and destination bucket.')
-#    exit()
+def getBucket(config, realm):
+    '''returns the bucket of a given realm'''
+    url = config['api_url'] + '/iam/realms/' + realm
+    response = requests.get(url, headers = config['auth_headers'])
+    tn.assert_success(response)
+    return response.json()['bucket']
 
 def getContext(config, realm):
     '''returns the context of a given realm'''
@@ -34,6 +36,14 @@ def getContext(config, realm):
     tn.assert_success(response)
     return response.json()['id']
 
+def getObject(config, id, context):
+    '''returns an object from a given context'''
+    url = config['api_url'] + '/iss/' + id + '?context=' + context
+    response = requests.get(url, headers = config['auth_headers'])
+    tn.assert_success(response)
+    return response.json()
+
+
 def getObjectType(config, context, id):
     url = config['api_url'] + '/iss/' + id + '/' + context
     response = requests.head(url, headers = config['auth_headers'])
@@ -41,9 +51,9 @@ def getObjectType(config, context, id):
     result = response.json()['type']
     return result
 
-def getVersion(config, type, realm):
+def getObjectVersion(config, type, realm):
     app = '/'.split(type)[2]
-    url = config['api_url'] + '/realms/' + realm + '/versions'
+    url = config['api_url'] + '/apm/apps/' + config['account'] + '/' + app + '/versions'
     response = requests.get(url, headers = config['auth_headers'])
     tn.assert_success(response)
     result = response.headers['thinknode-type']
@@ -62,22 +72,50 @@ def getSchema(config, type, version):
         if t['name'] is schema_type:
             schema = t
             break
-    return schema
+    return schema['schema']
     
-def objectCopy(auth_headers, id, a, b):
+def objectCopy(config, id, a, b):
     '''copy an object from one bucket to another'''
     url = config['api_url'] + '/iss/' + id + '/' + a + '?bucket=' + b
-    response = requests.post(url, headers = auth_headers)
+    response = requests.post(url, headers = config['auth_headers'])
     tn.assert_success(response)
     return response.json()['id']
 
-def deepObjectCopy(auth_headers, id, a, b):
+def deepObjectCopyRecurse(config, object, schema, a, b):
+    '''Search through an object's children for other objects that must be copied'''
+    for key, value in object_schema.items():
+        switch(key):
+            case 'dynamic_type':
+            case 'array_type':
+            case 'structure_type':
+            case 'map_type':
+            case 'union_type':
+            case 'reference_type':
+            case 'named_type':
+            case 'optional':
+
+
+def deepObjectCopy(config, id, a, b):
     '''
-    copy an object to a new bucket, as well as all of it's immutable references
+    copy from one realm to another, as well as all of it's immutable references
     based on the object schema int the new realm
+
+    @param a: the realm the id is copied from
+    @param b: the realm the id is copied to
     '''
-    new_object = objectCopy(auth_headers, id, a, b)
-    get
+    bucket_a = getBucket(config, a)
+    bucket_b = getBucket(config, b)
+    context_b = getContext(config, b)
+    new_object_id = objectCopy(config['auth_headers'], id, bucket_a, bucket_b)
+    new_object = getObject(config['auth_headers', ])
+    object_type = getObjectType(config, context_b, new_object_id)
+    object_version = getObjectVersion(config, object_type, b)
+    object_schema = getSchema(config, object_type, object_version)
+    deepObjectCopyRecurse()
+
+    return new_object_id
+    
+
 
 
 config = authenticate(tn.read_config('config.json'))
