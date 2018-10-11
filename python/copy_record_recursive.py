@@ -34,7 +34,11 @@ def object_copy(config, auth_headers, id, a, b):
     return response.json()['id']
 
 def record_copy_helper(config, auth_headers, api_url, context_a, context_b, parent_id, original_body, a, b):
-    """copies a single record and its object from one realm to another"""
+    """
+    copies a record and its object from one realm to another. Does the same for its 
+    children recursively.
+    """
+    # Create a copy of the original object for the new record
     duplicate_object = object_copy(config, auth_headers, original_body['immutable'], 
         a['bucket'], b['bucket'])
     url = api_url + '/rks/'
@@ -42,6 +46,7 @@ def record_copy_helper(config, auth_headers, api_url, context_a, context_b, pare
     url = url + original_body['record']['app'] + '/'
     url = url + original_body['record']['name'] + '/'
     url = url + '?context=' + context_b
+    # Create the new record based on the old record and the copied immutable
     data = {
         'name': original_body['name'],
         'immutable': duplicate_object,
@@ -56,7 +61,7 @@ def record_copy_helper(config, auth_headers, api_url, context_a, context_b, pare
     duplicate = response.json()
     tn.assert_success(response)
     sys.stdout.write('.')
-    # Next, recursively copy the children
+    # Recursively copy the children
     url = api_url + '/rks'
     url += '?context=' + context_a
     url += '&parent=' + original_body['id']
@@ -65,18 +70,30 @@ def record_copy_helper(config, auth_headers, api_url, context_a, context_b, pare
         record_copy_helper(config, auth_headers, api_url, context_a, context_b, duplicate['id'], child, a, b)
     return duplicate
 
-def record_copy_recursive(config, auth_headers, id, realm_id_a, realm_id_b):
+def record_copy_recursive(config, auth_headers, id, realm_name_a, realm_name_b):
+    """
+    Copy a record and its object from one realm to another. Do the same for its 
+    children recursively.
+
+    arguments:
+    config -- dictionary loaded from the config file containing 'api_url' and 'basic_user'
+    auth_headers -- authentication headers for HTTP requests
+    id -- id of the record to be copied
+    realm_name_a -- the name of the realm the record is copied *from*
+    realm_name_b -- the name of the realm the record is copied *to*
+    """
     api_url = config['api_url']
-    context_a = get_context(config, auth_headers, realm_id_a)
-    context_b = get_context(config, auth_headers, realm_id_b)
-    url = api_url + '/iam/realms/' + realm_id_a
+    context_a = get_context(config, auth_headers, realm_name_a)
+    context_b = get_context(config, auth_headers, realm_name_b)
+    url = api_url + '/iam/realms/' + realm_name_a
     realm_a = requests.get(url, headers = auth_headers).json()
-    url = api_url + '/iam/realms/' + realm_id_b
+    url = api_url + '/iam/realms/' + realm_name_b
     realm_b = requests.get(url, headers = auth_headers).json()
     url = api_url + '/rks/' + id + '?context=' + context_a
     original = requests.get(url, headers = auth_headers)
     original_body = original.json()
-    result = record_copy_helper(config, auth_headers, api_url, context_a, context_b, None, original_body, realm_a, realm_b)
+    result = record_copy_helper(config, auth_headers, api_url, context_a, context_b, 
+        None, original_body, realm_a, realm_b)
     print()
     return result
 
@@ -84,6 +101,10 @@ config = tn.read_config('thinknode.cfg')
 auth_headers = authenticate(config)
 
 if len(sys.argv) < 4:
-    print('Usage: copy_record_recursive object_id source_realm destination_realm')
-
-record_copy_recursive(config, auth_headers, sys.argv[1], sys.argv[2], sys.argv[3])
+    print()
+    print('    Usage: python copy_record_recursive.py record_id source_realm_name destination_realm_name')
+    print()
+    print('    This depends on the "api_url" and "basic_user" values from thinknode.cfg')
+    print()
+else:
+    record_copy_recursive(config, auth_headers, sys.argv[1], sys.argv[2], sys.argv[3])
