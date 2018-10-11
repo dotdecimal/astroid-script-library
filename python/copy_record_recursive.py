@@ -75,7 +75,7 @@ def record_copy_recursive(config, auth_headers, id, realm_id_a, realm_id_b):
     original_body = original.json()
     return record_copy_helper(config, auth_headers, api_url, context_a, context_b, None, original_body, realm_a, realm_b)
 
-config = tn.read_config('config.json')
+config = tn.read_config('thinknode.cfg')
 auth_headers = authenticate(config)
 
 if len(sys.argv) < 4:
