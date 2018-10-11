@@ -36,7 +36,7 @@ def getContext(config, realm):
     tn.assert_success(response)
     return response.json()['id']
 
-def getObject(config, id, context):
+def getObject(config, context, id):
     '''returns an object from a given context'''
     url = config['api_url'] + '/iss/' + id + '?context=' + context
     response = requests.get(url, headers = config['auth_headers'])
@@ -48,7 +48,7 @@ def getObjectType(config, context, id):
     url = config['api_url'] + '/iss/' + id + '/' + context
     response = requests.head(url, headers = config['auth_headers'])
     tn.assert_success(response)
-    result = response.json()['type']
+    result = response.headers['thinknode-type']
     return result
 
 def getObjectVersion(config, type, realm):
@@ -59,20 +59,14 @@ def getObjectVersion(config, type, realm):
     result = response.headers['thinknode-type']
     return result
     
-def getSchema(config, type, version):
-    app = '/'.split(type)[2]
-    schema_type = '/'.split(type)[3]
+def getTypes(config, app, version):
+    '''Get the types associated with the particular version of an app from the manifest'''
     url = (config['api_url'] + '/apm/apps/' + config['account'] + '/' + app + '/versions/' + 
         version + '?include_manifest=true')
     response = requests.get(url, headers = config['auth_headers'])
     tn.assert_success(response)
     app_types = response.json()['manifest']['types']
-    schema = None
-    for t in app_types:
-        if t['name'] is schema_type:
-            schema = t
-            break
-    return schema['schema']
+    return app_types
     
 def objectCopy(config, id, a, b):
     '''copy an object from one bucket to another'''
@@ -81,18 +75,16 @@ def objectCopy(config, id, a, b):
     tn.assert_success(response)
     return response.json()['id']
 
-def deepObjectCopyRecurse(config, object, schema, a, b):
+def deepObjectCopyRecurse(config, original_object, types, schema, a, b):
     '''Search through an object's children for other objects that must be copied'''
-    for key, value in object_schema.items():
-        switch(key):
-            case 'dynamic_type':
-            case 'array_type':
-            case 'structure_type':
-            case 'map_type':
-            case 'union_type':
-            case 'reference_type':
-            case 'named_type':
-            case 'optional':
+    dead_ends = ['string_type', 'integer_type','float_type', 'boolean_type', 'nil_type', 
+    'datetime', 'blob', '']
+    for key, value in schema.items():
+        if key is 'named_type':
+            continue
+        elif key not in dead_ends:
+            deepObjectCopyRecurse(config, value, types, schema, a, b)
+
 
 
 def deepObjectCopy(config, id, a, b):
@@ -103,20 +95,18 @@ def deepObjectCopy(config, id, a, b):
     @param a: the realm the id is copied from
     @param b: the realm the id is copied to
     '''
-    bucket_a = getBucket(config, a)
-    bucket_b = getBucket(config, b)
-    context_b = getContext(config, b)
-    new_object_id = objectCopy(config['auth_headers'], id, bucket_a, bucket_b)
-    new_object = getObject(config['auth_headers', ])
-    object_type = getObjectType(config, context_b, new_object_id)
+    context_a = getContext(config, a)
+    original_object = getObject(config, context_a, id)
+    object_type = getObjectType(config, context_a, id)
     object_version = getObjectVersion(config, object_type, b)
-    object_schema = getSchema(config, object_type, object_version)
-    deepObjectCopyRecurse()
-
-    return new_object_id
-    
-
-
+    object_types = getTypes(config, object_type, object_version)
+    type_name = '/'.split(object_type)[3]
+    schema = None
+    for t in object_types:
+        if t['name'] is type_name:
+            schema = t
+            break
+    return deepObjectCopyRecurse(config, original_object, object_types, schema, a, b)
 
 config = authenticate(tn.read_config('config.json'))
 print(str(getContext(config, 'dev-waugh')))
