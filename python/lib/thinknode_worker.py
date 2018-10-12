@@ -553,6 +553,13 @@ def get_head(config, app_name, obj_id):
     # print(json.loads(str(res)))
     return res.headers
 
+#  Copies an object from one bucket to another
+def iss_object_copy(config, obj_id, src_bucket, dest_bucket):
+    url = config['api_url'] + '/iss/' + obj_id + '/buckets/' + src_bucket + '?bucket=' + dest_bucket
+    res = session.post(url, headers = {'Authorization': 'Bearer ' + config["user_token"]})
+    assert_success(res)
+    return res.json()['id']
+
 #####################################################################
 # thinknode schema type builders
 #####################################################################
@@ -868,6 +875,10 @@ def get_app_versions(iam, app_name):
 # Get the details for the provided realm
 def get_realm(iam):
     return get(iam, "/iam/realms/" + iam['realm_name'])
+
+# Get the bucket for a realm
+def get_bucket_for_realm(iam):
+    return get(iam, '/iam/realms/' + iam['realm_name'])['bucket']
 
 # Get the list of app versions installed in this realm
 def get_installed_app_versions(iam):
