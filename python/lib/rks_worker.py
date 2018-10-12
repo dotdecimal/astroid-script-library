@@ -154,22 +154,16 @@ def mark_rks_entry_active(iam, record, name, parent = None, rks_record_app = 'pl
             updated_entry)
         return entry["id"]
 
-# Check if an entry exists in the planning RKS
-#   param iam: connection settings (url and unique basic user authentication)
+# Write an entry to RKS with the given iss_id
+#   param iam: connection settings (url and user authentication)
 #   param record: RKS record type
-#   param type: ISS type to post data to ISS as
+#   param iss_id: ISS ID for the records immutable data
 #   param name: unique RKS record name
-#   param data: data to post to ISS
 #   param parent: RKS parent
+#   param rks_record_app: name of the app to use when creating RKS record
 #   returns: RKS ID
-def write_rks_entry(iam, record, iss_type, name, data, parent = None, data_app_name = 'dosimetry', rks_record_app = 'planning'):
+def write_rks_entry(iam, record, iss_id, name, parent = None, rks_record_app = 'planning'):
     dl.debug("write_rks_entry")
-    print(str(data))
-    # Post to ISS
-    scope = thinknode.make_named_type_scope(iam, data_app_name, iss_type)
-    res = thinknode.post_immutable(iam, data_app_name, data, scope, False)
-    iss_id = json.loads(res.text)["id"]
-
     entry = find_entry(iam, record, name, parent, rks_record_app)
     # If the entry exists, update it.
     if entry:
@@ -212,6 +206,26 @@ def write_rks_entry(iam, record, iss_type, name, data, parent = None, data_app_n
             scope = '/rks/' + iam["account_name"] + '/' + rks_record_app + '/' + record
             res = thinknode.post_immutable(iam, rks_record_app, new_entry, scope, False)
             return json.loads(res.text)["id"]
+
+# Write an entry to RKS but first posts the provided data to ISS
+#   param iam: connection settings (url and user authentication)
+#   param record: RKS record type
+#   param iss_type: ISS type to post data to ISS as
+#   param name: unique RKS record name
+#   param data: data to post to ISS
+#   param parent: RKS parent
+#   param data_app_name: name of the app to use when posting iss data
+#   param rks_record_app: name of the app to use when creating RKS record
+#   returns: RKS ID
+def write_rks_entry_isspost(iam, record, iss_type, name, data, parent = None, data_app_name = 'dosimetry', rks_record_app = 'planning'):
+    dl.debug("write_rks_entry_isspost")
+    print(str(data))
+    # Post to ISS
+    scope = thinknode.make_named_type_scope(iam, data_app_name, iss_type)
+    res = thinknode.post_immutable(iam, data_app_name, data, scope, False)
+    iss_id = json.loads(res.text)["id"]
+    # Now create the record and return
+    return write_rks_entry(iam, record, iss_id, name, parent, rks_record_app)
 
 # Lock an RKS entry
 #   param iam: conection settings (url and unique basic user authentication)
