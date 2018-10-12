@@ -11,7 +11,7 @@ import decimal_logging as dl
 import json
 
 # Return the RKS entry
-#   param iam: connection settings (url and unique basic user authentication)
+#   param iam: connection settings (url and user authentication)
 #   param rks_id: RKS entry id
 def get_rks_entry(iam, rks_id, rks_record_app = 'planning'):
     dl.debug("get_rks_entry")
@@ -24,7 +24,7 @@ def get_rks_entry(iam, rks_id, rks_record_app = 'planning'):
         sys.exit()
 
 # Check if an entry exists in the planning RKS
-#   param iam: connection settings (url and unique basic user authentication)
+#   param iam: connection settings (url and user authentication)
 #   param record: RKS record type
 #   param name: unique RKS record name
 #   param parent: RKS parent
@@ -42,7 +42,7 @@ def find_entry(iam, record, name, parent = None, rks_record_app = 'planning'):
         return None
 
 # Check if an entry exists in the planning RKS inactive records
-#   param iam: connection settings (url and unique basic user authentication)
+#   param iam: connection settings (url and user authentication)
 #   param record: RKS record type
 #   param content: search record body
 #   returns: matching entry if one exists, or None otherwise
@@ -58,7 +58,7 @@ def search_for_record_entries(iam, content):
         return None
 
 # Check if an entry exists in the planning RKS inactive records
-#   param iam: connection settings (url and unique basic user authentication)
+#   param iam: connection settings (url and user authentication)
 #   param record: RKS record type
 #   param name: unique RKS record name
 #   param parent: RKS parent
@@ -228,7 +228,7 @@ def write_rks_entry_isspost(iam, record, iss_type, name, data, parent = None, da
     return write_rks_entry(iam, record, iss_id, name, parent, rks_record_app)
 
 # Lock an RKS entry
-#   param iam: conection settings (url and unique basic user authentication)
+#   param iam: conection settings (url and user authentication)
 #   param rks_id: The RKS entry id
 #   param revision_id: The RKS entry revision id
 #   param app: The app name the RKS entry belongs to
@@ -245,7 +245,7 @@ def lock_rks_entry(iam, rks_id, revision_id, app, deep = 'false'):
         "&deep=" + deep, json.dumps(revision))
 
 # Unlock an RKS entry
-#   param iam: conection settings (url and unique basic user authentication)
+#   param iam: conection settings (url and user authentication)
 #   param rks_id: The RKS entry id
 #   param revision_id: The RKS entry record as a dictionary
 #   param app: The app name the RKS entry belongs to
@@ -260,3 +260,25 @@ def unlock_rks_entry(iam, rks_id, revision_id, app, deep = 'false'):
         }
     thinknode.put(iam, "/rks/" + rks_id + "/unlock?context=" + iam["apps"][app]["context_id"] + 
         "&deep=" + deep, json.dumps(revision))
+
+# Copies a record and its object from one realm to another. Does the same for its 
+#   child records recursively.
+#   param iam_src: conection settings for source realm (url and user authentication)
+#   param iam_dest: conection settings for destination realm (url and user authentication)
+#   param iam_src: conection settings for source realm (url and user authentication)
+#   param parent: RKS parent ID
+#   param original_record: RKS record data for the record to be copied
+#   param src_bucket: name of the source bucket
+#   param dest_bucket: name of the destination bucket
+#   param app_name: name of app that defines this record
+#   returns: ID of the new copied record
+def copy_record_recursively(iam_src, iam_dest, parent_id, original_record, src_bucket, dest_bucket, app_name = 'planning'):
+    # Create a copy of the original object for the new record
+    duplicate_object_id = thinknode.iss_object_copy(iam_src, original_record['immutable'],  src_bucket, dest_bucket)
+    # Create the new record based on the old record and the copied immutable
+    rks_id = write_rks_entry(iam_dest, original_record['record']['name'], duplicate_object_id, original_record['name'], parent_id)
+    # Recursively copy the children
+    children = get_rks_entry_children(iam_src, original_record['id'], app_name, "false")
+    for child in children:
+        record_copy_helper(iam_src, iam_dest, rks_id, child, src_bucket, dest_bucket)
+    return duplicate_object_id
