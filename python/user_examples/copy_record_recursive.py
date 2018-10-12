@@ -14,16 +14,10 @@ import dicom_worker as dicom_worker
 import rks_worker as rks
 
 
-# src_rks_id = 'RKS ID of record to be copied'
-# app_name = 'planning'
-# src_config = tn.read_config('../thinknode.cfg') # Config file with src realm info
-# dest_realm = 'destination realm name'
-
-
-src_rks_id = '5b7d65cb01807ff0332ab01801974fcf' #'RKS ID of record to be copied'
+src_rks_id = 'RKS ID of record to be copied'
 app_name = 'planning'
 src_config = tn.read_config('../thinknode.cfg') # Config file with src realm info
-dest_realm = 'z-kburnett'# 'destination realm name'
+dest_realm = 'destination realm name'
 
 # --- Should not need to edit below this line -----
 
