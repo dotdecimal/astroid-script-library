@@ -12,6 +12,8 @@ import jsonpickle as jp
 import os.path
 import shutil
 
+# Store Thinknode calcs to the 'calculations' folder. Defaults to not perform this action
+cache_remote_calculations = False
 
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
@@ -186,25 +188,28 @@ def do_calculation(config, json_data, return_data=True, return_error=False, forc
     # Get calculation ID
     calculation_id = post_calculation(config, json_data, force, override_app_name)
     # Make sure calculation folder exists
-    loc = sys.path[0]
-    if loc[len(loc)-1] != '/':
-        loc += '/'
-    if not os.path.exists(loc + 'calculations' + os.sep):
-        os.makedirs(loc + 'calculations' + os.sep)
-    
-    if not os.path.isfile(loc + 'calculations' + os.sep + calculation_id + ".txt"):
-        # Get calculation Status
-        return wait_for_calculation(config, app_name, calculation_id, return_data, return_error)
-    else:
-        dl.event("Pulling Locally Cached Calculation...")        
-        f = open(loc + 'calculations' + os.sep + calculation_id + ".txt")
-        data = f.read()
-        # dl.data("Calculation Result: ", data)
-        
-        if return_data:
-            return ast.literal_eval(data)
+    if (cache_remote_calculations):
+        loc = sys.path[0]
+        if loc[len(loc)-1] != '/':
+            loc += '/'
+        if not os.path.exists(loc + 'calculations' + os.sep):
+            os.makedirs(loc + 'calculations' + os.sep)
+
+        if not os.path.isfile(loc + 'calculations' + os.sep + calculation_id + ".txt"):
+            # Get calculation Status
+            return wait_for_calculation(config, app_name, calculation_id, return_data, return_error)
         else:
-            return calculation_id
+            dl.event("Pulling Locally Cached Calculation...")
+            f = open(loc + 'calculations' + os.sep + calculation_id + ".txt")
+            data = f.read()
+            # dl.data("Calculation Result: ", data)
+
+            if return_data:
+                return ast.literal_eval(data)
+            else:
+                return calculation_id
+    else:
+        return wait_for_calculation(config, app_name, calculation_id, return_data, return_error)
 
 # Query thinknode calculation service for the calculation status and wait for the calculation to finish
 #   param config: connection settings (url, user token, and ids for context and realm)
@@ -254,9 +259,10 @@ def wait_for_calculation(config, app_name, calculation_id, return_data=True, ret
                 assert_success(res)
                 decoded = msgpack.unpackb(res.content, encoding='utf-8')
 
-                f = open(loc + os.sep + 'calculations' + os.sep + str(calculation_id) + ".txt", 'w')
-                f.write(str(decoded))
-                f.close()
+                if (cache_remote_calculations):
+                    f = open(loc + os.sep + 'calculations' + os.sep + str(calculation_id) + ".txt", 'w')
+                    f.write(str(decoded))
+                    f.close()
 
                 return decoded
             else:
