@@ -141,6 +141,10 @@ def parse_byte_ul(buf, offset=0):
     tmp = st.unpack_from('Q',buf,offset)
     return tmp[0]
 
+def parse_byte_us(buf, offset=0):
+    tmp = st.unpack_from('H',buf,offset)
+    return tmp[0]
+
 def parse_byte_u(buf, offset=0):
     tmp = st.unpack_from('I',buf,offset)
     return tmp[0]
@@ -241,10 +245,11 @@ class adaptive_grid_voxel(object):
         self.inside_count = 0
 
     def parse_self(self, buf, offset):
-        self.inside_count = parse_bytes_i(buf, offset)
-        self.surface_count = parse_byte_i(buf, offset + 4)
-        self.index = parse_byte_i(buf, offset + 8)
-        self.volume_offset = parse_byte_i(buf, offset + 12)
+        self.index = parse_byte_ul(buf, offset)
+        self.surface_count = parse_byte_us(buf, offset + 8)
+        self.volume_offset = parse_byte_u(buf, offset + 10)
+        self.inside_count = parse_byte_us(buf, offset + 14)
+
         return self.expand_data()
 
     def get_offset(self):

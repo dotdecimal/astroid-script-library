@@ -712,7 +712,7 @@ def optional_named_type_object(account, app, type_name, data):
 def array_number_type(app, a):
     return { "array": \
             { "item_schema" : \
-            { "number_type": {} }, "items": a } } 
+            { "float_type": {} }, "items": a } } 
 
 # Create a meta request for a named_type
 #   param account: account name on thinknode
