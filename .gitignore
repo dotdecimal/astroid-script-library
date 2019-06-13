@@ -6,4 +6,5 @@
 *.pyc
 python/calculations/*
 python/temp/*
+python/thinknode.cfg
 
