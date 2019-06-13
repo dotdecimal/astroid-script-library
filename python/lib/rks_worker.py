@@ -48,10 +48,10 @@ def find_entry(iam, record, name, parent = None, rks_record_app = 'planning'):
 #   returns: matching entry if one exists, or None otherwise
 def search_for_record_entries(iam, content):
     dl.debug("search_for_record_entries")
-    print(content)
+    # print(content)
     url = "/rks/search?context=" + iam["apps"]["planning"]["context_id"]
     entries = thinknode.post(iam, url, content)
-    print(entries)
+    # print(entries)
     if len(entries) != 0:
         return entries
     else:

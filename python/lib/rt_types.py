@@ -2457,7 +2457,21 @@ class filesystem_item_contents(object):
     #Initialize
     def __init__(self):
         self.directory = []
-        self.file = blob_type()
+        blob = blob_type()
+        self.file = blob.toStr()
+
+    # TODO: This function was manually added. Should update the parser to include this
+    def expand_data(self):
+        data = {}
+        #data['directory'] = str(self.directory)
+        data['file'] = self.file
+        return data
+
+    # TODO: This function was manually added. Should update the parser to include this
+    def from_json(self, jdict):
+        for k, v in jdict.items():
+            if hasattr(self,k):
+                setattr(self, k, v)
 
 class fixation_device(object):
 
