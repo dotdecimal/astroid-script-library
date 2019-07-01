@@ -308,9 +308,8 @@ def get_spot_size(machine, energy):
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #   param spot_id: spot iss id
 #   returns: box_2d bounding box of the spot
-def get_spot_bounding_box(iam, spot_id):
+def get_spot_bounding_box(spots):
     dl.debug("get_spot_bounding_box")
-    spots = thinknode.get_immutable(iam, 'dicom', spot_id)
 
     x_min = 9999
     x_max = -9999
@@ -341,9 +340,10 @@ def get_spot_bounding_box(iam, spot_id):
 #   param iam: connection settings (url, user token, and ids for context and realm)
 #   param spots: spot iss id
 #   param spacing: spacing between the points in the grid
-def get_pbs_bixel_grid(iam, spots, spacing):
+def get_pbs_bixel_grid(iam, spot_id, spacing):
     dl.debug("get_pbs_bixel_grid")
-    box = get_spot_bounding_box(iam, spots)
+    spots = thinknode.get_immutable(iam, 'dicom', spot_id)
+    box = get_spot_bounding_box(spots)
 
     bixel_grid = thinknode.function(iam["account_name"], "dosimetry", "make_grid_for_box_2d",
             [
