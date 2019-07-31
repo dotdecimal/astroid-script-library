@@ -107,7 +107,7 @@ def put(config, path, json_data=None):
                       headers={'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
     assert_success(res)
 
-
+# Note: The requests.sessions delete route does not take a body in the request
 def delete(config, path):
     delete_url = config["api_url"] + path
     res = session.delete(delete_url,
@@ -299,8 +299,7 @@ def get_calculation_status(config, app_name, calculation_id, status="completed",
     if (timeout <= 0):
         # if (False):
         dl.event("Checking Calculation Status...")
-        url = config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["apps"][app_name][
-            "context_id"]
+        url = config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["apps"][app_name]["context_id"]
         print('URL: ' + url)
         res = session.get(url,
                           headers={'Authorization': 'Bearer ' + config["user_token"]})
@@ -370,8 +369,9 @@ def get_bucket_from_realm(config, realm):
 #     assert_success(res)
 #     return json.loads(res.text)
 
+
 # Get the name of function from id
-def get_function_name(config, calc_id, context):
+def get_function(config, calc_id, context):
     url = config["api_url"] + '/calc/' + calc_id + '/resolved' + '?' + 'context=' + context
     print('URL: ' + url)
     res = session.get(url,
@@ -382,7 +382,7 @@ def get_function_name(config, calc_id, context):
     return json.loads(res.text)
 
 
-# Get the name of function from id
+# Get calculation
 def get_calculation(config, calc_id, context):
     url = config["api_url"] + '/calc/' + calc_id + '?' + 'context=' + context
     print('URL: ' + url)
@@ -390,14 +390,34 @@ def get_calculation(config, calc_id, context):
                       headers={'Authorization': 'Bearer ' + config["user_token"]})
 
     assert_success(res)
-    #return res
     return json.loads(res.text)
+
+
+# Get the interest in calculation
+def get_interest_in_calculation(config, calc_id, context):
+    url = config["api_url"] + '/calc/' + calc_id + '/interest' + '?' + 'context=' + context
+    print('URL: ' + url)
+    res = session.get(url,
+                      headers={'Authorization': 'Bearer ' + config["user_token"]})
+
+    assert_success(res)
+    return json.loads(res.text)
+
 
 # Get the name of function from id
 def remove_interest_calc_by_id(config, calc_id, context):
-    url = config["api_url"] + '/calc/' + calc_id + '/interest' + '?' + 'context=' + context
+    url = '/calc/' + calc_id + '/interest' + '?' + 'context=' + context
     print('URL: ' + url)
-    session.delete(url, headers={'Authorization': 'Bearer ' + config["user_token"]})
+    delete(config, url)
+
+
+# Get the name of function from id
+def remove_interest_in_calculations(config, json_data, context):
+    #url = config["api_url"] + '/calc/' + 'interest' + '?' + 'context=' + context
+    url = '/calc/' + 'interest' + '?' + 'context=' + context
+    print('URL: ' + url)
+    delete(config, '/calc/' + 'interest' + '?' + 'context=' + context, json_data)
+    #session.delete(url, data=json.dumps(json_data), headers={'Authorization': 'Bearer ' + config["user_token"]})
 
 
 # Get the name of function from id
