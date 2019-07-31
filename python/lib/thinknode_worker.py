@@ -378,7 +378,6 @@ def get_function(config, calc_id, context):
                       headers={'Authorization': 'Bearer ' + config["user_token"]})
 
     assert_success(res)
-    #return res
     return json.loads(res.text)
 
 
@@ -413,11 +412,9 @@ def remove_interest_calc_by_id(config, calc_id, context):
 
 # Get the name of function from id
 def remove_interest_in_calculations(config, json_data, context):
-    #url = config["api_url"] + '/calc/' + 'interest' + '?' + 'context=' + context
     url = '/calc/' + 'interest' + '?' + 'context=' + context
     print('URL: ' + url)
     delete(config, '/calc/' + 'interest' + '?' + 'context=' + context, json_data)
-    #session.delete(url, data=json.dumps(json_data), headers={'Authorization': 'Bearer ' + config["user_token"]})
 
 
 # Get the name of function from id
