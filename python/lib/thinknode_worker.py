@@ -405,9 +405,12 @@ def get_interest_in_calculation(config, calc_id, context):
 
 # Get the name of function from id
 def remove_interest_calc_by_id(config, calc_id, context):
-    url = '/calc/' + calc_id + '/interest' + '?' + 'context=' + context
-    print('URL: ' + url)
-    delete(config, url)
+    delete_url = config["api_url"] + '/calc/' + calc_id + '/interest' + '?' + 'context=' + context
+    print('URL: ' + delete_url)
+    res = session.delete(delete_url,
+                         headers={'Authorization': 'Bearer ' + config["user_token"],
+                                  'content-type': 'application/json'})
+    return res.status_code
 
 
 # Get the name of function from id
