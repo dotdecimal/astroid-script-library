@@ -5,6 +5,7 @@
 
 import json, ast
 import sys
+
 sys.path.append("lib")
 import msgpack
 import decimal_logging as dl
@@ -19,6 +20,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 import ssl
 
+
 class MyAdapter(HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=False):
         self.poolmanager = PoolManager(num_pools=connections,
@@ -26,11 +28,14 @@ class MyAdapter(HTTPAdapter):
                                        block=block,
                                        ssl_version=ssl.PROTOCOL_TLSv1)
 
+
 import requests
+
 session = requests.Session()
 session.mount('https://', MyAdapter())
 
 import time
+
 
 #####################################################################
 # thinknode get/post functions
@@ -42,49 +47,53 @@ import time
 def get(config, path):
     post_url = config["api_url"] + path
     dl.data('get_url: ', post_url)
-    res = session.get(post_url, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"],
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'})
+    res = session.get(post_url,
+                      headers={'Authorization': 'Bearer ' + config["user_token"],
+                               'Content-Type': 'application/json',
+                               'Accept': 'application/json'})
     try:
         return res.json()
     except:
         return None
 
+
 # Perform a basic post request
 def post(config, path, content):
     url = config["api_url"] + path
-    response = requests.post(url, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"],
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'},
-        data = content)
+    response = requests.post(url,
+                             headers={'Authorization': 'Bearer ' + config["user_token"],
+                                      'Content-Type': 'application/json',
+                                      'Accept': 'application/json'},
+                             data=content)
     assert_success(response)
     try:
         return response.json()
     except:
         return None
 
+
 # Perform a basic patch request
 def patch(config, path, content):
     url = config["api_url"] + path
-    response = requests.patch(url, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"],
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'},
-        data = content)
+    response = requests.patch(url,
+                              headers={'Authorization': 'Bearer ' + config["user_token"],
+                                       'Content-Type': 'application/json',
+                                       'Accept': 'application/json'},
+                              data=content)
     assert_success(response)
+
 
 def get_thinknode_usage(config):
     dl.event('get_usage')
     # url = config["api_url"] + '/ams/accounts/' + config["account_name"] + '/usage?include_users=true&month=201604'
     url = config["api_url"] + '/ams/accounts/' + config["account_name"] + '/usage?include_users=true'
     dl.debug(url)
-    res = session.get(url, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
+    res = session.get(url,
+                      headers={'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
     assert_success(res)
     # dl.data("Response: ", res.text)
     return res.text
+
 
 # Perform a basic put request, useful for updating existing data
 #   param config: connection settings (url and unique basic user authentication)
@@ -93,18 +102,21 @@ def get_thinknode_usage(config):
 def put(config, path, json_data=None):
     post_url = config["api_url"] + path
     dl.data('put_url: ', post_url)
-    res = session.put(post_url, 
-        data = json_data, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
+    res = session.put(post_url,
+                      data=json_data,
+                      headers={'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
     assert_success(res)
 
+# Note: The requests.sessions delete route does not take a body in the request
 def delete(config, path):
     delete_url = config["api_url"] + path
-    res = session.delete(delete_url, 
-        headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
+    res = session.delete(delete_url,
+                         headers={'Authorization': 'Bearer ' + config["user_token"],
+                                  'content-type': 'application/json'})
     assert_success(res)
-    
+
     return str(res.status_code)
+
 
 # Authenticate with thinknode and store necessary ids.
 # Gets the context id for each app detailed in the thinknode config
@@ -120,8 +132,8 @@ def authenticate(config):
             config["apps"][app_name]["use_branch"] = True
             dl.event("Getting " + app_name + " Branch...")
             branch_url = config["api_url"] + '/iam/realms/' + config["realm_name"] + '/branches'
-            res = session.get(branch_url, 
-                headers = {'Authorization': 'Bearer ' + config["user_token"]})
+            res = session.get(branch_url,
+                              headers={'Authorization': 'Bearer ' + config["user_token"]})
             assert_success(res)
             print('Branches:')
             print(res.text)
@@ -135,8 +147,8 @@ def authenticate(config):
             if config["apps"][app_name]["app_version"] == "":
                 dl.event("Getting " + app_name + " Version...")
                 version_url = config["api_url"] + '/iam/realms/' + config["realm_name"] + '/versions'
-                res = session.get(version_url, 
-                    headers = {'Authorization': 'Bearer ' + config["user_token"]})
+                res = session.get(version_url,
+                                  headers={'Authorization': 'Bearer ' + config["user_token"]})
                 assert_success(res)
                 for app in json.loads(res.text):
                     if app.get('app') == app_name:
@@ -146,10 +158,11 @@ def authenticate(config):
         # Get context ID
         if config["apps"][app_name]["use_branch"]:
             print('Use branches for: ' + app_name)
-            context_url = config["api_url"] + '/iam/realms/' + config["realm_name"] + '/context?account=' + config["account_name"] + "&app=" + app_name + "&branch=" + config["apps"][app_name]["app_branch"]
+            context_url = config["api_url"] + '/iam/realms/' + config["realm_name"] + '/context?account=' + config[
+                "account_name"] + "&app=" + app_name + "&branch=" + config["apps"][app_name]["app_branch"]
             dl.data('context_url: ', context_url)
-            res = session.get(context_url, 
-                headers = {'Authorization': 'Bearer ' + config["user_token"]})
+            res = session.get(context_url,
+                              headers={'Authorization': 'Bearer ' + config["user_token"]})
             assert_success(res)
             config["apps"][app_name]["context_id"] = res.json()["id"]
             dl.data("App " + app_name + " Context ID:", config["apps"][app_name]["context_id"])
@@ -158,14 +171,16 @@ def authenticate(config):
                 dl.data("**App " + app_name, "not installed in realm, skipping.")
                 continue
             dl.event("Getting Context ID...")
-            context_url = config["api_url"] + '/iam/realms/' + config["realm_name"] + '/context?account=' + config["account_name"] + "&app=" + app_name + "&version=" + config["apps"][app_name]["app_version"]
+            context_url = config["api_url"] + '/iam/realms/' + config["realm_name"] + '/context?account=' + config[
+                "account_name"] + "&app=" + app_name + "&version=" + config["apps"][app_name]["app_version"]
             dl.data('context_url: ', context_url)
-            res = session.get(context_url, 
-                headers = {'Authorization': 'Bearer ' + config["user_token"]})
+            res = session.get(context_url,
+                              headers={'Authorization': 'Bearer ' + config["user_token"]})
             assert_success(res)
             config["apps"][app_name]["context_id"] = res.json()["id"]
             dl.data("App " + app_name + " Context ID:", config["apps"][app_name]["context_id"])
     return config
+
 
 # Send calculation request to thinknode and wait for the calculation to perform. Caches locally calculation results so if the same calculation is performed again, the calculation
 # does not have to be repeatedly pulled from thinknode. Saves one calculation time and bandwidth.
@@ -190,7 +205,7 @@ def do_calculation(config, json_data, return_data=True, return_error=False, forc
     # Make sure calculation folder exists
     if (cache_remote_calculations):
         loc = sys.path[0]
-        if loc[len(loc)-1] != '/':
+        if loc[len(loc) - 1] != '/':
             loc += '/'
         if not os.path.exists(loc + 'calculations' + os.sep):
             os.makedirs(loc + 'calculations' + os.sep)
@@ -211,6 +226,7 @@ def do_calculation(config, json_data, return_data=True, return_error=False, forc
     else:
         return wait_for_calculation(config, app_name, calculation_id, return_data, return_error)
 
+
 # Query thinknode calculation service for the calculation status and wait for the calculation to finish
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: app_name the calculation was posted to (used to get the calculation context id)
@@ -219,15 +235,15 @@ def do_calculation(config, json_data, return_data=True, return_error=False, forc
 #   returns: either calculation data or id, based on return_flag. Default is ID.
 def wait_for_calculation(config, app_name, calculation_id, return_data=True, return_error=False):
     loc = sys.path[0]
-    res = get_calculation_status(config, app_name, calculation_id)
+    res = get_calculation_status(config, config["apps"][app_name]["context_id"], calculation_id)
     calculating = True
     while calculating:
-        res = get_calculation_status(config, app_name, calculation_id, "completed", 30)
+        res = get_calculation_status(config, config["apps"][app_name]["context_id"], calculation_id, "completed", 30)
         if "failed" in res.json():
             calculating = False
             dl.event("Getting error logs for calculation")
             # This route can only be used if the "with_logs" parameter is used in a dev realm on a calc
-            # log_res = session.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR', 
+            # log_res = session.get(config["api_url"] + '/calc/' + calculation_id + '/logs/ERR',
             #     headers = {'Authorization': 'Bearer ' + config["user_token"]})
             # assert_success(log_res)
             if return_error:
@@ -247,14 +263,15 @@ def wait_for_calculation(config, app_name, calculation_id, return_data=True, ret
         elif "generating" in res.json():
             dl.event("Request is generating...")
             dl.data("response: ", res.text)
-        else:         
+        else:
             calculating = False
             if return_data:
                 # Get calculation Result
                 dl.event("Fetching Calculation Result...")
-                res = session.get(config["api_url"] + '/iss/' + calculation_id + '?context=' + config["apps"][app_name]["context_id"], 
-                    headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/octet-stream'})
-                    # headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
+                res = session.get(
+                    config["api_url"] + '/iss/' + calculation_id + '?context=' + config["apps"][app_name]["context_id"],
+                    headers={'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/octet-stream'})
+                # headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
                 # dl.data("Calculation Result: ", res.text)
                 assert_success(res)
                 decoded = msgpack.unpackb(res.content, encoding='utf-8')
@@ -269,6 +286,7 @@ def wait_for_calculation(config, app_name, calculation_id, return_data=True, ret
                 dl.event("Fetching Calculation ID...")
                 return calculation_id
 
+
 # Manually gets a calculation's status
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: name of the app to use to get the context id from the iam config
@@ -276,54 +294,140 @@ def wait_for_calculation(config, app_name, calculation_id, return_data=True, ret
 #   param status: used for long polling when timeout > 0 (see thinknode spec for long polling)
 #   param timeout: long polling timeout
 #   returns: The thinknode status of the calculation after the specified timeout
-def get_calculation_status(config, app_name, calculation_id, status="completed", timeout=0):
+def get_calculation_status(config, context_id, calculation_id, status="completed", timeout=0):
     dl.debug("get_calculation_status: " + calculation_id)
     if (timeout <= 0):
-    # if (False):
+        # if (False):
         dl.event("Checking Calculation Status...")
-        url = config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["apps"][app_name]["context_id"]
-        print('URL: ' + url)
-        res = session.get(url, 
-            headers = {'Authorization': 'Bearer ' + config["user_token"]})
+        url = config["api_url"] + '/calc/' + calculation_id + '/status?context=' + context_id
+        dl.debug('URL: ' + url)
+        res = session.get(url,
+                          headers={'Authorization': 'Bearer ' + config["user_token"]})
         dl.data("Response: ", res.text)
     else:
         # using long polling if timeout > 0
-        url = config["api_url"] + '/calc/' + calculation_id + '/status/?status=' + status + '&progress=1&timeout=' + str(timeout) + '&context=' + config["apps"][app_name]["context_id"]
+        url = config[
+                  "api_url"] + '/calc/' + calculation_id + '/status/?status=' + status + '&progress=1&timeout=' + str(
+            timeout) + '&context=' + context_id
         print('URL: ' + url)
-        res = session.get(url, 
-                headers = {'Authorization': 'Bearer ' + config["user_token"]})
+        res = session.get(url,
+                          headers={'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
     return res
 
-def get_calc_status(config, app_name, calculation_id):
-    dl.debug("get_calculation_status: " + calculation_id)
-    url = config["api_url"] + '/calc/' + calculation_id + '/status'+ '?context=' + config["apps"][app_name]["context_id"]
-    print('URL: ' + url)
-    res = session.get(url, 
-            headers = {'Authorization': 'Bearer ' + config["user_token"]})
-    assert_success(res)
-    return res
 
 def get_calc_request(config, app_name, calculation_id):
-    dl.debug("get_calculation_status: " + calculation_id)
+    dl.debug("get_calc_request: " + calculation_id)
     url = config["api_url"] + '/calc/' + calculation_id + '?context=' + config["apps"][app_name]["context_id"]
-    print('URL: ' + url)
-    res = session.get(url, 
-            headers = {'Authorization': 'Bearer ' + config["user_token"]})
+    dl.debug('URL: ' + url)
+    res = session.get(url,
+                      headers={'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
     return json.loads(res.text)
 
+
+# Get the current calculation queue
+def get_calc_queue(config, bucket):
+    url = config["api_url"] + '/calc/' + '/queue' + '?' + 'bucket=' + bucket
+    dl.debug('URL: ' + url)
+    res = session.get(url,
+                      headers={'Authorization': 'Bearer ' + config["user_token"]})
+
+    assert_success(res)
+    return json.loads(res.text)
+
+
+# Get the bucket from realm_name
+def get_bucket_from_realm(config, realm):
+    url = config["api_url"] + '/iam/' + '/realms/' + realm
+    dl.debug('URL: ' + url)
+    res = session.get(url,
+                      headers={'Authorization': 'Bearer ' + config["user_token"]})
+
+    assert_success(res)
+    return json.loads(res.text)
+
+
+# # Get the app_versions from realm_name
+# def get_app_versions_from_realm(config, realm):
+#     url = config["api_url"] + '/iam/' + '/realms/' + realm + '/versions/'
+#     print('URL: ' + url)
+#     res = session.get(url,
+#                       headers={'Authorization': 'Bearer ' + config["user_token"]})
+#
+#     assert_success(res)
+#     return json.loads(res.text)
+
+
+# Get the name of function from id
+def get_function(config, calc_id, context):
+    url = config["api_url"] + '/calc/' + calc_id + '/resolved' + '?' + 'context=' + context
+    dl.debug('URL: ' + url)
+    res = session.get(url,
+                      headers={'Authorization': 'Bearer ' + config["user_token"]})
+
+    assert_success(res)
+    return json.loads(res.text)
+
+
+# Get calculation
+def get_calculation(config, calc_id, context):
+    url = config["api_url"] + '/calc/' + calc_id + '?' + 'context=' + context
+    dl.debug('URL: ' + url)
+    res = session.get(url,
+                      headers={'Authorization': 'Bearer ' + config["user_token"]})
+
+    assert_success(res)
+    return json.loads(res.text)
+
+
+# Get the interest in calculation
+def get_interest_in_calculation(config, calc_id, context):
+    url = config["api_url"] + '/calc/' + calc_id + '/interest' + '?' + 'context=' + context
+    dl.debug('URL: ' + url)
+    res = session.get(url,
+                      headers={'Authorization': 'Bearer ' + config["user_token"]})
+
+    assert_success(res)
+    return json.loads(res.text)
+
+
+# Get the name of function from id
+def remove_interest_calc_by_id(config, calc_id, context):
+    delete_url = config["api_url"] + '/calc/' + calc_id + '/interest' + '?' + 'context=' + context
+    dl.debug('URL: ' + delete_url)
+    res = session.delete(delete_url,
+                         headers={'Authorization': 'Bearer ' + config["user_token"],
+                                  'content-type': 'application/json'})
+    return res.status_code
+
+
+# Get the name of function from id
+def remove_interest_in_calculations(config, json_data, context):
+    url = '/calc/' + 'interest' + '?' + 'context=' + context
+    dl.debug('URL: ' + url)
+    delete(config, '/calc/' + 'interest' + '?' + 'context=' + context, json_data)
+
+
+# Get the name of function from id
+def post_calc_by_id(config, calc_id, context):
+    url = config["api_url"] + '/calc/' + calc_id + '?' + 'context=' + context
+    dl.debug('URL: ' + url)
+    session.post(url, headers={'Authorization': 'Bearer ' + config["user_token"]})
+
+
 def head_iss_object(config, app_name, obj_id):
-    dl.debug("get_calculation_status: " + calculation_id)
+    dl.debug("head_iss_object: " + obj_id)
     url = config["api_url"] + '/iss/' + obj_id + '?context=' + config["apps"][app_name]["context_id"]
-    print('URL: ' + url)
-    res = session.head(url, 
-            headers = {'Authorization': 'Bearer ' + config["user_token"]})
+    dl.debug('URL: ' + url)
+    res = session.head(url,
+                       headers={'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
     # print(str(res.headers))
     h = res.headers
     h['status_code'] = res.status_code
     return h
+
 
 # Manually post a calculation request, while only returning the ID and not waiting for the calculation to perform
 #   note: see do_calculation if you want to wait for the calculation to finish and get results
@@ -336,33 +440,35 @@ def post_calculation(config, json_data, force=False, override_app_name=None):
     app_name = get_name_from_data(json_data, 'app')
     if override_app_name != None:
         app_name = override_app_name
-     # Get calculation ID
+    # Get calculation ID
     dl.event("Sending Calculation...")
-    url = config["api_url"] + '/calc?context=' + config["apps"][app_name]["context_id"] + "&with_logs=false"    
+    url = config["api_url"] + '/calc?context=' + config["apps"][app_name]["context_id"] + "&with_logs=false"
     if force:
         url += '&force_run=true'
-    dl.debug(url + ' :: ' )
+    dl.debug(url + ' :: ')
 
-    #print(str(json_data))
+    # print(str(json_data))
     # attempt to submit the calculation and keep trying if there's a intermittent failure
     success = False
     tries = 0
     res = ""
     while success != True and tries < 100:
         tries = tries + 1
-        res = session.post(url, 
-            data = json.dumps(json_data), 
-            headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
+        res = session.post(url,
+                           data=json.dumps(json_data),
+                           headers={'Authorization': 'Bearer ' + config["user_token"],
+                                    'content-type': 'application/json'})
         success = is_thinknode_calc_resolved(config, app_name, res, None)
         if (success != True):
-           time.sleep(2)
+            time.sleep(2)
 
     assert_success(res)
     calculation_id = res.json()["id"]
     dl.data("Calculation ID: ", calculation_id)
     return calculation_id
 
-# Manually post a calculation request to extract a property out of a 
+
+# Manually post a calculation request to extract a property out of a
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param prop_name: the name of the property you want to extract
 #   param schema: the schema of the property you want to extract (helper functions to generate these should be provided)
@@ -374,19 +480,20 @@ def do_calc_item_property(config, prop_name, schema, ref_id, wait_for_calc=False
     dl.debug('do_calc_item_property: ' + prop_name)
     prop_calc = property(value(prop_name), schema, reference(ref_id))
     dl.debug(str(prop_calc))
-    prop = {} 
+    prop = {}
     if (wait_for_calc == True):
         prop = do_calculation(config, prop_calc, return_data)
     else:
-        prop = post_calculation(config, prop_calc, force)        
+        prop = post_calculation(config, prop_calc, force)
     dl.debug(str(prop))
     prop_text = str(prop)
     if "invalid_field" in prop_text:
         dl.error('Calc failed::do_calc_item_property: invalid index')
         sys.exit()
-    else:    
+    else:
         dl.debug('prop: ' + prop_name + ' :: ' + str(prop))
         return prop
+
 
 # Manually post a calculation request to extract an item out of an array
 #   param config: connection settings (url, user token, and ids for context and realm)
@@ -405,13 +512,14 @@ def do_calc_array_item(config, index, schema, ref_id, return_on_fail=False, forc
     if (wait_for_calc == True):
         ai = do_calculation(config, item_calc, False, True, force)
     else:
-        ai = post_calculation(config, item_calc, force)  
+        ai = post_calculation(config, item_calc, force)
     if 'failed' in ai and return_on_fail == False:
         dl.error('Calc failed::do_calc_array_item:invalid index')
         sys.exit()
     else:
         dl.debug('array_item: ' + str(ai))
         return ai
+
 
 # Generic function to post an object to immutable storage system (ISS)
 #   param config: connection settings (url, user token, and ids for context and realm)
@@ -435,21 +543,24 @@ def post_immutable(config, app_name, json_data, qualified_scope, use_msgpack=Tru
         dl.debug("Using json to post immutable")
         req_data = json.dumps(json_data)
         req_headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'}
-    res = session.post(post_url, 
-        data = req_data,
-        headers = req_headers)
+    res = session.post(post_url,
+                       data=req_data,
+                       headers=req_headers)
     assert_success(res)
     dl.event("    Immutable id: " + res.text)
     return res
+
 
 def id_post_immutable(config, app_name, json_data, qualified_scope, use_msgpack=True):
     res = post_immutable(config, app_name, json_data, qualified_scope, use_msgpack)
     obj = json.loads(res.text)
     return obj['id']
 
+
 def make_named_type_scope(config, app_name, named_type):
-    scope = '/iss/named/' + config["account_name"] + '/' + app_name  + '/' + named_type
+    scope = '/iss/named/' + config["account_name"] + '/' + app_name + '/' + named_type
     return scope
+
 
 # Post immutable named_type object to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
@@ -461,6 +572,7 @@ def make_named_type_scope(config, app_name, named_type):
 def post_immutable_named(config, app_name, json_data, obj_name, use_msgpack=True):
     scope = '/iss/named/' + config["account_name"] + '/dosimetry' + '/' + obj_name
     return post_immutable(config, app_name, json_data, scope, use_msgpack)
+
 
 # Post immutable array of objects to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
@@ -474,6 +586,8 @@ def post_immutable_array_simple_type(config, app_name, json_data, data_type, use
     return post_immutable(config, app_name, json_data, scope, use_msgpack)
 
     # Post immutable array of std types to ISS
+
+
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: name of the app to use to get the context id from the iam config
 #   param json_data: immutable array object in json format
@@ -484,7 +598,8 @@ def post_immutable_array(config, app_name, json_data, obj_name, use_msgpack=True
     scope = '/iss/array/named/' + config["account_name"] + "/dosimetry" + "/" + obj_name
     return post_immutable(config, app_name, json_data, scope, use_msgpack)
 
-# Post immutable object to ISS of a dependency type 
+
+# Post immutable object to ISS of a dependency type
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param dep_app: The name of the app the data type belongs too
 #   param json_data: immutable object in json format
@@ -495,6 +610,7 @@ def post_dependency_immutable(config, dep_app, json_data, obj_name, use_msgpack=
     scope = '/iss/named/' + config["account_name"] + "/" + dep_app + "/" + obj_name
     return post_immutable(config, dep_app, json_data, scope, use_msgpack)
 
+
 # Post immutable object to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: name of the app to use to get the context id from the iam config
@@ -504,6 +620,7 @@ def post_dependency_immutable(config, dep_app, json_data, obj_name, use_msgpack=
 def post_blob(config, app_name, json_data, use_msgpack=True):
     scope = '/iss/blob/' + 'blob'
     return post_immutable(config, app_name, json_data, scope, use_msgpack)
+
 
 # Post immutable object to ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
@@ -519,52 +636,58 @@ def get_immutable(config, app_name, obj_id, use_msgpack=True, ignore_upgrades=Fa
         url += '&ignore_upgrades=true'
     dl.debug("iss url:" + url)
     if use_msgpack:
-        dl.debug("Using msgpack to get immutable")        
+        dl.debug("Using msgpack to get immutable")
         # attempt to get the calculation results and keep trying if there's a intermittent failure
         success = False
         tries = 0
         while success != True and tries < 100:
             tries = tries + 1
-            res = session.get(url, 
-            headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/octet-stream'})
+            res = session.get(url,
+                              headers={'Authorization': 'Bearer ' + config["user_token"],
+                                       'accept': 'application/octet-stream'})
             success = is_thinknode_calc_resolved(config, app_name, res, obj_id)
             if (success == True):
                 decoded = msgpack.unpackb(res.content, encoding='utf-8')
                 return decoded
             time.sleep(3)
     else:
-        dl.debug("Using json to get immutable") 
-        # attempt to get the calculation results and keep trying if there's a intermittent failure       
+        dl.debug("Using json to get immutable")
+        # attempt to get the calculation results and keep trying if there's a intermittent failure
         success = False
         tries = 0
         while success != True and tries < 100:
             tries = tries + 1
-            res = session.get(url, 
-            headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
+            res = session.get(url,
+                              headers={'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/json'})
             success = is_thinknode_calc_resolved(config, app_name, res, obj_id)
             if (success == True):
                 return json.loads(res.text)
             time.sleep(3)
-            
+
     return None
+
 
 def get_head(config, app_name, obj_id):
     dl.event("Requesting Head Data from ISS...")
-    url = config["api_url"] + '/iss/' + obj_id + '?context=' + config['apps'][app_name]["context_id"] #+ "&ignore_upgrades=true"
+    url = config["api_url"] + '/iss/' + obj_id + '?context=' + config['apps'][app_name][
+        "context_id"]  # + "&ignore_upgrades=true"
     dl.debug("iss url:" + url)
-    res = session.head(url, 
-            headers = {'Authorization': 'Bearer ' + config["user_token"], 'accept': 'application/octet-stream'})
+    res = session.head(url,
+                       headers={'Authorization': 'Bearer ' + config["user_token"],
+                                'accept': 'application/octet-stream'})
     assert_success(res)
     print(res.headers)
     # print(json.loads(str(res)))
     return res.headers
 
+
 #  Copies an object from one bucket to another
 def iss_object_copy(config, obj_id, src_bucket, dest_bucket):
     url = config['api_url'] + '/iss/' + obj_id + '/buckets/' + src_bucket + '?bucket=' + dest_bucket
-    res = session.post(url, headers = {'Authorization': 'Bearer ' + config["user_token"]})
+    res = session.post(url, headers={'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
     return res.json()['id']
+
 
 #####################################################################
 # thinknode schema type builders
@@ -573,43 +696,48 @@ def iss_object_copy(config, obj_id, src_bucket, dest_bucket):
 # Create a schema for an array of named types
 #   param type_name: the named_type for the array items
 def schema_array_named_type(app_name, type_name):
-    return  { "array_type": { \
-                "element_schema": { \
-                    "named_type": { \
-                        "app": app_name, \
-                        "name": type_name } } } }
+    return {"array_type": { \
+        "element_schema": { \
+            "named_type": { \
+                "app": app_name, \
+                "name": type_name}}}}
+
 
 # Create a schema for an array of standard types
 #   param type_name: the standard type (number_type, string_type) for the array items
 def schema_array_standard_type(type_name):
-    return  { "array_type": { \
-                "element_schema": { \
-                    type_name: {} } } }
+    return {"array_type": { \
+        "element_schema": { \
+            type_name: {}}}}
+
 
 # Create a schema for an array of array of standard types
 #   param type_name: the standard type (number_type, string_type) for the array of array of items
 def schema_array_array_standard_type(type_name):
-    return  { "array_type": {
+    return {"array_type": {
+        "element_schema": {
+            "array_type": {
                 "element_schema": {
-                    "array_type": {
-                        "element_schema": {
-                            type_name: {}
-                        }
-                    }
+                    type_name: {}
                 }
-            } }
+            }
+        }
+    }}
+
 
 # Create a schema for a named type
 #   param type_name: the named_type for the schema
 def schema_named_type(app_name, type_name):
-    return { "named_type": { \
-                "app": app_name, \
-                "name": type_name } }
+    return {"named_type": { \
+        "app": app_name, \
+        "name": type_name}}
+
 
 # Create a schema for a standard type
 #   param type_name: the standard type (number_type, string_type) for the schema
 def schema_standard_type(type_name):
-    return  { type_name: {} }
+    return {type_name: {}}
+
 
 #####################################################################
 # thinknode calculation request builders
@@ -618,25 +746,30 @@ def schema_standard_type(type_name):
 # Create a value request
 #   param v: value (alpha numeric)
 def value(v):
-    return { "value": v }
+    return {"value": v}
+
 
 # Create an optional argument request
-#   param o: fully formatted item to make optional 
+#   param o: fully formatted item to make optional
 def some(o):
-    return  { "some": o}
+    return {"some": o}
+
 
 # Create an optional value request
 #   param v: value (alpha numeric)
 def optional_value(v):
     return value(some(v))
 
+
 # Create a none type (i.e. an empty optional type)
-none = { "none": None }
+none = {"none": None}
+
 
 # Create a reference request.
 #   param id: immutable storage id of the object
 def reference(id):
-    return { "reference": id }
+    return {"reference": id}
+
 
 # Create a function request.
 #   param app: app name on thinknode
@@ -645,8 +778,9 @@ def reference(id):
 def function(account_name, app_name, function_name, args):
     dl.debug("function: " + function_name)
     return {
-        "function": { "account": account_name, "app": app_name, "name": function_name, "args": args }
+        "function": {"account": account_name, "app": app_name, "name": function_name, "args": args}
     }
+
 
 # Create a property function request to extract a property from an object
 #   param field: the field you want to extract
@@ -654,8 +788,9 @@ def function(account_name, app_name, function_name, args):
 #   param object: the item you want to pull the data from
 def property(field, schema, object):
     return {
-        "property": { "field": field, "schema": schema, "object": object }
+        "property": {"field": field, "schema": schema, "object": object}
     }
+
 
 # Create a array item function request to extract a item from an array
 #   param index: the index of the array item you want to extract
@@ -663,33 +798,37 @@ def property(field, schema, object):
 #   param array: the array you want to pull the data from
 def array_item(index, schema, array):
     return {
-        "item": { "index": index, "schema": schema, "array": array }
+        "item": {"index": index, "schema": schema, "array": array}
     }
+
 
 # Create a object request
 #   param schema: the schema body of object request
 #   param properties: array of properties matching the schema for the request
 def structure(schema, properties):
     return {
-        "object": { "schema": schema, "properties": properties }
+        "object": {"schema": schema, "properties": properties}
     }
-    
+
+
 # Create a object request for a named_type
 #   param app: app name on thinknode
 #   param name: function name in app manifest
 #   param args: array of arguments
 def structure_named_type(app, name, args):
-    schema = { "named_type": { "name": name, "app": app } }
+    schema = {"named_type": {"name": name, "app": app}}
     return structure(schema, args)
+
 
 # Create an array request for a named_type
 #   param app: app name on thinknode
 #   param item_name: name of the named_type
 #   param a: array of items (can be values or references or functions)
 def array_named_type(app, item_name, a):
-    return { "array": \
-            { "item_schema" : \
-            { "named_type": { "name": item_name, "app": app } }, "items": a } }  
+    return {"array": \
+                {"item_schema": \
+                     {"named_type": {"name": item_name, "app": app}}, "items": a}}
+
 
 # Create an optional object request for a named_type
 #   param account: account name on thinknode
@@ -712,13 +851,15 @@ def optional_named_type_object(account, app, type_name, data):
         }
     }
 
+
 # Create an array request for a number type
 #   param app: app name on thinknode
 #   param a: array of items
 def array_number_type(app, a):
-    return { "array": \
-            { "item_schema" : \
-            { "float_type": {} }, "items": a } } 
+    return {"array": \
+                {"item_schema": \
+                     {"float_type": {}}, "items": a}}
+
 
 # Create a meta request for a named_type
 #   param account: account name on thinknode
@@ -739,7 +880,8 @@ def meta_named_type(account, app, type_name, generator_ref):
                 "reference": generator_ref
             }
         }
-}
+    }
+
 
 # Create a meta request for an array of named types
 #   param account: account name on thinknode
@@ -764,7 +906,8 @@ def meta_array_named_type(account, app, type_name, generator_ref):
                 "reference": generator_ref
             }
         }
-}
+    }
+
 
 # Create a meta request for a standard type
 #   param type_name: name of the standard type that will be returned by the meta generator
@@ -779,7 +922,8 @@ def meta_standard_type(type_name, generator_ref):
                 "reference": generator_ref
             }
         }
-}
+    }
+
 
 # Create a meta request for an array of standard types
 #   param type_name: name of the standard types that will be returned by the meta generator
@@ -798,7 +942,8 @@ def meta_array_standard_type(type_name, generator_ref):
                 "reference": generator_ref
             }
         }
-}
+    }
+
 
 #####################################################################
 # misc helpers
@@ -811,11 +956,12 @@ def assert_success(res):
         dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
         # sys.exit()
 
-# Check if the Thinknode calculation has been resolved correctly. Returns false if 
-# the status code is 202 (resolving) or 5XX (internal thinknode error) so that the 
+
+# Check if the Thinknode calculation has been resolved correctly. Returns false if
+# the status code is 202 (resolving) or 5XX (internal thinknode error) so that the
 # calculation may be optionally tried again
 #   param res: http response
-def is_thinknode_calc_resolved(config, app_name, res, calc_id = None):
+def is_thinknode_calc_resolved(config, app_name, res, calc_id=None):
     dl.debug("Attempting...")
     if res.status_code == 202 or res.status_code >= 500:
         dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
@@ -828,6 +974,7 @@ def is_thinknode_calc_resolved(config, app_name, res, calc_id = None):
     else:
         return True
 
+
 # Read the thinknode config file
 #   param path: relative location of config file
 def read_config(path):
@@ -836,16 +983,19 @@ def read_config(path):
     file.close()
     return config
 
+
 # Clears the cached calculations in the calculation directory
 def clear_calculations():
     shutil.rmtree('calculations')
     os.makedirs('calculations')
-           
-# Turn dosimetry_types class object into serialized json dictionary. 
+
+
+# Turn dosimetry_types class object into serialized json dictionary.
 # This handles interdependent classes within dosimetry_types.
 #   param obj: instance of a dosimetry_types class
 def to_json(obj):
     return json.loads(jp.encode(obj, unpicklable=False))
+
 
 # Gets the value of the specified key from a json dict
 #   param obj: Json dictionary to search
@@ -858,44 +1008,57 @@ def get_name_from_data(obj, key):
     else:
         return get_value_by_key(obj, key)
 
+
 def get_value_by_key(obj, key):
     if key in obj: return obj[key]
     for k, v in obj.items():
-        if isinstance(v,dict):
+        if isinstance(v, dict):
             item = get_value_by_key(v, key)
             if item is not None:
                 return item
+
 
 # Get the username associated with the given session
 def get_username(iam):
     return get(iam, "/cas/session")["username"]
 
+
 # Get the list of apps
 def get_app_list(iam):
     return get(iam, "/apm/apps")
+
 
 # Get the list of versions for an app
 def get_app_versions(iam, app_name):
     return get(iam, "/apm/apps/" + self.config["account"] + "/" + app_name + "/versions")
 
+
 # Get the details for the provided realm
 def get_realm(iam):
     return get(iam, "/iam/realms/" + iam['realm_name'])
+
 
 # Get the bucket for a realm
 def get_bucket_for_realm(iam):
     return get(iam, '/iam/realms/' + iam['realm_name'])['bucket']
 
+
 # Get the list of app versions installed in this realm
 def get_installed_app_versions(iam):
     return filter(lambda v: v["status"] == "installed",
-        get(iam, "/iam/realms/" + iam['realm_name'] + "/versions"))
+                  get(iam, "/iam/realms/" + iam['realm_name'] + "/versions"))
+
 
 # Get the version of a particular app that's installed in this realm
 def get_installed_app_version(iam, app_name):
     versions = [v for v in get_installed_app_versions(iam)
-        if v["app"] == app_name]
+                if v["app"] == app_name]
     try:
         return versions[0]
     except:
         return None
+
+
+
+
+
