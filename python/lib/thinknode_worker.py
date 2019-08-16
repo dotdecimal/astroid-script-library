@@ -235,10 +235,10 @@ def do_calculation(config, json_data, return_data=True, return_error=False, forc
 #   returns: either calculation data or id, based on return_flag. Default is ID.
 def wait_for_calculation(config, app_name, calculation_id, return_data=True, return_error=False):
     loc = sys.path[0]
-    res = get_calculation_status(config, app_name, calculation_id)
+    res = get_calculation_status(config, config["apps"][app_name]["context_id"], calculation_id)
     calculating = True
     while calculating:
-        res = get_calculation_status(config, app_name, calculation_id, "completed", 30)
+        res = get_calculation_status(config, config["apps"][app_name]["context_id"], calculation_id, "completed", 30)
         if "failed" in res.json():
             calculating = False
             dl.event("Getting error logs for calculation")
@@ -294,13 +294,13 @@ def wait_for_calculation(config, app_name, calculation_id, return_data=True, ret
 #   param status: used for long polling when timeout > 0 (see thinknode spec for long polling)
 #   param timeout: long polling timeout
 #   returns: The thinknode status of the calculation after the specified timeout
-def get_calculation_status(config, app_name, calculation_id, status="completed", timeout=0):
+def get_calculation_status(config, context_id, calculation_id, status="completed", timeout=0):
     dl.debug("get_calculation_status: " + calculation_id)
     if (timeout <= 0):
         # if (False):
         dl.event("Checking Calculation Status...")
-        url = config["api_url"] + '/calc/' + calculation_id + '/status?context=' + config["apps"][app_name]["context_id"]
-        print('URL: ' + url)
+        url = config["api_url"] + '/calc/' + calculation_id + '/status?context=' + context_id
+        dl.debug('URL: ' + url)
         res = session.get(url,
                           headers={'Authorization': 'Bearer ' + config["user_token"]})
         dl.data("Response: ", res.text)
@@ -308,7 +308,7 @@ def get_calculation_status(config, app_name, calculation_id, status="completed",
         # using long polling if timeout > 0
         url = config[
                   "api_url"] + '/calc/' + calculation_id + '/status/?status=' + status + '&progress=1&timeout=' + str(
-            timeout) + '&context=' + config["apps"][app_name]["context_id"]
+            timeout) + '&context=' + context_id
         print('URL: ' + url)
         res = session.get(url,
                           headers={'Authorization': 'Bearer ' + config["user_token"]})
@@ -316,21 +316,10 @@ def get_calculation_status(config, app_name, calculation_id, status="completed",
     return res
 
 
-def get_calc_status(config, app_name, calculation_id):
-    dl.debug("get_calculation_status: " + calculation_id)
-    url = config["api_url"] + '/calc/' + calculation_id + '/status' + '?context=' + config["apps"][app_name][
-        "context_id"]
-    print('URL: ' + url)
-    res = session.get(url,
-                      headers={'Authorization': 'Bearer ' + config["user_token"]})
-    assert_success(res)
-    return res
-
-
 def get_calc_request(config, app_name, calculation_id):
-    dl.debug("get_calculation_status: " + calculation_id)
+    dl.debug("get_calc_request: " + calculation_id)
     url = config["api_url"] + '/calc/' + calculation_id + '?context=' + config["apps"][app_name]["context_id"]
-    print('URL: ' + url)
+    dl.debug('URL: ' + url)
     res = session.get(url,
                       headers={'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
@@ -340,7 +329,7 @@ def get_calc_request(config, app_name, calculation_id):
 # Get the current calculation queue
 def get_calc_queue(config, bucket):
     url = config["api_url"] + '/calc/' + '/queue' + '?' + 'bucket=' + bucket
-    print('URL: ' + url)
+    dl.debug('URL: ' + url)
     res = session.get(url,
                       headers={'Authorization': 'Bearer ' + config["user_token"]})
 
@@ -351,7 +340,7 @@ def get_calc_queue(config, bucket):
 # Get the bucket from realm_name
 def get_bucket_from_realm(config, realm):
     url = config["api_url"] + '/iam/' + '/realms/' + realm
-    print('URL: ' + url)
+    dl.debug('URL: ' + url)
     res = session.get(url,
                       headers={'Authorization': 'Bearer ' + config["user_token"]})
 
@@ -373,7 +362,7 @@ def get_bucket_from_realm(config, realm):
 # Get the name of function from id
 def get_function(config, calc_id, context):
     url = config["api_url"] + '/calc/' + calc_id + '/resolved' + '?' + 'context=' + context
-    print('URL: ' + url)
+    dl.debug('URL: ' + url)
     res = session.get(url,
                       headers={'Authorization': 'Bearer ' + config["user_token"]})
 
@@ -384,7 +373,7 @@ def get_function(config, calc_id, context):
 # Get calculation
 def get_calculation(config, calc_id, context):
     url = config["api_url"] + '/calc/' + calc_id + '?' + 'context=' + context
-    print('URL: ' + url)
+    dl.debug('URL: ' + url)
     res = session.get(url,
                       headers={'Authorization': 'Bearer ' + config["user_token"]})
 
@@ -395,7 +384,7 @@ def get_calculation(config, calc_id, context):
 # Get the interest in calculation
 def get_interest_in_calculation(config, calc_id, context):
     url = config["api_url"] + '/calc/' + calc_id + '/interest' + '?' + 'context=' + context
-    print('URL: ' + url)
+    dl.debug('URL: ' + url)
     res = session.get(url,
                       headers={'Authorization': 'Bearer ' + config["user_token"]})
 
@@ -406,7 +395,7 @@ def get_interest_in_calculation(config, calc_id, context):
 # Get the name of function from id
 def remove_interest_calc_by_id(config, calc_id, context):
     delete_url = config["api_url"] + '/calc/' + calc_id + '/interest' + '?' + 'context=' + context
-    print('URL: ' + delete_url)
+    dl.debug('URL: ' + delete_url)
     res = session.delete(delete_url,
                          headers={'Authorization': 'Bearer ' + config["user_token"],
                                   'content-type': 'application/json'})
@@ -416,21 +405,21 @@ def remove_interest_calc_by_id(config, calc_id, context):
 # Get the name of function from id
 def remove_interest_in_calculations(config, json_data, context):
     url = '/calc/' + 'interest' + '?' + 'context=' + context
-    print('URL: ' + url)
+    dl.debug('URL: ' + url)
     delete(config, '/calc/' + 'interest' + '?' + 'context=' + context, json_data)
 
 
 # Get the name of function from id
 def post_calc_by_id(config, calc_id, context):
     url = config["api_url"] + '/calc/' + calc_id + '?' + 'context=' + context
-    print('URL: ' + url)
+    dl.debug('URL: ' + url)
     session.post(url, headers={'Authorization': 'Bearer ' + config["user_token"]})
 
 
 def head_iss_object(config, app_name, obj_id):
-    dl.debug("get_calculation_status: " + obj_id)
+    dl.debug("head_iss_object: " + obj_id)
     url = config["api_url"] + '/iss/' + obj_id + '?context=' + config["apps"][app_name]["context_id"]
-    print('URL: ' + url)
+    dl.debug('URL: ' + url)
     res = session.head(url,
                        headers={'Authorization': 'Bearer ' + config["user_token"]})
     assert_success(res)
