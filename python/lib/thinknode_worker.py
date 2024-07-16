@@ -83,10 +83,10 @@ def patch(config, path, content):
     assert_success(response)
 
 
-def get_thinknode_usage(config):
+def get_thinknode_usage(config, month):
     dl.event('get_usage')
     # url = config["api_url"] + '/ams/accounts/' + config["account_name"] + '/usage?include_users=true&month=201604'
-    url = config["api_url"] + '/ams/accounts/' + config["account_name"] + '/usage?include_users=true'
+    url = config["api_url"] + '/ams/accounts/' + config["account_name"] + '/usage?include_users=true&month=' + month
     dl.debug(url)
     res = session.get(url,
                       headers={'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/json'})
@@ -550,6 +550,26 @@ def post_immutable(config, app_name, json_data, qualified_scope, use_msgpack=Tru
     dl.event("    Immutable id: " + res.text)
     return res
 
+# Generic function to post an object to immutable storage system (ISS) from msg_pack data
+#   param config: connection settings (url, user token, and ids for context and realm)
+#   param app_name: name of the app to use to get the context id from the iam config
+#   param data: immutable object in msgpack format
+#   param qualified_scope: unique url for the iss type being posted (i.e. named types, blobs, arrays all have unique urls)
+#   returns: iss immutable response object
+def post_immutable_msgpack(config, app_name, data, qualified_scope):
+    dl.event("Posting object to ISS...")
+    # Post immutable object
+    post_url = config["api_url"] + qualified_scope + '?context=' + config["apps"][app_name]["context_id"]
+    dl.data('post_url: ', post_url)
+    req_headers = {}
+    req_data = {}
+    req_headers = {'Authorization': 'Bearer ' + config["user_token"], 'content-type': 'application/octet-stream'}
+    res = session.post(post_url,
+                       data=data,
+                       headers=req_headers)
+    assert_success(res)
+    dl.event("    Immutable id: " + res.text)
+    return res
 
 def id_post_immutable(config, app_name, json_data, qualified_scope, use_msgpack=True):
     res = post_immutable(config, app_name, json_data, qualified_scope, use_msgpack)
@@ -622,7 +642,7 @@ def post_blob(config, app_name, json_data, use_msgpack=True):
     return post_immutable(config, app_name, json_data, scope, use_msgpack)
 
 
-# Post immutable object to ISS
+# Get immutable object from ISS
 #   param config: connection settings (url, user token, and ids for context and realm)
 #   param app_name: name of the app to use to get the context id from the iam config
 #   param obj_id: thinknode iss reference id for object to get
@@ -666,6 +686,20 @@ def get_immutable(config, app_name, obj_id, use_msgpack=True, ignore_upgrades=Fa
 
     return None
 
+# Get immutable data object from ISS
+#   param config: connection settings (url, user token, and ids for context and realm)
+#   param app_name: name of the app to use to get the context id from the iam config
+#   param obj_id: thinknode iss immutable reference id for object to get
+#   returns: iss immutable data response object
+def get_immutable_data(config, app_name, obj_id):
+    dl.event("Requesting Immutable Data from ISS...")
+    url = config["api_url"] + '/iss/immutable/' + obj_id + '?context=' + config['apps'][app_name]["context_id"]
+    res = session.get(url,
+                      headers={'Authorization': 'Bearer ' + config["user_token"],
+                               'accept': 'application/octet-stream'})
+    decoded = msgpack.unpackb(res.content, encoding='utf-8')
+    return decoded
+
 
 def get_head(config, app_name, obj_id):
     dl.event("Requesting Head Data from ISS...")
@@ -676,7 +710,7 @@ def get_head(config, app_name, obj_id):
                        headers={'Authorization': 'Bearer ' + config["user_token"],
                                 'accept': 'application/octet-stream'})
     assert_success(res)
-    print(res.headers)
+    # print(res.headers)
     # print(json.loads(str(res)))
     return res.headers
 
@@ -962,14 +996,14 @@ def assert_success(res):
 # calculation may be optionally tried again
 #   param res: http response
 def is_thinknode_calc_resolved(config, app_name, res, calc_id=None):
-    dl.debug("Attempting...")
+    dl.debug("Check is_thinknode_calc_resolved...")
     if res.status_code == 202 or res.status_code >= 500:
         dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
         return False
     if res.status_code != 200:
         dl.error("Server Responded: " + str(res.status_code) + " - " + res.text)
         if (calc_id != None):
-            dl.error(get_calc_status(config, app_name, calc_id).text)
+            dl.error(str(res.status_code))
         sys.exit()
     else:
         return True
@@ -1058,7 +1092,21 @@ def get_installed_app_version(iam, app_name):
     except:
         return None
 
+# Install an app version from a realm
+def app_version_install(config, app_name, version):
+    dl.event("Installing version: " + version)
+    return put(config, "/iam/realms/" + config['realm_name'] + "/versions/" + config['account_name'] + "/" + app_name + "/" + version)
 
+# Uninstall an app version from a realm
+def app_version_uninstall(config, app_name, version):
+    dl.event("Removing version: " + version)
+    return delete(config, "/iam/realms/" + config['realm_name'] + "/versions/" + config['account_name'] + "/" + app_name + "/" + version)
 
-
-
+# Get the context for the current realm
+def get_context(config, app_name, version):
+    dl.event("Getting Context ID for version: " + version)
+    context_url =  "/iam/realms/" + config['realm_name'] + "/context?account=" + config['account_name'] + "&app=" + app_name + "&version=" + version
+    res = get(config, context_url)
+    dl.event("Version Ctx: " + str(res))
+    return res
+                      
